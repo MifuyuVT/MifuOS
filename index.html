@@ -188,7 +188,11 @@
   .joy-pick.pop{animation:joypop .5s ease;} @keyframes joypop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.13)}100%{transform:scale(1);opacity:1}}
   /* sticky notes */
   /* modular layout — drag-reorder · resize · minimize/remove · masonry */
-  .grid-modular{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));grid-auto-rows:8px;grid-auto-flow:row dense;gap:0 16px;}   /* row-gap 0: the 16px lives inside the span math → uniform spacing */
+  /* clean column model (Eggie / iPad style): 3 columns wide → 2 medium → 1 narrow.
+     Cards snap to whole columns so they always tile together with no orphan widths. */
+  .grid-modular{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:8px;grid-auto-flow:row dense;gap:0 16px;}   /* row-gap 0: the gap lives inside the span math → uniform spacing */
+  @media (max-width:1040px){ .grid-modular{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:640px){ .grid-modular{grid-template-columns:minmax(0,1fr);} }
   .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);min-width:0;}
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
@@ -492,9 +496,9 @@
     --elev-2:0 12px 30px rgba(120,130,200,.20);
   }
   /* ---- SPACING SYSTEM — one even gap token across every page; tighter on tablet/phone ---- */
-  :root{ --gap:14px; }
-  @media (max-width:1040px){ :root{ --gap:12px; } }
-  @media (max-width:560px){ :root{ --gap:10px; } }
+  :root{ --gap:16px; }
+  @media (max-width:1040px){ :root{ --gap:13px; } }
+  @media (max-width:560px){ :root{ --gap:11px; } }
   .page{ max-width:980px; margin:0 auto; display:flex; flex-direction:column; gap:var(--gap); }
   .page.narrow{ max-width:880px; } .page.tight{ max-width:780px; }
   .col, .health-col{ gap:var(--gap) !important; }
@@ -716,11 +720,14 @@
   @media (max-width:640px){ #sb-open-btn{ display:none!important; } }
   /* desktop: rail is invisible (just shows gradient border line) */
   @media (min-width:901px){ #rail{ padding-top:4px; padding-bottom:4px; min-height:6px; } #rail>*{ display:none; } }
-  /* sidebar header */
+  /* sidebar header — just the logo + collapse arrow, clean like the reference */
   #sb-header{
     display:flex; align-items:center; justify-content:space-between;
-    padding:14px 14px 8px; gap:8px; flex-shrink:0;
+    padding:16px 14px 10px; gap:8px; flex-shrink:0;
   }
+  #sb-header .brand{ display:flex; align-items:center; }
+  #sb-header .brand-logo{ height:40px; width:auto; }
+  #sidebar.sb-collapsed #sb-header .brand-logo{ height:32px; }
   #sb-collapse{
     border:none; background:none; cursor:pointer;
     color:var(--muted); font-size:14px; border-radius:8px;
@@ -883,7 +890,7 @@
 <!-- ===== LEFT SIDEBAR ===== -->
 <aside id="sidebar">
   <div id="sb-header">
-    <span class="brand" data-act="modeToggle" title="tap to swap between Creator OS and Health OS"><img class="brand-logo" src="Logo.png" alt="mifuyu" /><span class="brand-name" id="brandName">Mifuyu OS</span><span class="mode-pill mode-creator" id="modePill"></span></span>
+    <span class="brand" data-act="modeToggle" title="tap the logo to swap between Creator and Health"><img class="brand-logo" src="Logo.png" alt="Mifuyu OS" /></span>
     <button id="sb-collapse" data-act="sidebarToggle" title="Collapse sidebar">«</button>
   </div>
   <div id="sb-mode">
@@ -1262,6 +1269,11 @@ function modularGrid(tab, items, addable){
   const add= addable===false?"":`<button class="home-add" data-act="manageCards" data-tab="${tab}">＋ cards${hiddenN?` · ${hiddenN} hidden`:""}</button>`;
   return `<div class="grid-modular" data-tab="${tab}">${cells}${add}</div>`;
 }
+/* width preference → whole columns. Stored width (data-c) keeps its old 3-16 scale for
+   back-compat: small/default → 1 col, mid → 2 cols, large → full. Clamped to what fits now. */
+function spanFromC(c, colCount){ c=c||4; let span = c>=9 ? 3 : c>=6 ? 2 : 1; return Math.max(1, Math.min(span, colCount)); }
+/* inverse — when a resize picks N columns, store a value that maps back to N via spanFromC */
+function cForSpan(span){ return span>=3 ? 12 : span===2 ? 7 : 4; }
 function layoutHome(){
   const grid=document.querySelector(".grid-modular"); if(!grid)return; const rowH=8; let gap=16; try{ gap=Math.round(parseFloat(getComputedStyle(grid).columnGap))||16; }catch(e){}   // match the responsive --gap token
   /* portrait/landscape: clamp each card's saved span (data-c) to the tracks that actually fit right now,
@@ -1283,10 +1295,9 @@ function layoutHome(){
     for(let i=bestC;i<bestC+span;i++) colBottom[i]=bestRow+rowSpan;
   };
   widgets.forEach(w=>{
-    const want=parseInt(w.dataset.c||"0",10)||colCount;
-    let span=Math.max(1,Math.min(want,colCount));
-    if(colCount<=4) span=colCount;                          // phone-narrow → tidy single column
-    else if(colCount<=10) span = span>colCount*0.62 ? colCount : Math.ceil(colCount/2);   // tablet → clean halves or full so cards tile without odd orphan widths
+    // map the stored width preference to a whole number of columns (1 / 2 / full),
+    // then clamp to however many columns fit right now → always tiles cleanly, never an orphan width.
+    const span=spanFromC(parseInt(w.dataset.c||"0",10), colCount);
     const panel=w.querySelector(".panel,section")||w.lastElementChild; let h=0;
     if(w.classList.contains("min")){ h=54; } else if(panel){ const sh=parseFloat(w.dataset.h||"0")||0; panel.style.minHeight=sh?sh+"px":""; h=panel.getBoundingClientRect().height; }
     place(w, span, Math.max(2,Math.ceil(((h||60)+gap)/rowH)));
@@ -7141,7 +7152,7 @@ start();
 (function(){
   let d=null, sc=false, rafL=0;
   const gridEl=()=>document.querySelector(".grid-modular");
-  function maxCols(){ const g=gridEl(); return g?Math.max(3,Math.min(16,Math.floor(g.clientWidth/88))):3; }
+  function maxCols(){ const g=gridEl(); if(!g)return 3; let n=0; try{ n=(((getComputedStyle(g).gridTemplateColumns)||"").match(/\S+/g)||[]).length; }catch(e){} return Math.max(1,n||3); }   // real column count (3 / 2 / 1)
   function relayoutSoon(){ if(rafL)return; rafL=requestAnimationFrame(()=>{ rafL=0; try{layoutHome();}catch(_){} }); }
   function commitTabs(order){ try{ localStorage.setItem("tab-order",JSON.stringify(order)); }catch(e){} }
   function moveGhost(x,y,scale){ if(d&&d.ghost)d.ghost.style.transform="translate("+(x-d.gx)+"px,"+(y-d.gy)+"px) scale("+(scale||1.04)+")"; }
@@ -7167,14 +7178,14 @@ start();
       else { const r=d.item.getBoundingClientRect(); d.gx=d.sx-r.left; d.gy=d.sy-r.top; const g=d.item.cloneNode(true); g.classList.add("drag-clone"); g.classList.remove("reordering","dragsrc"); g.style.width=r.width+"px"; g.style.height=r.height+"px"; g.querySelectorAll(".home-tools,.home-resize").forEach(x=>x.remove()); document.body.appendChild(g); d.ghost=g; d.item.classList.add("dragsrc"); moveGhost(d.sx,d.sy); }
     }
     e.preventDefault();
-    if(d.mode==="resize"){ const unit=d.startW/d.startCols||d.startW; let nc=Math.round((d.startW+(e.clientX-d.sx))/unit); nc=Math.max(3,Math.min(maxCols(),nc)); if(nc!==d.cols){ d.cols=nc; d.item.style.gridColumn="span "+nc; d.item.dataset.c=nc; } const nh=Math.max(120,Math.round(d.startH+(e.clientY-d.sy))); d.h=nh; if(d.panel)d.panel.style.minHeight=nh+"px"; d.item.dataset.h=nh; relayoutSoon(); return; }
+    if(d.mode==="resize"){ const unit=d.startW/d.startCols||d.startW; let nc=Math.round((d.startW+(e.clientX-d.sx))/unit); nc=Math.max(1,Math.min(maxCols(),nc)); if(nc!==d.cols){ d.cols=nc; d.item.style.gridColumn="span "+nc; d.item.dataset.c=cForSpan(nc); } const nh=Math.max(120,Math.round(d.startH+(e.clientY-d.sy))); d.h=nh; if(d.panel)d.panel.style.minHeight=nh+"px"; d.item.dataset.h=nh; relayoutSoon(); return; }
     moveGhost(e.clientX,e.clientY);
     const el=document.elementFromPoint(e.clientX,e.clientY), over=el&&el.closest(d.itemSel);
     if(over&&over!==d.item&&over.parentElement===d.c){ const r=over.getBoundingClientRect(), before=d.horiz?(e.clientX<r.left+r.width/2):(e.clientY<r.top+r.height/2); const ref=before?over:over.nextSibling; if(ref!==d.item){ flipReorder(d.c, ()=>d.c.insertBefore(d.item, ref)); } }
   },true);
   document.addEventListener("pointerup",()=>{
     if(!d)return; const x=d; d=null; try{x.cap.releasePointerCapture(x.pid);}catch(_){}
-    if(x.mode==="resize"){ x.item.classList.remove("resizing"); if(x.moved){ sc=true; setTimeout(()=>sc=false,350); setLayout(x.tab,L=>{ L.size={...L.size,[x.key]:{c:x.cols,h:Math.round(x.h)}}; }); try{layoutHome();}catch(_){} } return; }
+    if(x.mode==="resize"){ x.item.classList.remove("resizing"); if(x.moved){ sc=true; setTimeout(()=>sc=false,350); setLayout(x.tab,L=>{ L.size={...L.size,[x.key]:{c:cForSpan(x.cols),h:Math.round(x.h)}}; }); try{layoutHome();}catch(_){} } return; }
     if(!x.moved)return;
     sc=true; setTimeout(()=>sc=false,350);
     const fr=x.item.getBoundingClientRect();
