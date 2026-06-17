@@ -727,7 +727,6 @@
   }
   #sb-header .brand{ display:flex; align-items:center; }
   #sb-header .brand-logo{ height:40px; width:auto; }
-  #sidebar.sb-collapsed #sb-header .brand-logo{ height:32px; }
   #sb-collapse{
     border:none; background:none; cursor:pointer;
     color:var(--muted); font-size:14px; border-radius:8px;
@@ -735,9 +734,15 @@
     flex:0 0 auto; line-height:1;
   }
   #sb-collapse:hover{ background:var(--panel-soft); color:var(--peri-deep); }
-  #sidebar.sb-collapsed #sb-collapse{ transform:rotate(180deg); }
+  /* expand button = Mifu's profile pic; only appears when the sidebar is collapsed */
+  #sb-expand{ display:none; border:none; background:none; cursor:pointer; padding:0; border-radius:50%; line-height:0; flex:0 0 auto; }
+  #sb-expand img{ width:40px; height:40px; border-radius:50%; object-fit:cover; box-shadow:0 2px 8px rgba(120,130,200,.28); transition:transform .15s var(--ease); display:block; }
+  #sb-expand:hover img{ transform:scale(1.08); }
+  /* collapsed: hide logo + arrow, show the profile-pic expand button centered (this is how you re-open) */
+  #sidebar.sb-collapsed .brand, #sidebar.sb-collapsed #sb-collapse{ display:none; }
+  #sidebar.sb-collapsed #sb-expand{ display:block; }
   #sidebar.sb-collapsed .brand-name, #sidebar.sb-collapsed .mode-pill{ display:none; }
-  #sidebar.sb-collapsed #sb-header{ justify-content:center; padding:14px 8px 8px; }
+  #sidebar.sb-collapsed #sb-header{ justify-content:center; padding:14px 8px 10px; }
   /* sidebar mode switcher */
   #sb-mode{
     margin:0 10px 4px; display:flex;
@@ -808,9 +813,10 @@
   #sb-footer .right{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
   #sidebar.sb-collapsed #sb-footer{ align-items:center; }
   #sidebar.sb-collapsed #sb-footer .chip-label{ display:none; }
-  /* main view */
-  main#view{ flex:1; padding:18px; max-width:1320px; width:100%; }
+  /* main view — comfortable centered column so content sits together next to the sidebar */
+  main#view{ flex:1; padding:22px 22px 28px; max-width:1180px; width:100%; margin:0 auto; }
   main{ padding:0; max-width:none; margin:0; }
+  @media (min-width:641px) and (max-width:1040px){ main#view{ padding:16px; } }
   /* ---- Tablet 641-900px: icon-only sidebar, hamburger to expand ---- */
   @media (min-width:641px) and (max-width:900px){
     #sidebar:not(.sb-user-expanded){ width:64px; flex-basis:64px; }
@@ -822,6 +828,8 @@
     #sidebar:not(.sb-user-expanded) .tab{ padding:9px; justify-content:center; }
     #sidebar:not(.sb-user-expanded) #sb-header{ justify-content:center; padding:14px 8px 8px; }
     #sidebar:not(.sb-user-expanded) #sb-collapse{ display:none; }
+    #sidebar:not(.sb-user-expanded) .brand{ display:none; }
+    #sidebar:not(.sb-user-expanded) #sb-expand{ display:block; }
     #sb-open-btn{ display:flex; align-items:center; }
     #rail{ padding-top:8px; padding-bottom:8px; }
   }
@@ -891,6 +899,7 @@
 <aside id="sidebar">
   <div id="sb-header">
     <span class="brand" data-act="modeToggle" title="tap the logo to swap between Creator and Health"><img class="brand-logo" src="Logo.png" alt="Mifuyu OS" /></span>
+    <button id="sb-expand" data-act="sidebarToggle" title="Open menu"><img src="AYAYA.png" alt="Open menu" /></button>
     <button id="sb-collapse" data-act="sidebarToggle" title="Collapse sidebar">«</button>
   </div>
   <div id="sb-mode">
@@ -1294,15 +1303,21 @@ function layoutHome(){
     el.style.gridColumn=(bestC+1)+" / span "+span; el.style.gridRowStart=(bestRow+1); el.style.gridRowEnd="span "+rowSpan;
     for(let i=bestC;i<bestC+span;i++) colBottom[i]=bestRow+rowSpan;
   };
-  widgets.forEach(w=>{
-    // map the stored width preference to a whole number of columns (1 / 2 / full),
-    // then clamp to however many columns fit right now → always tiles cleanly, never an orphan width.
-    const span=spanFromC(parseInt(w.dataset.c||"0",10), colCount);
+  // map each card's stored width preference to a whole number of columns (1 / 2 / full),
+  // clamped to however many fit now → always tiles cleanly, never an orphan width.
+  const plan=widgets.map(w=>({ w, span:spanFromC(parseInt(w.dataset.c||"0",10), colCount) }));
+  // PASS 1 — set the final WIDTH (and clear any stale row) so each card reflows to its real
+  // column width BEFORE we measure it. Measuring at the wrong width was making tall cards report
+  // a short height → they overlapped the card below. Let auto-flow lay them out for the measure.
+  plan.forEach(({w,span})=>{ w.style.gridColumn="span "+span; w.style.gridRowStart=""; w.style.gridRowEnd=""; });
+  void grid.offsetHeight;   // force one reflow so the widths above are applied before we read heights
+  // PASS 2 — now measure each card at its real width, then place it into the shortest column.
+  plan.forEach(({w,span})=>{
     const panel=w.querySelector(".panel,section")||w.lastElementChild; let h=0;
     if(w.classList.contains("min")){ h=54; } else if(panel){ const sh=parseFloat(w.dataset.h||"0")||0; panel.style.minHeight=sh?sh+"px":""; h=panel.getBoundingClientRect().height; }
     place(w, span, Math.max(2,Math.ceil(((h||60)+gap)/rowH)));
   });
-  const add=grid.querySelector(".home-add"); if(add) place(add, Math.min(4,colCount), 6);   // "+ cards" tucks under the shortest column, never floats in a gap
+  const add=grid.querySelector(".home-add"); if(add) place(add, Math.min(colCount,colCount), 6);   // "+ cards" tucks under the shortest column, never floats in a gap
 }
 function manageCardsModal(tab){
   const L=modLayout(tab); const labels=MODULAR_LABELS[tab]||{}; const keys=Object.keys(labels);
