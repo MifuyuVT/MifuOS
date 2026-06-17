@@ -43,13 +43,15 @@
   *{-webkit-tap-highlight-color:transparent;}            /* no gray iOS tap flash */
   body{overscroll-behavior-y:none;}                      /* no whole-page rubber-band */
   nav{overscroll-behavior-x:contain;}                    /* tab-strip swipes don't yank the page */
-  body{background:var(--bg);background-image:radial-gradient(80% 50% at 100% 0%,#f7e0f3 0%,transparent 60%),radial-gradient(70% 50% at 0% 0%,#e2e9fb 0%,transparent 55%);background-attachment:fixed;color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;font-weight:500;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  body{background:var(--bg);background-image:radial-gradient(80% 50% at 100% 0%,#f7e0f3 0%,transparent 60%),radial-gradient(70% 50% at 0% 0%,#e2e9fb 0%,transparent 55%);background-attachment:fixed;color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;font-weight:500;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh;}
   h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;}
+  /* cleaner default heading scale — keeps card titles in the 15–17px range (inline sizes still win) */
+  h2{font-size:17px;} h3{font-size:14.5px;}
   .muted{color:var(--muted);} .soft{color:var(--ink-soft);} .peri{color:var(--peri-deep);} .sak{color:var(--sakura-deep);} .lav{color:var(--lav-deep);} .mint{color:#3a9d83;}
   .num{font-variant-numeric:tabular-nums;} a{color:var(--lav-deep);}
   button{font-family:inherit;cursor:pointer;font-weight:600;} input,textarea,select{font-family:inherit;font-weight:500;}
   .label{font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);font-weight:700;}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:16px;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:20px;}
   .inp{background:#fff;border:1.5px solid var(--line-2);border-radius:12px;padding:9px 12px;color:var(--ink);font-size:13px;width:100%;outline:none;}
   .inp:focus{border-color:var(--peri);box-shadow:0 0 0 3px rgba(117,138,198,.14);}
   textarea.inp{resize:vertical;}
@@ -78,8 +80,8 @@
   .grid-home{display:grid;grid-template-columns:320px minmax(0,1fr) 320px;gap:16px;}
   .col{display:flex;flex-direction:column;gap:16px;}
   @media(max-width:1040px){.grid-home{grid-template-columns:1fr;}}
-  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap;}
-  .soft-card{background:var(--panel-soft);border:1px solid var(--line);border-radius:14px;padding:12px;}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px;flex-wrap:wrap;}
+  .soft-card{background:var(--panel-soft);border:1px solid var(--line);border-radius:14px;padding:14px;}
   .seg{display:inline-flex;background:#eef0fa;border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap;}
   .seg button{border:none;background:none;border-radius:999px;padding:5px 11px;font-size:12px;color:var(--ink-soft);}
   .seg button.on{background:#fff;color:var(--sakura-deep);box-shadow:var(--shadow-sm);}
@@ -404,13 +406,14 @@
   .ci-btn .ci-ic{font-size:20px;}
   .ci-btn:hover{border-color:var(--sakura);}
   .ci-btn.on{background:linear-gradient(135deg,#fde2f2,#f3ecfb);border-color:var(--sakura);color:var(--sakura-deep);box-shadow:0 2px 10px rgba(255,158,216,.25);}
-  .glance-head{display:flex;gap:12px;align-items:center;margin-bottom:12px;}
-  .glance-fox{font-size:34px;}
-  .glance-head h2{font-family:var(--display);font-size:24px;}
-  .glance-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
+  .glance-head{display:flex;gap:12px;align-items:center;margin-bottom:14px;}
+  .glance-fox{font-size:28px;}
+  .glance-head h2{font-family:var(--display);font-size:20px;}
+  .glance-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
   @media(max-width:860px){ .glance-cols{grid-template-columns:1fr;} .hero-clockwrap{margin-left:0;text-align:left;width:100%;} }
-  .gcard{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fff;min-width:0;}
-  .sec-label{font-weight:800;letter-spacing:.07em;color:var(--sakura-deep);margin-bottom:8px;font-size:10.5px;text-transform:uppercase;}
+  .gcard{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff;min-width:0;}
+  /* section labels recede in soft muted tone instead of shouting bright pink (less colour noise) */
+  .sec-label{font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;font-size:10.5px;text-transform:uppercase;}
   .kn-row{display:flex;gap:9px;align-items:center;padding:5px 0;font-size:12.5px;}
   .kn-dot{width:7px;height:7px;border-radius:50%;background:var(--sakura);flex:none;}
   .focus-row{display:flex;gap:10px;align-items:center;width:100%;background:#fdf0fb;border:1px solid #f8dcef;border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--ink);margin-top:8px;transition:.15s;cursor:pointer;}
@@ -492,9 +495,9 @@
     --elev-2:0 12px 30px rgba(120,130,200,.20);
   }
   /* ---- SPACING SYSTEM — one even gap token across every page; tighter on tablet/phone ---- */
-  :root{ --gap:16px; }
-  @media (max-width:1040px){ :root{ --gap:13px; } }
-  @media (max-width:560px){ :root{ --gap:11px; } }
+  :root{ --gap:22px; }
+  @media (max-width:1040px){ :root{ --gap:16px; } }
+  @media (max-width:560px){ :root{ --gap:13px; } }
   .page{ max-width:980px; margin:0 auto; display:flex; flex-direction:column; gap:var(--gap); }
   .page.narrow{ max-width:880px; } .page.tight{ max-width:780px; }
   .col, .health-col{ gap:var(--gap) !important; }
@@ -675,14 +678,59 @@
   .jr-cell.jr-sel{ outline:2.5px solid var(--jr-accent,#8AB1CA); outline-offset:-2px; }
   @media (max-width:640px){ .jr-pagetext{ min-height:240px; } .jr-page-day{ font-size:26px; } }
 
+  /* ===== 🎮 Gacha tracker + checklist rows (shared with Daily habits/goals) ===== */
+  .gt-sec{ font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-soft); margin:2px 0 7px; }
+  .gt-div{ height:1px; margin:14px 0; background:linear-gradient(90deg,transparent,var(--line) 20%,var(--line) 80%,transparent); }
+  .gt-list{ display:flex; flex-direction:column; }
+  /* one checklist row — used by gacha "today", daily habits, daily goals */
+  .gt-row, .ck-row{ display:flex; align-items:center; gap:11px; width:100%; min-height:46px; padding:6px 10px;
+    border:none; background:none; text-align:left; border-radius:11px; cursor:pointer; transition:background .14s var(--ease,ease); }
+  .gt-row:hover, .ck-row:hover{ background:var(--panel-soft); }
+  .gt-row + .gt-row, .ck-row + .ck-row{ border-top:1px solid var(--line); }
+  .gt-box, .ck-box{ flex:0 0 auto; width:21px; height:21px; border-radius:7px; border:2px solid var(--line-2);
+    display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#fff; background:#fff; transition:.14s; }
+  .gt-box.on, .ck-box.on{ background:var(--mint,#6fc3ab); border-color:var(--mint,#6fc3ab); }
+  .gt-name, .ck-name{ flex:1; min-width:0; font-size:13.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gt-donetxt, .ck-donetxt{ color:var(--muted); text-decoration:line-through; }
+  .gt-del, .ck-del{ flex:0 0 auto; color:var(--muted); font-size:13px; padding:2px 6px; border-radius:6px; }
+  .gt-del:hover, .ck-del:hover{ color:var(--sakura-deep); }
+  .gt-icon, .ck-icon{ flex:0 0 auto; font-size:15px; line-height:1; }
+  .gt-complete{ font-size:11.5px; color:var(--muted); font-weight:600; margin:8px 0 2px; }
+  /* checklist progress bar (Daily habits / goals) */
+  .ck-prog{ height:7px; border-radius:999px; background:#eef0fa; overflow:hidden; margin:2px 0 2px; }
+  .ck-prog>span{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--peri),var(--sakura)); transition:width .3s var(--ease,ease); }
+  .gt-add{ display:flex; gap:6px; margin-top:8px; }
+  .gt-today{ gap:8px; }   /* a touch more room between game chips */
+  /* gacha chips: soft rounded-squares rather than full pills */
+  .gt-today .chiptog, .gt-wk .chiptog{ border-radius:11px; }
+  /* compact streak chips — name + 🔥count, wrap inline instead of stretching across the bar */
+  .gt-streaks{ display:flex; flex-wrap:wrap; gap:7px; }
+  .gt-schip{ font-size:12px; background:var(--panel-soft); border:1px solid var(--line); border-radius:999px; padding:4px 11px; color:var(--ink-soft); }
+  .gt-schip b{ color:var(--sakura-deep); font-variant-numeric:tabular-nums; font-weight:700; }
+  /* last-7-days grid */
+  .gt-grid-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+  .gt-nav{ display:inline-flex; align-items:center; gap:4px; }
+  .gt-nav .btn{ padding:3px 9px; font-size:13px; }
+  .gt-wklabel{ font-size:11px; color:var(--ink-soft); min-width:78px; text-align:center; }
+  .gt-grid{ display:flex; flex-direction:column; gap:3px; overflow-x:auto; }
+  .gt-grow{ display:grid; grid-template-columns:64px repeat(7,1fr); align-items:center; gap:2px; min-width:220px; }
+  .gt-glabel{ font-size:11.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px; }
+  .gt-cell{ text-align:center; font-size:11px; height:24px; line-height:24px; border-radius:6px; }
+  .gt-ghead .gt-cell{ color:var(--muted); font-weight:700; }
+  .gt-cell.ok{ background:#e4f6ee; color:#2f9d79; }
+  .gt-cell.no{ background:#fde4e4; color:#d6798a; }                 /* genuinely missed past day */
+  .gt-cell.pend{ background:#f0f1f6; color:#c2c5d6; }               /* not happened yet / today not ticked — neutral gray box + ○ */
+
   /* ===== SIDEBAR LAYOUT (replaces top-tab navigation) ===== */
-  #app-shell{ display:flex; min-height:100vh; align-items:stretch; }
+  #app-shell{ display:flex; min-height:100vh; min-height:100dvh; align-items:stretch; }
   #sidebar{
     width:220px; flex:0 0 220px;
     display:flex; flex-direction:column;
-    background:rgba(255,255,255,.88); backdrop-filter:blur(14px);
-    border-right:1.5px solid var(--line);
-    position:sticky; top:0; height:100vh;
+    /* Mifu's gradient — purply-blue at the top flowing into pink at the bottom (her palette) */
+    background:linear-gradient(180deg, rgba(224,232,251,.94) 0%, rgba(231,223,250,.93) 42%, rgba(244,214,238,.95) 78%, rgba(253,210,235,.96) 100%);
+    backdrop-filter:blur(14px);
+    border-right:1.5px solid #e9def1;
+    position:sticky; top:0; height:100vh; height:100dvh;
     overflow-y:auto; overflow-x:hidden;
     z-index:25;
     transition:width .22s cubic-bezier(.22,.61,.36,1),flex-basis .22s cubic-bezier(.22,.61,.36,1);
@@ -938,7 +986,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-14.24";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-17.streamprep";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1281,10 +1329,11 @@ function layoutHome(){
   /* portrait/landscape: clamp each card's saved span (data-c) to the tracks that actually fit right now,
      WITHOUT persisting — rotate back to landscape and the saved width comes back.
      The browser tells us the REAL resolved track count (auto-fill expands in the computed value). */
-  let colCount=0;
-  try{ colCount=(((getComputedStyle(grid).gridTemplateColumns)||"").match(/\S+/g)||[]).length; }catch(e){}
-  if(!colCount){ const w=grid.clientWidth; colCount = w<=640?1 : w<=1040?2 : 3; }   // safe breakpoint fallback (never tiny columns)
-  colCount=Math.max(1,Math.min(3,colCount));   // hard cap: this grid is 3 columns max, so a bad read can never explode into slivers
+  // Column count MUST match the CSS breakpoints exactly (viewport-based: 3 / 2 / 1).
+  // Parsing getComputedStyle was fragile on iOS Safari — it split minmax() into stray tokens
+  // and reported far too many columns, which squeezed cards into overlapping slivers. Width-based is bulletproof.
+  const vw=window.innerWidth||grid.clientWidth||1200;
+  const colCount = vw>1040 ? 3 : vw>640 ? 2 : 1;
   const widgets=[...grid.querySelectorAll(".home-widget")];
   if(widgets.some(w=>w.classList.contains("resizing"))) return;   // don't fight a live resize drag; reflow on release
   // TRUE masonry: place each card into the column slot where it sits highest, so a tall card never
@@ -1549,17 +1598,40 @@ function weekStrip(field,total){
   return `<div style="display:flex;gap:4px;align-items:flex-end;height:30px;margin-top:10px">${bars}</div>
     <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin-top:2px"><span>${fmtDate(dayAgo(-6))}</span><span>this week 🌱</span><span>today</span></div>`;
 }
-function cardHabits(){
-  const list=habitsList(), checks=state.today.habits||{}, ed=!!state.habitEdit;
-  const done=list.filter(h=>checks[h.id]).length;
+/* weekly habit/goal helpers (done-this-week toggles, like gacha weeklies) */
+function wkDoneThisWeek(map,gid){ const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA"); return (map||{})[gid]===mon; }
+function habitsWeekly(){ const l=state.sentinel.habitsWeekly; return Array.isArray(l)?l:[]; }
+function cgoalsWeekly(){ const l=state.sentinel.cgoalsWeekly; return Array.isArray(l)?l:[]; }
+/* shared renderer for a clean checklist card (daily rows by energy + progress + weekly section) */
+function checklistCard(opt){
+  const {label,list,checks,ed,toggleAct,delAct,editAct,addAct,inputId,energyId,draft,
+         weekly,wkDoneMap,wkToggleAct,wkAddAct,wkDelAct,wkInputId,wkDraft,wkLabel,wkPlaceholder}=opt;
+  const done=list.filter(h=>checks[h.id]).length, total=list.length;
+  const pct=total?Math.round(done/total*100):0;
   const groups=[["low","🌙 Low energy"],["med","🌤 Medium energy"],["high","🌞 High energy"]];
-  const row=h=>`<div class="listrow"><button class="x" data-act="habitToggle" data-v="${h.id}" style="font-size:16px;color:${checks[h.id]?'var(--mint,#2f9d79)':'var(--muted)'}">${checks[h.id]?'●':'○'}</button><span class="grow ${checks[h.id]?'soft':''}" style="font-size:12.5px;${checks[h.id]?'text-decoration:line-through':''}">${esc(h.text)}</span>${ed?`<button class="x" data-act="delHabit" data-v="${h.id}">✕</button>`:''}</div>`;
+  const row=h=>`<button class="ck-row" data-act="${toggleAct}" data-v="${h.id}">
+      <span class="ck-box ${checks[h.id]?'on':''}">${checks[h.id]?'✓':''}</span>
+      <span class="ck-name ${checks[h.id]?'ck-donetxt':''}">${esc(h.text)}</span>
+      ${ed?`<span class="ck-del" data-act="${delAct}" data-v="${h.id}" title="remove">✕</span>`:''}</button>`;
   return `<section class="panel">
-    <div class="card-head"><span class="label">Daily habits ✅</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done&&done===list.length?'pill-mint':'pill-gray'}">${done}/${list.length}${done&&done===list.length?' ♡':''}</span><button class="btn" data-act="habitEdit">${ed?'done':'edit'}</button></span></div>
-    ${groups.map(([g,label])=>{ const its=list.filter(h=>(h.energy||"med")===g); return its.length?`<div class="label" style="margin:6px 0 2px;color:var(--peri-deep)">${label}</div>${its.map(row).join("")}`:""; }).join("")}
-    ${ed?`<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><input class="inp" id="habitInput" placeholder="new habit…" style="flex:1;min-width:130px" value="${esc((state.habitDraft||{}).text||'')}"><select class="inp" id="habitEnergy" style="max-width:92px;flex:0 0 auto">${[["low","🌙 low"],["med","🌤 med"],["high","🌞 high"]].map(([v,l])=>`<option value="${v}" ${(((state.habitDraft||{}).energy)||"med")===v?'selected':''}>${l}</option>`).join("")}</select><button class="btn btn-grad" data-act="addHabitUI">add</button></div>`:''}
-    ${weekStrip("habits",list.length)}
+    <div class="card-head"><span class="label">${label}</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done&&done===total?'pill-mint':'pill-gray'}">${done}/${total}${done&&done===total?' ♡':''}</span><button class="btn" data-act="${editAct}">${ed?'done':'edit'}</button></span></div>
+    <div class="ck-prog"><span style="width:${pct}%"></span></div>
+    ${groups.map(([g,gl])=>{ const its=list.filter(h=>(h.energy||"med")===g); return its.length?`<div class="gt-sec" style="margin-top:10px">${gl}</div><div class="gt-list">${its.map(row).join("")}</div>`:""; }).join("")}
+    ${ed?`<div class="gt-add"><input class="inp" id="${inputId}" placeholder="new item…" style="flex:1;min-width:110px" value="${esc((draft||{}).text||'')}"><select class="inp" id="${energyId}" style="max-width:90px;flex:0 0 auto">${[["low","🌙 low"],["med","🌤 med"],["high","🌞 high"]].map(([v,l])=>`<option value="${v}" ${(((draft||{}).energy)||"med")===v?'selected':''}>${l}</option>`).join("")}</select><button class="btn btn-grad" data-act="${addAct}">add</button></div>`:''}
+    <div class="gt-div"></div>
+    <div class="gt-sec">${wkLabel}</div>
+    ${weekly.length?`<div class="chiprow gt-wk">${weekly.map(h=>`<button class="chiptog ${wkDoneThisWeek(wkDoneMap,h.id)?'on':''}" data-act="${wkToggleAct}" data-v="${h.id}"><span>${wkDoneThisWeek(wkDoneMap,h.id)?'✓':'•'}</span>${esc(h.text)}${ed?`<span class="x" data-act="${wkDelAct}" data-v="${h.id}" style="margin-left:2px">✕</span>`:''}</button>`).join("")}</div>`:`<p class="soft" style="font-size:11.5px;margin:2px 0">No weekly tasks yet${ed?` — add one below (${esc(wkPlaceholder)})`:''}.</p>`}
+    ${ed?`<div class="gt-add"><input class="inp" id="${wkInputId}" placeholder="new weekly task…" value="${esc(wkDraft||'')}"><button class="btn btn-grad" data-act="${wkAddAct}">add</button></div>`:''}
   </section>`;
+}
+function cardHabits(){
+  return checklistCard({ label:"Daily habits ✅",
+    list:habitsList(), checks:state.today.habits||{}, ed:!!state.habitEdit,
+    toggleAct:"habitToggle", delAct:"delHabit", editAct:"habitEdit", addAct:"addHabitUI",
+    inputId:"habitInput", energyId:"habitEnergy", draft:state.habitDraft,
+    weekly:habitsWeekly(), wkDoneMap:state.sentinel.habitsWkDone, wkToggleAct:"habitWkToggle",
+    wkAddAct:"addHabitWk", wkDelAct:"delHabitWk", wkInputId:"habitWkInput", wkDraft:state.habitWkDraft,
+    wkLabel:"🧹 Weekly", wkPlaceholder:"vacuum, tidy room, clean the toilet…" });
 }
 /* creator-focused daily goals — mirrors Daily Habits but a SEPARATE list, for content work (own energy tags) */
 const CGOALS_DEFAULT=[
@@ -1573,26 +1645,59 @@ const CGOALS_DEFAULT=[
 ];
 function cgoalsList(){ const l=state.sentinel.cgoalsList; return (Array.isArray(l)&&l.length)?l:CGOALS_DEFAULT; }
 function cardCreatorGoals(){
-  const list=cgoalsList(), checks=state.today.cgoals||{}, ed=!!state.cgoalEdit;
-  const done=list.filter(h=>checks[h.id]).length;
-  const groups=[["low","🌙 Low energy"],["med","🌤 Medium energy"],["high","🌞 High energy"]];
-  const row=h=>`<div class="listrow"><button class="x" data-act="cgoalToggle" data-v="${h.id}" style="font-size:16px;color:${checks[h.id]?'var(--mint,#2f9d79)':'var(--muted)'}">${checks[h.id]?'●':'○'}</button><span class="grow ${checks[h.id]?'soft':''}" style="font-size:12.5px;${checks[h.id]?'text-decoration:line-through':''}">${esc(h.text)}</span>${ed?`<button class="x" data-act="delCgoal" data-v="${h.id}">✕</button>`:''}</div>`;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">Daily goals 🎯</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done&&done===list.length?'pill-mint':'pill-gray'}">${done}/${list.length}${done&&done===list.length?' ♡':''}</span><button class="btn" data-act="cgoalEdit">${ed?'done':'edit'}</button></span></div>
-    ${groups.map(([g,label])=>{ const its=list.filter(h=>(h.energy||"med")===g); return its.length?`<div class="label" style="margin:6px 0 2px;color:var(--peri-deep)">${label}</div>${its.map(row).join("")}`:""; }).join("")}
-    ${ed?`<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><input class="inp" id="cgoalInput" placeholder="new goal…" style="flex:1;min-width:130px" value="${esc((state.cgoalDraft||{}).text||'')}"><select class="inp" id="cgoalEnergy" style="max-width:92px;flex:0 0 auto">${[["low","🌙 low"],["med","🌤 med"],["high","🌞 high"]].map(([v,l])=>`<option value="${v}" ${(((state.cgoalDraft||{}).energy)||"med")===v?'selected':''}>${l}</option>`).join("")}</select><button class="btn btn-grad" data-act="addCgoalUI">add</button></div>`:''}
-    ${weekStrip("cgoals",list.length)}
-  </section>`;
+  return checklistCard({ label:"Daily goals 🎯",
+    list:cgoalsList(), checks:state.today.cgoals||{}, ed:!!state.cgoalEdit,
+    toggleAct:"cgoalToggle", delAct:"delCgoal", editAct:"cgoalEdit", addAct:"addCgoalUI",
+    inputId:"cgoalInput", energyId:"cgoalEnergy", draft:state.cgoalDraft,
+    weekly:cgoalsWeekly(), wkDoneMap:state.sentinel.cgoalsWkDone, wkToggleAct:"cgoalWkToggle",
+    wkAddAct:"addCgoalWk", wkDelAct:"delCgoalWk", wkInputId:"cgoalWkInput", wkDraft:state.cgoalWkDraft,
+    wkLabel:"🗂 Weekly", wkPlaceholder:"do taxes, clean streaming room, clear inbox…" });
 }
+/* gacha history helpers */
+function gachaByDate(){ const m={}; (state.range||[]).forEach(r=>{ if(r&&r.date) m[r.date]=r.notes||{}; }); m[TODAY]=state.today||{}; return m; }
+function gachaCheckedOn(map,gid,d){ const n=map[d]; return !!(n&&n.gacha&&n.gacha[gid]); }
+function gachaStreak(gid){ const map=gachaByDate(); let s=0; const start=gachaCheckedOn(map,gid,TODAY)?0:1;
+  for(let i=start;i<200;i++){ if(gachaCheckedOn(map,gid,dayAgo(-i))) s++; else break; } return s; }
+function gachaWeekMonday(off){ const m=mondayOf(new Date(TODAY+"T00:00")); m.setDate(m.getDate()+(off||0)*7); return m; }
+function gachaWeeklies(){ const l=state.sentinel.gachaWeeklies; return Array.isArray(l)?l:[]; }
+function gachaWkDoneThisWeek(gid){ const wk=state.sentinel.gachaWkDone||{}; const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA"); return wk[gid]===mon; }
 function cardGacha(){
   const list=gachaList(), checks=state.today.gacha||{}, ed=!!state.gachaEdit;
-  const done=list.filter(g=>checks[g.id]).length;
+  const weeklies=gachaWeeklies();
+  const done=list.filter(g=>checks[g.id]).length, goal=list.length;
+  // TODAY — compact chips
+  const todayRows=list.length?`<div class="chiprow gt-today">${list.map(g=>`<button class="chiptog ${checks[g.id]?'on':''}" data-act="gachaToggle" data-v="${g.id}"><span>${checks[g.id]?'✓':'•'}</span>${esc(g.name)}${ed?`<span class="x" data-act="delGacha" data-v="${g.id}" style="margin-left:2px">✕</span>`:''}</button>`).join("")}</div>`:'<p class="soft" style="font-size:11.5px;margin:2px 0">No games yet — tap edit to add one.</p>';
+  // STREAKS — compact inline chips (name + 🔥count), not full-width rows
+  const streaks=list.map(g=>({name:g.name,s:gachaStreak(g.id)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
+  const streakRows=streaks.length?`<div class="gt-streaks">${streaks.map(x=>`<span class="gt-schip">${esc(x.name)} <b>🔥${x.s}</b></span>`).join("")}</div>`:'<p class="soft" style="font-size:11.5px;margin:2px 0">Check a game two days in a row to start a streak 🔥</p>';
+  // WEEKLIES (simple toggles, not part of the streak)
+  const wkRows=weeklies.length?`<div class="chiprow gt-wk">${weeklies.map(g=>`<button class="chiptog ${gachaWkDoneThisWeek(g.id)?'on':''}" data-act="gachaWkToggle" data-v="${g.id}"><span>${gachaWkDoneThisWeek(g.id)?'✓':'•'}</span>${esc(g.name)}${ed?`<span class="x" data-act="delGachaWk" data-v="${g.id}" style="margin-left:2px">✕</span>`:''}</button>`).join("")}</div>`:`<p class="soft" style="font-size:11.5px;margin:2px 0">No weeklies yet${ed?' — add one below':''}.</p>`;
+  // LAST 7 DAYS grid (dailies only)
+  const off=state.gachaWeek||0, mon=gachaWeekMonday(off); const map=gachaByDate();
+  const days=[]; for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(d.getDate()+i); days.push(d.toLocaleDateString("en-CA")); }
+  const dowH=["M","T","W","T","F","S","S"];
+  const gridHead=`<div class="gt-grow gt-ghead"><span class="gt-glabel"></span>${dowH.map(x=>`<span class="gt-cell">${x}</span>`).join("")}</div>`;
+  const gridBody=list.map(g=>`<div class="gt-grow"><span class="gt-glabel">${esc(g.name)}</span>${days.map(d=>{ const ok=gachaCheckedOn(map,g.id,d); const past=d<TODAY;
+    // checked → green ✓ · genuinely missed PAST day → red ✗ · today-not-yet or future → neutral gray ○
+    const cls=ok?'ok':(past?'no':'pend'), ch=ok?'✓':(past?'✗':'○');
+    return `<span class="gt-cell ${cls}">${ch}</span>`; }).join("")}</div>`).join("");
+  const wkLabel=off===0?"This week":off===-1?"Last week":`${fmtDate(days[0])} – ${fmtDate(days[6])}`;
   return `<section class="panel">
-    <div class="card-head"><span class="label">Gacha dailies 🎮</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done&&done===list.length?'pill-mint':'pill-gray'}">${done}/${list.length}${done&&done===list.length?' ✦':''}</span><button class="btn" data-act="gachaEdit">${ed?'done':'edit'}</button></span></div>
-    <div class="chiprow" style="margin-top:4px">${list.map(g=>`<button class="chiptog ${checks[g.id]?'on':''}" data-act="gachaToggle" data-v="${g.id}"><span>${checks[g.id]?'✓':'•'}</span>${esc(g.name)}${ed?`<span class="x" data-act="delGacha" data-v="${g.id}" style="margin-left:2px">✕</span>`:''}</button>`).join("")}</div>
-    ${ed?`<div style="display:flex;gap:6px;margin-top:8px"><input class="inp" id="gachaInput" placeholder="add a game…" value="${esc(state.gachaDraft||'')}"><button class="btn btn-grad" data-act="addGachaUI">add</button></div>`:''}
-    ${weekStrip("gacha",list.length)}
-    <p class="soft" style="font-size:10.5px;margin:6px 0 0;text-align:center">checks reset each day — past days live in the little bars 💜</p>
+    <div class="card-head"><span class="label">🎮 Gacha tracker</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done===goal&&goal?'pill-mint':'pill-gray'}">${done}/${goal}${done===goal&&goal?' ✦':''}</span><button class="btn" data-act="gachaEdit">${ed?'done':'edit'}</button></span></div>
+    <div class="gt-sec">Today</div>
+    <div class="gt-list">${todayRows}</div>
+    <div class="gt-complete">${done} / ${goal} complete</div>
+    ${ed?`<div class="gt-add"><input class="inp" id="gachaInput" placeholder="add a daily game…" value="${esc(state.gachaDraft||'')}"><button class="btn btn-grad" data-act="addGachaUI">add</button></div>`:''}
+    <div class="gt-div"></div>
+    <div class="gt-sec">🔥 Streaks</div>
+    <div>${streakRows}</div>
+    <div class="gt-div"></div>
+    <div class="gt-sec">📅 Weeklies</div>
+    ${wkRows}
+    ${ed?`<div class="gt-add"><input class="inp" id="gachaWkInput" placeholder="add a weekly…" value="${esc(state.gachaWkDraft||'')}"><button class="btn btn-grad" data-act="addGachaWk">add</button></div>`:''}
+    <div class="gt-div"></div>
+    <div class="gt-grid-top"><span class="gt-sec" style="margin:0">Last 7 days</span><span class="gt-nav"><button class="btn" data-act="gachaWeek" data-d="-1" title="previous week">‹</button><span class="gt-wklabel">${wkLabel}</span><button class="btn" data-act="gachaWeek" data-d="1" title="next week"${off>=0?' disabled':''}>›</button></span></div>
+    <div class="gt-grid">${gridHead}${gridBody}</div>
   </section>`;
 }
 function cardBrainDump(){
@@ -1679,7 +1784,7 @@ function cardWeightTrend(){ const wl=(state.sentinel.weightLog||[]).slice().sort
    she tells it — no pretend integrations). Glance: deterministic Kiko Noticed + Suggested Focus — every
    line traceable to a check-in or a stored number. The two OSes never leak into each other. */
 const CI_DEFS={
-  creator:[["streamed","📺","Streamed Today"],["ytVideo","▶️","Uploaded YouTube Video"],["ytShort","🎬","Uploaded YouTube Short"],["madeArt","🎨","Made Art"],["coverSong","🎤","Worked on Cover Song"],["emails","✉️","Replied to Emails"],["sponsors","🤝","Worked on Sponsorships"]],
+  creator:[["streamed","📺","Streamed Today"],["ytVideo","▶️","Uploaded YouTube Video"],["ytShort","🎬","Uploaded YouTube Short"]],
   health:[["medsAM","💊","Took Meds AM"],["medsPM","💊","Took Meds PM"],["weighed","⚖️","Weighed In"],["journaled","📓","Journaled"],["gym","🏋️","Went to Gym"],["walk","🚶","Walked a Bit"],["water","💧","Drank Water"],["sleep","😴","Slept Well"]]
 };
 /* meds classified AM vs PM by their time text — drives the AM/PM check-in linking */
@@ -1715,9 +1820,13 @@ function cardHero(){
       <div class="hero-title"><div class="label">Welcome to</div><h1>Mifu's ${creator?"Creator":"Health"} OS 🌸</h1><div class="soft" style="font-size:13px;margin-top:2px">Kiko is here to ${creator?"help":"support"} you. 💜</div></div>
       <div class="hero-clockwrap"><div class="hero-clock" id="heroClock">${nowHM()}</div><div class="hero-date" id="heroDate">${date}</div></div>
     </div>
-    <div class="label" style="margin:16px 0 8px;letter-spacing:.08em">TODAY'S CHECK-INS</div>
-    <div class="ci-grid">${defs.map(([k,em,l])=>`<button class="ci-btn ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span class="ci-ic">${em}</span><span>${l}</span></button>`).join("")}</div>
-    <p class="soft" style="font-size:11.5px;text-align:center;margin:10px 0 0">✨ Click any check-in above when you complete it!</p>
+    ${creator
+      ? `<div class="label" style="margin:16px 0 7px;letter-spacing:.08em">Did you create today?</div>
+         <div class="chiprow">${defs.map(([k,em,l])=>{ const short={streamed:"Streamed",ytVideo:"YouTube video",ytShort:"YouTube Short"}[k]||l; return `<button class="chiptog ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span>${ciOn(k)?'✓':em}</span>${esc(short)}</button>`; }).join("")}</div>
+         <p class="soft" style="font-size:11px;margin:8px 0 0">Just tap if you happen to do one — no pressure to do these daily. 💜</p>`
+      : `<div class="label" style="margin:16px 0 8px;letter-spacing:.08em">TODAY'S CHECK-INS</div>
+         <div class="ci-grid">${defs.map(([k,em,l])=>`<button class="ci-btn ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span class="ci-ic">${em}</span><span>${l}</span></button>`).join("")}</div>
+         <p class="soft" style="font-size:11.5px;text-align:center;margin:10px 0 0">✨ Click any check-in above when you complete it!</p>`}
   </section>`;
 }
 /* deterministic observations — each one traceable to a check-in or stored number; ticking today resets it */
@@ -2055,7 +2164,7 @@ function viewHome(){
     {key:"cgoals",label:"Daily goals",cols:4,html:cardCreatorGoals()},
     {key:"gacha",label:"Gacha dailies",cols:4,html:cardGacha()},
     {key:"schedule",label:"Stream schedule",cols:4,html:cardSchedule()},
-    {key:"contentops",label:"Content opportunities",cols:4,html:cardContentOps()},
+    {key:"contentops",label:"Stream prep",cols:4,html:cardContentOps()},
     {key:"braindump",label:"Brain-dump",cols:4,html:cardBrainDump()},
     {key:"goals",label:"Goals",cols:4,html:cardGoals()},
     {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
@@ -2139,19 +2248,56 @@ function cardBirthdayPrep(){
     <div style="display:flex;gap:6px"><input class="inp" id="prepInput_${esc(key)}" placeholder="add your own…"><button class="btn" data-act="prepAdd" data-kind="bday" data-key="${esc(key)}">add</button></div>
   </section>`;
 }
-/* ===== Content opportunity assistant — game beats → content, zero scrolling ===== */
+/* ===== Stream prep — a per-stream checklist that flips to off-stream work on non-stream days ===== */
+const STREAM_PREP_DEFAULT=[
+  ["title","🏷️","Twitch title + tags"],
+  ["thumb","🖼️","Thumbnail"],
+  ["discord","📣","Discord announcement"],
+  ["youtube","📺","YouTube premiere / stream"],
+  ["scene","🎬","Scene + overlays ready"],
+];
+/* today's stream from the calendar/schedule (matches the weekday slot) */
+function todayStreamSlot(){ const wd=DOW_ORDER[(new Date().getDay()+6)%7];
+  const slots=slotsForDate(new Date(TODAY+"T00:00"))||[]; return slots.find(s=>s.day===wd&&(s.show||s.text))||null; }
+/* the off-stream content work she can only really do on non-stream days */
+const OFFSTREAM_WORK=[["emails","✉️","Reply to emails"],["sponsors","🤝","Work on sponsorships"],["coverSong","🎤","Cover-song progress"],["madeArt","🎨","Make art"]];
+function offStreamAllDone(){ return OFFSTREAM_WORK.every(w=>ciOn(w[0])); }
+function streamPrepAllDone(){ const c=state.today.streamPrep||{}; return STREAM_PREP_DEFAULT.every(p=>c[p[0]]); }
 function cardContentOps(){
-  const wk7=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=7).sort((a,b)=>a.days-b.days);
-  if(!wk7.length) return `<section class="panel"><div class="label" style="margin-bottom:6px">💡 Content opportunities</div><p class="soft" style="font-size:12px">No game beats in the next 7 days — ask Kiko to "refresh my game calendar" and fresh ones land here. 🎮</p></section>`;
-  const top=wk7[0];
-  const ops=[["🔴","Reaction stream"],["🖼️","Thumbnail"],["📺","YouTube stream"],["📣","Discord announcement"]];
+  const slot=todayStreamSlot();
+  if(slot){
+    const show=slot.show||slot.text||"Stream";
+    const checks=state.today.streamPrep||{};
+    const done=STREAM_PREP_DEFAULT.filter(p=>checks[p[0]]).length, total=STREAM_PREP_DEFAULT.length, pct=total?Math.round(done/total*100):0;
+    return `<section class="panel">
+      <div class="card-head"><span class="label">🎬 Stream prep</span><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span></div>
+      <div style="font-size:14px;margin-bottom:2px"><b>${esc(show)}</b> <span class="soft">· stream today${slot.time?" · "+esc(slot.time):""}</span></div>
+      <p class="soft" style="font-size:11.5px;margin:0 0 8px">Let's get ready — tap each as you go 💜</p>
+      <div class="ck-prog"><span style="width:${pct}%"></span></div>
+      <div class="gt-list">${STREAM_PREP_DEFAULT.map(([k,em,l])=>`<button class="ck-row" data-act="streamPrepToggle" data-k="${k}"><span class="ck-box ${checks[k]?'on':''}">${checks[k]?'✓':''}</span><span class="ck-icon">${em}</span><span class="ck-name ${checks[k]?'ck-donetxt':''}">${esc(l)}</span></button>`).join("")}</div>
+    </section>`;
+  }
+  // not a stream day → off-stream content work
+  const done=OFFSTREAM_WORK.filter(w=>ciOn(w[0])).length, total=OFFSTREAM_WORK.length, pct=total?Math.round(done/total*100):0;
   return `<section class="panel">
-    <div class="card-head"><span class="label">💡 Content opportunities</span><span class="pill pill-gray">${wk7.length} beat${wk7.length>1?"s":""} this week</span></div>
-    <div style="font-size:13px;margin-bottom:6px"><b>${esc(top.title)}</b> <span class="soft">· ${top.days===0?"today":top.days===1?"tomorrow":"in "+top.days+"d"}</span></div>
-    <div class="chiprow" style="margin-bottom:8px">${ops.map(([e,l])=>`<button class="chiptog" data-act="kikoSeedAsk" data-seed="${esc(`help me plan a ${l.toLowerCase()} for ${top.title}`)}"><span>${e}</span>${l}</button>`).join("")}</div>
-    ${wk7.length>1?`<p class="soft" style="font-size:11px;margin:0 0 8px">also coming: ${wk7.slice(1,4).map(e=>esc(e.title)).join(" · ")}</p>`:""}
-    <button class="btn" data-act="draftStreams">📅 draft this week's stream slots</button>
+    <div class="card-head"><span class="label">🌙 Off-stream prep</span><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span></div>
+    <p class="soft" style="font-size:11.5px;margin:0 0 8px">No stream today — a calm day for the behind-the-scenes work. 🌸</p>
+    <div class="ck-prog"><span style="width:${pct}%"></span></div>
+    <div class="gt-list">${OFFSTREAM_WORK.map(([k,em,l])=>`<button class="ck-row" data-act="ciToggle" data-k="${k}"><span class="ck-box ${ciOn(k)?'on':''}">${ciOn(k)?'✓':''}</span><span class="ck-icon">${em}</span><span class="ck-name ${ciOn(k)?'ck-donetxt':''}">${esc(l)}</span></button>`).join("")}</div>
   </section>`;
+}
+/* little celebration burst (respects reduced-motion / calm) */
+function popConfetti(){
+  try{ if(document.body.classList.contains("calm")||matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+    const colors=["#758ac6","#ff9ed8","#a98fe0","#9fc3e8","#6fc3ab","#f3a978"];
+    const cont=document.createElement("div"); cont.style.cssText="position:fixed;inset:0;z-index:9500;pointer-events:none;overflow:hidden";
+    document.body.appendChild(cont);
+    for(let i=0;i<26;i++){ const p=document.createElement("div"); const c=colors[i%colors.length]; const sz=6+Math.random()*7;
+      p.style.cssText=`position:absolute;top:36%;left:${18+Math.random()*64}%;width:${sz}px;height:${sz*0.6}px;background:${c};border-radius:2px;`;
+      p.animate([{transform:"translate(0,0) rotate(0deg)",opacity:1},{transform:`translate(${(Math.random()-0.5)*340}px,${200+Math.random()*280}px) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:1200+Math.random()*600,easing:"cubic-bezier(.2,.7,.3,1)"});
+      cont.appendChild(p); }
+    setTimeout(()=>cont.remove(),2000);
+  }catch(e){}
 }
 
 /* ===================== 🎨 ART STUDIO — full creative suite (ported from Eggie OS 2026-06-12) =====================
@@ -5172,7 +5318,7 @@ async function loadData(){
   state.sentinel = await DB.daily(SENTINEL);
   applyAppConfig();
   state.today = await DB.daily(TODAY);
-  state.range = await DB.range(30);   // 30 days so the Trends 14d/30d toggle both have data
+  state.range = await DB.range(63);   // 9 weeks: Trends 14d/30d toggle + gacha streaks & past-week grid
   state._loaded = true;
   try{ withingsAutoSync(); }catch(e){}   // pull new weigh-ins from the scale in the background
 }
@@ -5243,7 +5389,15 @@ const H={
         (state.sentinel.medsList||[]).forEach(m=>{ if(WATER_SUPP_NAMES.some(s=>String(m.name||"").toLowerCase().includes(s))) mt[m.id]=on; });   // her morning supplements ride with the first drink
         return {...n,mounjaro,medsTaken:mt}; }); }
     if(k==="sleep") await setToday(n=>({...n,sleep:on?8:0}));   // "slept well" = log 8h on the chart
-    if(on)toast("checked in ✨"); render(); },
+    // celebrate when the off-stream work set is freshly completed
+    if(on && OFFSTREAM_WORK.some(w=>w[0]===k) && offStreamAllDone()){ toast("off-stream prep done — amazing! 🎉"); popConfetti(); }
+    else if(on) toast("checked in ✨");
+    render(); },
+  async streamPrepToggle(el){ const k=el.dataset.k; if(!k)return;
+    const on=!((state.today.streamPrep||{})[k]);
+    await setToday(n=>({...n,streamPrep:{...(n.streamPrep||{}),[k]:on}}));
+    if(on && streamPrepAllDone()){ toast("stream prep complete — go get 'em! 🎉"); popConfetti(); }
+    render(); },
   memSearch(){ const el=$("#memSearchInput"); state.memQuery=el?String(el.value||"").trim():""; render(); },
   memSearchClear(){ state.memQuery=""; render(); },
   memBunny(){ state.memBunny=!state.memBunny; render(); },
@@ -5495,6 +5649,21 @@ const H={
     const ci=$("#cgoalInput"); if(ci) state.cgoalDraft={text:ci.value,energy:($("#cgoalEnergy")||{}).value||"med"};
     await setSent(n=>{ let l=(Array.isArray(n.cgoalsList)&&n.cgoalsList.length)?n.cgoalsList.slice():CGOALS_DEFAULT.slice();
       l=l.filter(h=>h.id!==id); return {...n,cgoalsList:l}; }); render(); },
+  /* --- weekly habits (personal/home) + weekly goals (creator/work): done-this-week toggles --- */
+  async habitWkToggle(el){ const id=el.dataset.v; const wi=$("#habitWkInput"); if(wi) state.habitWkDraft=wi.value;
+    const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA");
+    await setSent(n=>{ const wk={...(n.habitsWkDone||{})}; if(wk[id]===mon) delete wk[id]; else wk[id]=mon; return {...n,habitsWkDone:wk}; }); render(); },
+  async addHabitWk(){ const inp=$("#habitWkInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return; state.habitWkDraft=null;
+    await setSent(n=>{ const l=Array.isArray(n.habitsWeekly)?n.habitsWeekly.slice():[]; l.push({id:"hw"+Date.now(),text:t}); return {...n,habitsWeekly:l}; }); toast("weekly added 🧹"); render(); },
+  async delHabitWk(el){ const id=el.dataset.v; const wi=$("#habitWkInput"); if(wi) state.habitWkDraft=wi.value;
+    await setSent(n=>{ const l=(Array.isArray(n.habitsWeekly)?n.habitsWeekly:[]).filter(h=>h.id!==id); return {...n,habitsWeekly:l}; }); render(); },
+  async cgoalWkToggle(el){ const id=el.dataset.v; const wi=$("#cgoalWkInput"); if(wi) state.cgoalWkDraft=wi.value;
+    const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA");
+    await setSent(n=>{ const wk={...(n.cgoalsWkDone||{})}; if(wk[id]===mon) delete wk[id]; else wk[id]=mon; return {...n,cgoalsWkDone:wk}; }); render(); },
+  async addCgoalWk(){ const inp=$("#cgoalWkInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return; state.cgoalWkDraft=null;
+    await setSent(n=>{ const l=Array.isArray(n.cgoalsWeekly)?n.cgoalsWeekly.slice():[]; l.push({id:"cw"+Date.now(),text:t}); return {...n,cgoalsWeekly:l}; }); toast("weekly added 🗂"); render(); },
+  async delCgoalWk(el){ const id=el.dataset.v; const wi=$("#cgoalWkInput"); if(wi) state.cgoalWkDraft=wi.value;
+    await setSent(n=>{ const l=(Array.isArray(n.cgoalsWeekly)?n.cgoalsWeekly:[]).filter(h=>h.id!==id); return {...n,cgoalsWeekly:l}; }); render(); },
   async gachaToggle(el){ const id=el.dataset.v;
     const gi=$("#gachaInput"); if(gi) state.gachaDraft=gi.value;   // keep a half-typed new game
     await setToday(n=>{ const gacha={...(n.gacha||{})}; gacha[id]=!gacha[id]; return {...n,gacha}; }); render(); },
@@ -5507,6 +5676,17 @@ const H={
     const gi=$("#gachaInput"); if(gi) state.gachaDraft=gi.value;
     await setSent(n=>{ let l=(Array.isArray(n.gachaList)&&n.gachaList.length)?n.gachaList.slice():GACHA_DEFAULT.slice();
       l=l.filter(g=>g.id!==id); return {...n,gachaList:l}; }); render(); },
+  // --- gacha weeklies (toggle done-this-week) + past-week grid nav ---
+  async gachaWkToggle(el){ const id=el.dataset.v;
+    const wi=$("#gachaWkInput"); if(wi) state.gachaWkDraft=wi.value;
+    const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA");
+    await setSent(n=>{ const wk={...(n.gachaWkDone||{})}; if(wk[id]===mon) delete wk[id]; else wk[id]=mon; return {...n,gachaWkDone:wk}; }); render(); },
+  async addGachaWk(){ const inp=$("#gachaWkInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return; state.gachaWkDraft=null;
+    await setSent(n=>{ const l=Array.isArray(n.gachaWeeklies)?n.gachaWeeklies.slice():[]; l.push({id:"gw"+Date.now(),name:t}); return {...n,gachaWeeklies:l}; }); toast("weekly added 📅"); render(); },
+  async delGachaWk(el){ const id=el.dataset.v;
+    const wi=$("#gachaWkInput"); if(wi) state.gachaWkDraft=wi.value;
+    await setSent(n=>{ const l=(Array.isArray(n.gachaWeeklies)?n.gachaWeeklies:[]).filter(g=>g.id!==id); return {...n,gachaWeeklies:l}; }); render(); },
+  gachaWeek(el){ const d=Number(el.dataset.d)||0; let off=(state.gachaWeek||0)+d; if(off>0)off=0; if(off<-8)off=-8; state.gachaWeek=off; render(); },
 
   async mjSet(el){ const f=el.dataset.f,v=Number(el.dataset.v);
     await setToday(n=>{ const mounjaro={...(n.mounjaro||{})}; mounjaro[f]=v; return {...n,mounjaro}; }); toast("saved 💗"); render(); },
