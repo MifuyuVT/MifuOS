@@ -674,17 +674,239 @@
   .jr-page-foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; flex-wrap:wrap; }
   .jr-cell.jr-sel{ outline:2.5px solid var(--jr-accent,#8AB1CA); outline-offset:-2px; }
   @media (max-width:640px){ .jr-pagetext{ min-height:240px; } .jr-page-day{ font-size:26px; } }
+
+  /* ===== SIDEBAR LAYOUT (replaces top-tab navigation) ===== */
+  #app-shell{ display:flex; min-height:100vh; align-items:stretch; }
+  #sidebar{
+    width:220px; flex:0 0 220px;
+    display:flex; flex-direction:column;
+    background:rgba(255,255,255,.88); backdrop-filter:blur(14px);
+    border-right:1.5px solid var(--line);
+    position:sticky; top:0; height:100vh;
+    overflow-y:auto; overflow-x:hidden;
+    z-index:25;
+    transition:width .22s cubic-bezier(.22,.61,.36,1),flex-basis .22s cubic-bezier(.22,.61,.36,1);
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    padding-left:env(safe-area-inset-left,0px);
+    scrollbar-width:none;
+  }
+  #sidebar::-webkit-scrollbar{ display:none; }
+  #sidebar.sb-collapsed{ width:64px; flex-basis:64px; }
+  #main-col{ flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+  /* desktop rail: just a thin gradient line, no tabs */
+  #rail{
+    display:flex; align-items:center; padding:8px 16px; gap:8px;
+    position:sticky; top:0; z-index:20;
+    background:rgba(255,255,255,.80); backdrop-filter:blur(12px);
+    border-bottom:2px solid transparent;
+    border-image:linear-gradient(90deg,#9fc3e8,#758ac6,#a98fe0,#ff9ed8) 1;
+    padding-left:calc(16px + env(safe-area-inset-left,0px));
+    padding-right:calc(16px + env(safe-area-inset-right,0px));
+    min-height:0;
+  }
+  #sb-open-btn{
+    border:none; background:none; cursor:pointer;
+    font-size:20px; color:var(--ink-soft); padding:4px 6px; border-radius:8px;
+    transition:background .15s,color .15s; line-height:1;
+  }
+  #sb-open-btn:hover{ background:var(--panel-soft); color:var(--peri-deep); }
+  /* hide hamburger on desktop (sidebar always visible); hide on mobile (sidebar = bottom bar) */
+  @media (min-width:901px){ #sb-open-btn{ display:none; } }
+  @media (max-width:640px){ #sb-open-btn{ display:none!important; } }
+  /* desktop: rail is invisible (just shows gradient border line) */
+  @media (min-width:901px){ #rail{ padding-top:4px; padding-bottom:4px; min-height:6px; } #rail>*{ display:none; } }
+  /* sidebar header */
+  #sb-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 14px 8px; gap:8px; flex-shrink:0;
+  }
+  #sb-collapse{
+    border:none; background:none; cursor:pointer;
+    color:var(--muted); font-size:14px; border-radius:8px;
+    padding:5px 7px; transition:background .15s,color .15s,transform .22s;
+    flex:0 0 auto; line-height:1;
+  }
+  #sb-collapse:hover{ background:var(--panel-soft); color:var(--peri-deep); }
+  #sidebar.sb-collapsed #sb-collapse{ transform:rotate(180deg); }
+  #sidebar.sb-collapsed .brand-name, #sidebar.sb-collapsed .mode-pill{ display:none; }
+  #sidebar.sb-collapsed #sb-header{ justify-content:center; padding:14px 8px 8px; }
+  /* sidebar mode switcher */
+  #sb-mode{
+    margin:0 10px 4px; display:flex;
+    border-radius:999px; background:#eef0fa; padding:3px; gap:2px; flex-shrink:0;
+  }
+  #sidebar.sb-collapsed #sb-mode{ display:none; }
+  #sb-mode button{
+    flex:1; border:none; background:none; border-radius:999px;
+    padding:5px 8px; font-size:11px; color:var(--ink-soft);
+    font-family:inherit; font-weight:600; cursor:pointer;
+    transition:background .15s,color .15s; white-space:nowrap;
+  }
+  #sb-mode button.on{ background:#fff; color:var(--sakura-deep); box-shadow:var(--shadow-sm); }
+  /* sidebar nav — vertical */
+  #sidebar nav#nav{ flex:1; padding:4px 10px; display:flex; flex-direction:column; gap:2px; }
+  #sidebar .tab{
+    position:relative;
+    border-radius:11px; text-align:left; padding:8px 11px;
+    font-size:13px; display:flex; align-items:center; gap:10px;
+    white-space:nowrap; overflow:hidden; border:none; background:none;
+    color:var(--ink-soft); font-weight:500; width:100%;
+    transition:background var(--dur-2,.16s) var(--ease), color var(--dur-2,.16s) var(--ease), transform .10s;
+  }
+  /* icon chip — emojis sit in tidy rounded squares so the column lines up */
+  .tab-emoji{
+    font-size:15px; flex:0 0 auto; line-height:1;
+    width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:9px; background:var(--panel-soft);
+    transition:background var(--dur-2,.16s) var(--ease), transform var(--dur-2,.16s) var(--ease);
+  }
+  .tab-label{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #sidebar .tab:hover:not(.active){ background:var(--panel-soft); color:var(--ink); }
+  #sidebar .tab:hover:not(.active) .tab-emoji{ background:#fff; transform:scale(1.06); }
+  /* active item — soft tinted pill + a left accent bar (the polished-sidebar hallmark) */
+  #sidebar .tab.active{
+    background:linear-gradient(135deg,#eaf0fc,#fdeaf5);
+    color:var(--sakura-deep); font-weight:600;
+  }
+  #sidebar .tab.active::before{
+    content:""; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:3px; height:20px; border-radius:0 3px 3px 0;
+    background:linear-gradient(180deg,var(--peri),var(--sakura));
+  }
+  #sidebar .tab.active .tab-emoji{
+    background:#fff; box-shadow:0 1px 5px rgba(236,116,191,.22);
+  }
+  #sidebar.sb-collapsed .tab{ padding:8px; justify-content:center; gap:0; }
+  #sidebar.sb-collapsed .tab-label{ display:none; }
+  #sidebar.sb-collapsed .tab.active::before{ display:none; }
+  /* sidebar group labels + dividers */
+  .sb-group{ margin-top:10px; position:relative; }
+  .sb-group::before{
+    content:""; display:block; height:1px; margin:0 12px 8px;
+    background:linear-gradient(90deg,transparent,var(--line) 30%,var(--line) 70%,transparent);
+  }
+  .sb-group-label{
+    font-size:9.5px; letter-spacing:.11em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; padding:0 14px 4px; display:block;
+  }
+  #sidebar.sb-collapsed .sb-group-label{ display:none; }
+  #sidebar.sb-collapsed .sb-group::before{ margin:4px 14px; }
+  /* sidebar footer */
+  #sb-footer{
+    padding:10px; display:flex; flex-direction:column; gap:6px;
+    border-top:1px solid var(--line); flex-shrink:0;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));
+  }
+  #sb-footer .right{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  #sidebar.sb-collapsed #sb-footer{ align-items:center; }
+  #sidebar.sb-collapsed #sb-footer .chip-label{ display:none; }
+  /* main view */
+  main#view{ flex:1; padding:18px; max-width:1320px; width:100%; }
+  main{ padding:0; max-width:none; margin:0; }
+  /* ---- Tablet 641-900px: icon-only sidebar, hamburger to expand ---- */
+  @media (min-width:641px) and (max-width:900px){
+    #sidebar:not(.sb-user-expanded){ width:64px; flex-basis:64px; }
+    #sidebar:not(.sb-user-expanded) .brand-name,
+    #sidebar:not(.sb-user-expanded) .mode-pill,
+    #sidebar:not(.sb-user-expanded) .sb-group-label,
+    #sidebar:not(.sb-user-expanded) #sb-mode,
+    #sidebar:not(.sb-user-expanded) .tab-label{ display:none; }
+    #sidebar:not(.sb-user-expanded) .tab{ padding:9px; justify-content:center; }
+    #sidebar:not(.sb-user-expanded) #sb-header{ justify-content:center; padding:14px 8px 8px; }
+    #sidebar:not(.sb-user-expanded) #sb-collapse{ display:none; }
+    #sb-open-btn{ display:flex; align-items:center; }
+    #rail{ padding-top:8px; padding-bottom:8px; }
+  }
+  /* ---- Mobile ≤640px: sidebar = fixed bottom tab bar ---- */
+  @media (max-width:640px){
+    #app-shell{ flex-direction:column; }
+    #sidebar{
+      width:100%!important; flex-basis:auto!important; height:auto;
+      position:fixed; bottom:0; left:0; right:0; top:auto;
+      flex-direction:row;
+      border-right:none; border-top:1.5px solid var(--line);
+      padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+      z-index:25; overflow-x:auto; overflow-y:hidden;
+    }
+    #sb-header, #sb-mode, #sb-footer, .sb-group{ display:none!important; }
+    #sidebar nav#nav{
+      flex-direction:row; padding:4px;
+      overflow-x:auto; overflow-y:hidden;
+      scrollbar-width:none; width:100%;
+    }
+    #sidebar nav#nav::-webkit-scrollbar{ display:none; }
+    #sidebar .tab{
+      flex-direction:column; gap:2px; padding:6px 10px;
+      font-size:9.5px; border-radius:10px; flex:0 0 auto;
+      min-width:52px; align-items:center; justify-content:center;
+    }
+    #sidebar .tab-label{ display:block!important; font-size:9px; margin-top:1px; }
+    /* on the bottom bar, drop the chip square — just show the emoji */
+    #sidebar .tab-emoji{ font-size:19px; width:auto; height:auto; background:none!important; box-shadow:none!important; }
+    #sidebar .tab.active{ background:none; }
+    #sidebar .tab.active::before{ display:none; }   /* mobile uses color, not the left bar */
+    #main-col{ padding-bottom:calc(60px + env(safe-area-inset-bottom,0px)); }
+    main#view{ padding:10px 8px; }
+    /* rail shows brand + controls on mobile */
+    #rail{ padding:8px 10px; }
+    #rail>*{ display:flex; }
+    .rail-brand{ display:flex!important; }
+    .rail-right{ display:flex!important; align-items:center; gap:9px; margin-left:auto; }
+    /* floating buttons shift up to clear the bottom bar */
+    #addStickyBtn{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); }
+    #snowWindBtn{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); right:62px; }
+    #restBtn{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); }
+    .toast{ bottom:calc(76px + env(safe-area-inset-bottom,0px)); }
+    #kikoChat{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); }
+  }
+  /* PWA standalone: clear notch on sidebar top */
+  @media (display-mode:standalone){
+    #sidebar{ padding-top:calc(0px + env(safe-area-inset-top,0px)); }
+    #rail{ padding-top:calc(8px + env(safe-area-inset-top,0px)); }
+  }
+  /* desktop: offset left-anchored floating elements to clear the sidebar */
+  @media (min-width:641px){
+    #addStickyBtn{ left:calc(220px + 16px); }
+    #kiko{ left:calc(220px + 60px); }
+    #kikoBubble{ left:calc(220px + 60px); }
+    #snowWindBtn{ right:72px; }
+  }
+  /* old top-nav rules that could conflict — neutralize for sidebar context */
+  @media (max-width:560px){
+    #sidebar nav#nav{ width:auto; flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity; }
+  }
 </style>
 </head>
 <body>
-<div id="rail">
-  <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+<div id="app-shell">
+<!-- ===== LEFT SIDEBAR ===== -->
+<aside id="sidebar">
+  <div id="sb-header">
     <span class="brand" data-act="modeToggle" title="tap to swap between Creator OS and Health OS"><img class="brand-logo" src="Logo.png" alt="mifuyu" /><span class="brand-name" id="brandName">Mifuyu OS</span><span class="mode-pill mode-creator" id="modePill"></span></span>
-    <nav id="nav"></nav>
+    <button id="sb-collapse" data-act="sidebarToggle" title="Collapse sidebar">«</button>
   </div>
-  <div class="right">
+  <div id="sb-mode">
+    <button id="sbCreatorBtn" data-act="sbMode" data-m="creator">🎀 Creator</button>
+    <button id="sbHealthBtn" data-act="sbMode" data-m="health">❄️ Health</button>
+  </div>
+  <nav id="nav"></nav>
+  <div id="sb-footer">
     <span id="status" class="chip">…</span>
-    <button id="lockChip" class="chip" data-act="toggleLock" title="Lock / unlock the layout">🔓</button>
+    <div class="right">
+      <button id="lockChip" class="chip" data-act="toggleLock" title="Lock / unlock the layout">🔓</button>
+      <button class="chip" data-act="settings" title="Comfort &amp; display">⚙️</button>
+      <span class="avatar"><img src="AYAYA.png" alt="Mifu" /></span>
+    </div>
+  </div>
+</aside>
+<!-- ===== MAIN CONTENT ===== -->
+<div id="main-col">
+<div id="rail">
+  <button id="sb-open-btn" data-act="sidebarToggle" title="Open menu">☰</button>
+  <span class="brand rail-brand" data-act="modeToggle" title="tap to swap modes" style="display:none"><img class="brand-logo" src="Logo.png" alt="mifuyu" /></span>
+  <div class="rail-right" style="display:none;gap:9px;align-items:center">
+    <span id="status-rail" class="chip">…</span>
     <button class="chip" data-act="settings" title="Comfort &amp; display">⚙️</button>
     <span class="avatar"><img src="AYAYA.png" alt="Mifu" /></span>
   </div>
@@ -1086,6 +1308,20 @@ const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null
 const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["script","✍️ Script"],["optimize","🔴 Stream"],["money","💶 Money"],["studio","🏆 Studio"],["art","🎨 Art"],["toolbox","🧰 Toolbox"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
 /* ===== one app, two minds — Creator OS 🎀 / Health OS ❄️ (tap the logo to swap) ===== */
 const CREATOR_TABS=["home","planner","calendar","events","script","optimize","money","studio","art","toolbox","memories","kiko"];
+const SB_GROUPS={
+  creator:[
+    {label:null,tabs:["home"]},
+    {label:"Create",tabs:["planner","script","art","toolbox"]},
+    {label:"Publish",tabs:["optimize","calendar","events"]},
+    {label:"Business",tabs:["money","studio","memories"]},
+  ],
+  health:[
+    {label:null,tabs:["home"]},
+    {label:"Health",tabs:["food","care","bunny","health","trends"]},
+    {label:"Mind & Life",tabs:["life","journal"]},
+    {label:"Memories",tabs:["memories"]},
+  ]
+};
 const HEALTH_TABS=["home","food","care","bunny","life","trends","health","journal","memories","kiko"];   /* Settings removed from the nav bar — reach it via the ⚙️ chip by the avatar */
 let OS_MODE=(function(){ try{ return localStorage.getItem("mifu-mode")==="health"?"health":"creator"; }catch(e){ return "creator"; } })();   // default: Creator OS
 function modeTabs(){ return OS_MODE==="health"?HEALTH_TABS:CREATOR_TABS; }
@@ -1130,8 +1366,27 @@ async function render(){
   { const _ki=_tabs.findIndex(t=>t[0]==="kiko"); if(_ki>=0) _tabs.push(_tabs.splice(_ki,1)[0]); }   // 🦊 Ask Kiko always sits at the tail of the nav, both modes
   const _bn=$("#brandName"); if(_bn) _bn.textContent=OS_MODE==="health"?"Mifuyu Health OS":"Mifuyu Creator OS";
   const _mp=$("#modePill"); if(_mp){ _mp.textContent=OS_MODE==="health"?"❄️ health":"🎀 creator"; _mp.className="mode-pill "+(OS_MODE==="health"?"mode-health":"mode-creator"); _mp.title="tap the logo to swap to "+(OS_MODE==="health"?"Creator OS":"Health OS"); }
-  $("#nav").innerHTML = _tabs.map(([t,l])=>`<button class="tab ${state.tab===t?'active':''}" data-act="tab" data-tab="${t}">${l}</button>`).join("");
-  const st=$("#status"); st.textContent=DEMO?"◇ demo data":(SB?"● live":"◌ connecting…"); st.className="chip"+(DEMO?" demo":(SB?" on":""));
+  // sync sidebar mode buttons
+  { const sc=$("#sbCreatorBtn"),sh=$("#sbHealthBtn"); if(sc)sc.className=OS_MODE==="creator"?"on":""; if(sh)sh.className=OS_MODE==="health"?"on":""; }
+  // build grouped sidebar nav
+  { const _sbTabBtn=([t,l])=>{ const sp=l.split(' '); const em=sp[0]; const lb=sp.slice(1).join(' ');
+      return `<button class="tab${state.tab===t?' active':''}" data-act="tab" data-tab="${t}"><span class="tab-emoji">${em}</span><span class="tab-label">${lb}</span></button>`; };
+    const _kikoTab=_tabs.find(([t])=>t==="kiko"); const _nonKiko=_tabs.filter(([t])=>t!=="kiko");
+    const _sbGroups=(SB_GROUPS[OS_MODE]||SB_GROUPS.creator);
+    const _groupedSet=new Set(_sbGroups.flatMap(g=>g.tabs));
+    let _navHtml="";
+    for(const g of _sbGroups){
+      const gt=_nonKiko.filter(([t])=>g.tabs.includes(t)); if(!gt.length)continue;
+      _navHtml+=g.label?`<div class="sb-group"><span class="sb-group-label">${g.label}</span>${gt.map(_sbTabBtn).join("")}</div>`:gt.map(_sbTabBtn).join("");
+    }
+    // any tabs not in groups (safety net)
+    _nonKiko.filter(([t])=>!_groupedSet.has(t)).forEach(tb=>{ _navHtml+=_sbTabBtn(tb); });
+    _navHtml+=`<div style="flex:1;min-height:8px"></div>`;
+    if(_kikoTab) _navHtml+=_sbTabBtn(_kikoTab);
+    $("#nav").innerHTML=_navHtml; }
+  const _stxt=DEMO?"◇ demo data":(SB?"● live":"◌ connecting…"); const _scls="chip"+(DEMO?" demo":(SB?" on":""));
+  const st=$("#status"); if(st){ st.textContent=_stxt; st.className=_scls; }
+  const str=$("#status-rail"); if(str){ str.textContent=_stxt; str.className=_scls; }
   const v=$("#view");
   // Decide NOW whether this is a real page change, but DON'T start the animation yet.
   // (Never animate the very first paint, so the boot splash hands straight to home.)
@@ -4931,6 +5186,17 @@ const H={
   modeToggle(){ OS_MODE=(OS_MODE==="health"?"creator":"health"); try{localStorage.setItem("mifu-mode",OS_MODE);}catch(e){}
     if(!modeTabs().includes(state.tab)) state.tab="home";
     modeSwapAnim(); toast(OS_MODE==="health"?"❄️ Health OS":"🎀 Creator OS"); render(); },
+  sidebarToggle(){
+    const sb=document.getElementById("sidebar"); if(!sb)return;
+    const wasCollapsed=sb.classList.contains("sb-collapsed");
+    sb.classList.toggle("sb-collapsed");
+    sb.classList.toggle("sb-user-expanded",wasCollapsed);   // tablet: flag as user-expanded so CSS doesn't auto-collapse
+    try{ localStorage.setItem("mifu-sb-col",sb.classList.contains("sb-collapsed")?"1":""); }catch(e){}
+  },
+  sbMode(el){
+    const m=el.dataset.m; if(!m||m===OS_MODE)return;
+    H.modeToggle();
+  },
   // --- daily briefing + prep assistants ---
   async prepToggle(el){ const d=el.dataset; await prepWrite(d.kind,d.key,c=>({...c,items:c.items.map(i=>i.id===d.v?{...i,done:!i.done}:i)})); },
   async prepAdd(el){ const d=el.dataset; const inp=document.getElementById("prepInput_"+d.key); const t=((inp&&inp.value)||"").trim(); if(!t)return;
@@ -6154,12 +6420,13 @@ function positionKikoUI(){
 function kikoStep(now){
   const sp=$("#kikoSprite"); if(!sp){ KIKO_RAF=requestAnimationFrame(kikoStep); return; }
   const dt=Math.min(60, now-(kikoLast||now)); kikoLast=now;
-  if(kikoX==null) kikoX=100;
+  if(kikoX==null){ const _sb=document.getElementById("sidebar"); kikoX=(_sb&&window.innerWidth>640)?_sb.offsetWidth+60:100; }
   if(kikoState==="held" || KIKO.open){ setKikoFrame(KIKO_SIT); sp.style.transform=kikoFacing(); positionKikoUI(); KIKO_RAF=requestAnimationFrame(kikoStep); return; }
   if(kikoState==="thrown"){
     kikoVY-=2400*dt/1000; kikoY+=kikoVY*dt/1000; kikoX+=kikoVX*dt/1000;
     const maxX=window.innerWidth-KSPRW;
-    if(kikoX<0){ kikoX=0; kikoVX=-kikoVX*0.55; } else if(kikoX>maxX){ kikoX=maxX; kikoVX=-kikoVX*0.55; }
+    const _sbw=(()=>{ const s=document.getElementById("sidebar"); return (s&&window.innerWidth>640)?s.offsetWidth:0; })();
+    if(kikoX<_sbw){ kikoX=_sbw; kikoVX=-kikoVX*0.55; } else if(kikoX>maxX){ kikoX=maxX; kikoVX=-kikoVX*0.55; }
     const topMax=window.innerHeight-KSPRH-20; if(kikoY>topMax){ kikoY=topMax; kikoVY=-kikoVY*0.4; }
     if(kikoY<=0){ kikoY=0;
       if(Math.abs(kikoVY)<150){ kikoVY=0; kikoVX*=0.55; if(Math.abs(kikoVX)<30){ const b=kikoBounds(); kikoX=Math.max(b.min,Math.min(kikoX,b.max)); kikoState="walk"; kikoStateT=0; } }
@@ -6849,6 +7116,8 @@ function showLoginScreen(message){
 
 function start(){
   applyPrefs();
+  // restore sidebar collapsed state from last visit
+  try{ const sb=document.getElementById("sidebar"); if(sb&&localStorage.getItem("mifu-sb-col")==="1") sb.classList.add("sb-collapsed"); }catch(e){}
   try{ kikoStart(); setTimeout(kikoGreet,3500); setInterval(kikoGreet,10*60*1000); }catch(e){ console.error(e); }   // one hello, then at most every 10 min (was 45s — way too chatty)
   if(DEMO){ render(); return; }                 // demo: data is instant — one render
   // live: gentle loader while Supabase connects, then check login
@@ -7231,5 +7500,7 @@ setInterval(kikoProactive, 20*60*1000);
   requestAnimationFrame(frame);
 })();
 </script>
+</div><!-- end #main-col -->
+</div><!-- end #app-shell -->
 </body>
 </html>
