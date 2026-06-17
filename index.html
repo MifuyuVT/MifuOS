@@ -281,11 +281,16 @@
   .sticky-swatches.hidden{display:none;}
   .sticky-swatches button{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.1);cursor:pointer;padding:0;}
   .sticky-swatches button:hover{transform:scale(1.15);}
-  /* notepad sits on the right, just left of the pomodoro timer (Eggie-style) */
-  #addStickyBtn{position:fixed;right:72px;bottom:16px;z-index:83;border:none;border-radius:999px;width:46px;height:46px;font-size:18px;background:linear-gradient(135deg,var(--peri),var(--sakura));color:#fff;box-shadow:var(--shadow);}
+  /* universal voice capture — biggest, easiest target, true bottom-right corner (wrist-friendly) */
+  #voiceFab{position:fixed;right:16px;bottom:16px;z-index:84;border:none;border-radius:999px;width:56px;height:56px;font-size:24px;background:linear-gradient(135deg,var(--peri),var(--sakura));color:#fff;box-shadow:0 8px 22px rgba(150,120,190,.4);cursor:pointer;transition:transform .14s;}
+  #voiceFab:hover{transform:scale(1.07);}
+  #voiceFab.listening{animation:voicePulse 1.1s ease-in-out infinite;}
+  @keyframes voicePulse{0%,100%{box-shadow:0 8px 22px rgba(150,120,190,.4);}50%{box-shadow:0 8px 30px rgba(255,158,216,.75);transform:scale(1.05);}}
+  /* notepad + timer bumped up one row so they clear the voice button */
+  #addStickyBtn{position:fixed;right:72px;bottom:80px;z-index:83;border:none;border-radius:999px;width:46px;height:46px;font-size:18px;background:linear-gradient(135deg,var(--peri),var(--sakura));color:#fff;box-shadow:var(--shadow);}
   /* floating timer (rest + pomodoro focus) */
-  #restBtn{position:fixed;right:16px;bottom:16px;z-index:83;border:1.5px solid var(--line-2);border-radius:999px;width:46px;height:46px;font-size:18px;background:#fff;box-shadow:var(--shadow);}
-  #restWidget{position:fixed;right:16px;bottom:70px;z-index:82;width:236px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 32px rgba(120,110,160,.26);padding:12px;}
+  #restBtn{position:fixed;right:16px;bottom:80px;z-index:83;border:1.5px solid var(--line-2);border-radius:999px;width:46px;height:46px;font-size:18px;background:#fff;box-shadow:var(--shadow);}
+  #restWidget{position:fixed;right:16px;bottom:134px;z-index:82;width:236px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 32px rgba(120,110,160,.26);padding:12px;}
   #restWidget.hidden{display:none;}
   .ring-time{font-family:var(--display);font-size:26px;color:var(--ink);text-align:center;}
   .timer-ic{border:none;background:none;color:var(--ink-soft);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:7px;}
@@ -696,6 +701,8 @@
   .gt-del:hover, .ck-del:hover{ color:var(--sakura-deep); }
   .gt-icon, .ck-icon{ flex:0 0 auto; font-size:15px; line-height:1; }
   .gt-complete{ font-size:11.5px; color:var(--muted); font-weight:600; margin:8px 0 2px; }
+  /* creator spark idea box */
+  .spark-idea{ background:linear-gradient(135deg,#eef2fb,#fdeaf6); border:1px solid var(--line); border-radius:14px; padding:13px 15px; font-family:var(--display); font-size:14.5px; line-height:1.5; color:var(--ink); }
   /* checklist progress bar (Daily habits / goals) */
   .ck-prog{ height:7px; border-radius:999px; background:#eef0fa; overflow:hidden; margin:2px 0 2px; }
   .ck-prog>span{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--peri),var(--sakura)); transition:width .3s var(--ease,ease); }
@@ -916,8 +923,10 @@
     .rail-brand{ display:flex!important; }
     .rail-right{ display:flex!important; align-items:center; gap:9px; margin-left:auto; }
     /* floating buttons shift up to clear the bottom bar */
-    #addStickyBtn{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); right:62px; }
-    #restBtn{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); }
+    #voiceFab{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); }
+    #addStickyBtn{ bottom:calc(132px + env(safe-area-inset-bottom,0px)); right:62px; }
+    #restBtn{ bottom:calc(132px + env(safe-area-inset-bottom,0px)); }
+    #restWidget{ bottom:calc(186px + env(safe-area-inset-bottom,0px)); }
     .toast{ bottom:calc(76px + env(safe-area-inset-bottom,0px)); }
     #kikoChat{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); }
   }
@@ -976,6 +985,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="modal"></div>
 <div id="stickyLayer"></div>
+<button id="voiceFab" data-act="voiceOpen" title="Capture a thought (Alt+R)" aria-label="Capture a thought by voice or text">🎙️</button>
 <button id="addStickyBtn" data-act="addSticky" title="New sticky note">🗒️+</button>
 <button id="restBtn" data-act="toggleRest" title="Breathing &amp; rest timer">🫧</button>
 <div id="restWidget" class="hidden"></div>
@@ -986,7 +996,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-17.nojiggle";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.voice";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1019,11 +1029,17 @@ const DEMO = !(CONFIG.url && CONFIG.anonKey);
 let SB = null; // set in start() once the Supabase library has loaded (live mode only)
 let UID = CONFIG.userId;  // set to your real account id after login (see start())
 const SENTINEL = "2000-01-01";
-const TODAY = new Date().toLocaleDateString("en-CA");
+/* The "day" rolls over at 4:00 AM Europe/Amsterdam, not midnight — Mifu's a night owl,
+   so anything she checks off at 12–1 AM still counts for the day she's mentally in.
+   Trick: shift the real instant back 4h, then ask what Amsterdam calendar date that lands on. */
+const DAY_ROLLOVER_HOURS = 4;
+function logicalDateKey(d){ return new Date((d||new Date()).getTime() - DAY_ROLLOVER_HOURS*3600*1000).toLocaleDateString("en-CA",{timeZone:"Europe/Amsterdam"}); }
+function logicalDisplayDate(){ return new Date(Date.now() - DAY_ROLLOVER_HOURS*3600*1000); }   // a Date whose Amsterdam date == the logical day, for headers
+const TODAY = logicalDateKey();
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id"+Math.random().toString(36).slice(2));
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $ = s => document.querySelector(s);
-function dayAgo(n){const d=new Date();d.setDate(d.getDate()+n);return d.toLocaleDateString("en-CA");}
+function dayAgo(n){const d=new Date(TODAY+"T00:00");d.setDate(d.getDate()+n);return d.toLocaleDateString("en-CA");}
 function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
 const cmpDate=(a,b)=>a.date<b.date?-1:a.date>b.date?1:0;   // ascending, total-order (stable for equal dates) — single source for the date sort duplicated app-wide
 function fmtDate(iso){ try{ return new Date(iso+"T00:00").toLocaleDateString(undefined,{month:'short',day:'numeric'}); }catch(e){ return iso; } }
@@ -1486,12 +1502,17 @@ async function render(){
     if(state.tab==='trends'){ try{ paintTrendChart(); }catch(e){ console.error(e); } }
     if(state.tab==='art'){ try{ if(state.art&&state.art.notan) artNotanPaint(); }catch(e){} }   // repaint the value-checker canvas after innerHTML
     if(MODULAR_TABS.includes(state.tab)){
-      // Position the masonry cards SYNCHRONOUSLY now — before the browser paints — so a toggle never
+      // Position the masonry cards SYNCHRONOUSLY now — before the browser paints — so it never
       // shows cards stacked-then-snapping (that one-frame reflow was the "whole page jiggles" bug).
       try{layoutHome();}catch(e){}
-      // follow-up passes only catch late async content (images finishing); with stable heights they
-      // produce identical positions, so they don't move anything visibly.
-      requestAnimationFrame(()=>{try{layoutHome();}catch(e){}}); setTimeout(()=>{try{layoutHome();}catch(e){}},150); setTimeout(()=>{try{layoutHome();}catch(e){}},520); }
+      // The extra staggered passes ONLY matter on first load / tab change (late images, fonts settling).
+      // On a plain check-off (same tab) they re-pack with no real change and just cause jitter on iOS —
+      // so skip them then. The single synchronous pass above already measured the post-tap heights.
+      if(animate || !state._homeLaidOnce){
+        state._homeLaidOnce=true;
+        requestAnimationFrame(()=>{try{layoutHome();}catch(e){}}); setTimeout(()=>{try{layoutHome();}catch(e){}},150); setTimeout(()=>{try{layoutHome();}catch(e){}},520);
+      }
+    }
     if(state.tab==='kiko'){ KIKO.open=false; const cc=$("#kikoChat"); if(cc)cc.classList.add("hidden"); try{ paintKiko(); }catch(e){} }   // fill the Ask-Kiko chat panel
     if(state.tab==='memories'){ if(state.media===undefined&&!state._mediaLoading){ loadMedia().then(()=>{ if(state.tab==='memories') render(); }); } try{ wireMedia(); }catch(e){} }   // lazy-load the media row + wire upload/caption inputs
     if(state.tab==='journal'){ try{ wireJrPage(); }catch(e){} }   // attach the daily-page auto-save
@@ -1658,6 +1679,60 @@ function cardCreatorGoals(){
     weekly:cgoalsWeekly(), wkDoneMap:state.sentinel.cgoalsWkDone, wkToggleAct:"cgoalWkToggle",
     wkAddAct:"addCgoalWk", wkDelAct:"delCgoalWk", wkInputId:"cgoalWkInput", wkDraft:state.cgoalWkDraft,
     wkLabel:"🗂 Weekly", wkPlaceholder:"do taxes, clean streaming room, clear inbox…" });
+}
+/* ===== Creator Growth — low-friction "put yourself out there" checklist (energy-tagged) ===== */
+const CGROWTH_DEFAULT=[
+  {id:"cgr_comments",text:"Reply to 2–3 comments",                 energy:"low"},
+  {id:"cgr_kind",    text:"Leave 1 kind comment on a creator's post", energy:"low"},
+  {id:"cgr_discord", text:"Check in on Discord once",              energy:"low"},
+  {id:"cgr_tweet",   text:"Post 1 personality tweet",             energy:"med"},
+  {id:"cgr_visit",   text:"Visit 1 VTuber's stream",              energy:"med"},
+  {id:"cgr_share",   text:"Share 1 creator's work",               energy:"med"},
+  {id:"cgr_dm",      text:"Reach out / DM 1 creator",             energy:"high"},
+  {id:"cgr_collab",  text:"Brainstorm or save 1 collab idea",     energy:"high"},
+];
+function cgrowthList(){ const l=state.sentinel.cgrowthList; return (Array.isArray(l)&&l.length)?l:CGROWTH_DEFAULT; }
+function cardCreatorGrowth(){
+  const list=cgrowthList(), checks=state.today.cgrowth||{}, ed=!!state.cgrowthEdit;
+  const done=list.filter(h=>checks[h.id]).length, total=list.length, pct=total?Math.round(done/total*100):0;
+  const groups=[["low","🌙 Low energy"],["med","🌤 Medium energy"],["high","🌞 High energy"]];
+  const row=h=>`<button class="ck-row" data-act="cgrowthToggle" data-v="${h.id}"><span class="ck-box ${checks[h.id]?'on':''}">${checks[h.id]?'✓':''}</span><span class="ck-name ${checks[h.id]?'ck-donetxt':''}">${esc(h.text)}</span>${ed?`<span class="ck-del" data-act="delCgrowth" data-v="${h.id}" title="remove">✕</span>`:''}</button>`;
+  return `<section class="panel">
+    <div class="card-head"><span class="label">🌱 Creator growth</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done&&done===total?'pill-mint':'pill-gray'}">${done}/${total}${done&&done===total?' ♡':''}</span><button class="btn" data-act="cgrowthEdit">${ed?'done':'edit'}</button></span></div>
+    <p class="soft" style="font-size:11px;margin:0 0 8px">Tiny ways to put yourself out there — pick what matches your energy. 💜</p>
+    <div class="ck-prog"><span style="width:${pct}%"></span></div>
+    ${groups.map(([g,gl])=>{ const its=list.filter(h=>(h.energy||"med")===g); return its.length?`<div class="gt-sec" style="margin-top:10px">${gl}</div><div class="gt-list">${its.map(row).join("")}</div>`:""; }).join("")}
+    ${ed?`<div class="gt-add"><input class="inp" id="cgrowthInput" placeholder="new growth action…" style="flex:1;min-width:110px" value="${esc((state.cgrowthDraft||{}).text||'')}"><select class="inp" id="cgrowthEnergy" style="max-width:90px;flex:0 0 auto">${[["low","🌙 low"],["med","🌤 med"],["high","🌞 high"]].map(([v,l])=>`<option value="${v}" ${(((state.cgrowthDraft||{}).energy)||"med")===v?'selected':''}>${l}</option>`).join("")}</select><button class="btn btn-grad" data-act="addCgrowthUI">add</button></div>`:''}
+  </section>`;
+}
+/* ===== Creator Spark — one personalized idea starter from her own app data (no generic AI prompts) ===== */
+function sparkIdeas(){
+  const out=[], seen=new Set(); const add=(ctx,idea)=>{ if(idea&&!seen.has(idea)){ seen.add(idea); out.push({ctx,idea}); } };
+  try{ const evs=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=-2&&e.days<=21).sort((a,b)=>Math.abs(a.days)-Math.abs(b.days));
+    evs.slice(0,3).forEach(e=>{ const g=String(e.title).split(/[\s—·-]+/)[0]; add(`${e.title} is on the radar`,`"Is ${g} Worth Streaming Right Now?" — a quick first-impressions / reaction stream.`); add(`${e.title} is coming up`,`A short: "3 things to know before ${g} drops."`); }); }catch(e){}
+  try{ const gl=gachaList(); if(gl.length>=2){ const names=gl.slice(0,3).map(g=>g.name).join(", "); add(`You actively play ${gl.length} gacha games`,`"Which Gacha Respects Your Time the Most?" — rank ${names}.`); add(`You juggle a few gacha dailies`,`A cozy "do my gacha dailies with me" body-double stream.`); } }catch(e){}
+  try{ (state.sentinel.captures||[]).slice(-6).reverse().forEach(c=>{ const t=String((c&&c.text)||"").trim(); if(t.length>4&&t.length<110) add("From your brain-dump",`Turn "${t}" into a short or a stream segment.`); }); }catch(e){}
+  [`"The VTuber Burnout Pipeline" — why creators quit, and how you pace yourself.`,
+   `"Why streamers need a second brain" — show your notes/setup system.`,
+   `A "get ready with me before stream" prep-routine short.`,
+   `React to VTuber hot-takes while chatting — low prep, high interaction.`,
+   `"A day in the life of a snowfox shrine maiden" cozy vlog short.`
+  ].forEach(idea=>add("Idea starter",idea));
+  return out;
+}
+function cardCreatorSpark(){
+  const ideas=sparkIdeas();
+  if(!ideas.length) return `<section class="panel"><div class="label" style="margin-bottom:6px">✨ Creator spark</div><p class="soft" style="font-size:12px">Add a brain-dump or a game to your calendar and Kiko will spark ideas from them. 💡</p></section>`;
+  const i=(((state.sparkIdx||0)%ideas.length)+ideas.length)%ideas.length; const s=ideas[i];
+  return `<section class="panel">
+    <div class="card-head"><span class="label">✨ Creator spark</span><button class="btn" data-act="sparkNext">↻ another</button></div>
+    <p class="soft" style="font-size:11px;margin:0 0 6px">${esc(s.ctx)} 💡</p>
+    <div class="spark-idea">${esc(s.idea)}</div>
+    <div class="chiprow" style="margin-top:10px">
+      <button class="chiptog" data-act="sparkSave"><span>📌</span>Save idea</button>
+      <button class="chiptog" data-act="sparkToGoal"><span>🎯</span>Add to goals</button>
+    </div>
+  </section>`;
 }
 /* gacha history helpers */
 function gachaByDate(){ const m={}; (state.range||[]).forEach(r=>{ if(r&&r.date) m[r.date]=r.notes||{}; }); m[TODAY]=state.today||{}; return m; }
@@ -2027,6 +2102,15 @@ function evergreenCreatorFocus(n, existing){
 function suggestedFocus(mode){
   const prio=[], F=[]; const push=f=>{ if(f&&f.t)F.push(f); };
   if(mode==="creator"){
+    // 🎬 a stream is scheduled today but prep isn't finished → top priority
+    try{ const slot=todayStreamSlot(); if(slot){ const c=state.today.streamPrep||{}; const left=streamPrepList().filter(p=>!c[p.id]).length;
+      if(left>0) push({t:`${slot.show||slot.text||"Your stream"} is today${slot.time?" at "+slot.time:""} — ${left} stream-prep item${left>1?"s":""} left. Finish before going live. 🎬`,tab:"home",cat:"stream",urgent:true}); } }catch(e){}
+    // 🎮 gacha dailies still open today (data-driven, names the games to start with)
+    try{ const gl=gachaList(), gc=state.today.gacha||{}, gleft=gl.filter(g=>!gc[g.id]);
+      if(gl.length&&gleft.length){ const names=gleft.slice(0,2).map(g=>g.name).join(" & ")+(gleft.length>2?" +":"");
+        push({t:`${gl.length-gleft.length}/${gl.length} gacha dailies done — ${names} still to go. 🎮`,tab:"home",cat:"gacha"}); } }catch(e){}
+    // ⏳ game events ending / debuting soon — actionable, straight from the game calendar
+    try{ gameDeadlineObs().slice(0,2).forEach(o=>{ if(o&&o.focus) push({...o.focus,cat:"game"}); }); }catch(e){}
     // game pre-farm beats live only in the Game Updates box — content work goes here
     const dArt=ciDays("madeArt"); if(dArt!=null&&dArt>=7) push({t:"You haven't drawn in a while — maybe it's time to make some art together! 🎨",tab:"art",cat:"art"});
     const dYt=ciDays("ytVideo"); if(dYt!=null&&dYt>=7) push({t:"It's been a while since a YouTube upload — want to check in with your editors? 🎥",seed:"help me draft a check-in message to my YouTube editors",cat:"youtube"});
@@ -2059,7 +2143,8 @@ function suggestedFocus(mode){
     try{ const tg=foodTargets(), tt=foodTotals(); if(foodToday().length&&tt.fiber<tg.fiber*0.5) push({t:"Fibre's running low today — psyllium or some veggies could help. 🌿",tab:"food",cat:"fiber"}); }catch(e){}
     try{ (state.sentinel.medsList||[]).forEach(m=>{ if(m.refill){ const dd=daysBetween(TODAY,m.refill); if(dd>=0&&dd<=5) push({t:`Your ${m.name} refill is coming up — worth sorting before you run low. 💊`,tab:"settings",cat:"meds",urgent:true}); } }); }catch(e){}
   }
-  try{ memoryNudges(mode).forEach(o=>{ if(o&&o.focus)prio.push({...o.focus,cat:"memory"}); }); }catch(e){}
+  // NOTE: things Mifu tells Kiko (kikoMemory) are CONTEXT, not tasks — they must never be echoed
+  // here as Suggested Focus items. Suggested Focus only ever shows actionable, data-driven nudges.
   // learn from what she taps: float her engaged categories up; urgent/time-sensitive stay first
   const Fr=F.map((f,i)=>({f,i})).sort((a,b)=> (a.f.urgent?0:1)-(b.f.urgent?0:1) || focusScore(b.f.cat)-focusScore(a.f.cat) || a.i-b.i).map(x=>x.f);
   let out=[...prio,...Fr];
@@ -2070,10 +2155,36 @@ function suggestedFocus(mode){
   if(!out.length){ try{ const a=anchorFocus(mode); if(a&&a.focus)out.push({...a.focus,cat:"anchor"}); }catch(e){} }
   return out;
 }
-function glanceHeader(){ const d=new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+function glanceHeader(){ const d=logicalDisplayDate().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"Europe/Amsterdam"});
   return `<div class="glance-head"><span class="glance-fox">🦊</span><div><h2>${greeting()}, ${esc(CONFIG.creator.name)}! 🌸</h2><div class="label" style="margin-top:3px">${d} • Today at a Glance</div></div></div>`; }
 function noticedCard(N){ return `<div class="gcard"><div class="sec-label">✨ Kiko noticed</div>
   ${N.length?N.map(o=>`<div class="kn-row"><span class="kn-dot"></span><span>${esc(o.t)}</span></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">No clear patterns yet — a few more tracked days and Kiko will start spotting trends and connections for you. ❄️</p>`}</div>`; }
+/* ===== Quick Notices — recent, actionable status with a tiny next step (lives up top) ===== */
+function quickNotices(mode){
+  const O=[]; const wkISO=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA");
+  if(mode==="creator"){
+    try{ const slot=todayStreamSlot(); if(slot){ const c=state.today.streamPrep||{}, list=streamPrepList(), dn=list.filter(p=>c[p.id]).length; if(dn<list.length) O.push({t:`Stream today — ${dn}/${list.length} prep done.`,sub:"Finish before going live.",tab:"home"}); } }catch(e){}
+    try{ const gl=gachaList(), gc=state.today.gacha||{}, dn=gl.filter(g=>gc[g.id]).length; if(gl.length&&dn<gl.length) O.push({t:`Gacha dailies: ${dn}/${gl.length} done.`,sub:"A few left to clear.",tab:"home"}); }catch(e){}
+    try{ const gr=cgrowthList(), gc=state.today.cgrowth||{}, dn=gr.filter(h=>gc[h.id]).length; if(dn===0) O.push({t:`No creator-growth action yet today.`,sub:"Pick one low-energy one.",tab:"home"}); }catch(e){}
+    try{ const ends=(state.sentinel.calendarEvents||[]).filter(gameSrc).filter(e=>e&&e.endDate&&e.endDate>=TODAY&&e.date<=TODAY&&daysBetween(TODAY,e.endDate)<=2); if(ends.length) O.push({t:`${ends.length} game event${ends.length>1?"s":""} ending soon.`,sub:"Do them before they disappear.",tab:"calendar"}); }catch(e){}
+    try{ const vault=(state.sentinel.sparkVault||[]); if(!vault.some(x=>x&&x.date&&x.date>=wkISO)) O.push({t:`No new stream idea saved this week.`,sub:"Tap Creator Spark for one.",tab:"home"}); }catch(e){}
+  } else {
+    try{ const hl=habitsList(), hc=state.today.habits||{}, dn=hl.filter(h=>hc[h.id]).length; if(hl.length&&dn<hl.length) O.push({t:`Daily habits: ${dn}/${hl.length} done.`,sub:"Tick what you've done.",tab:"home"}); }catch(e){}
+    try{ const cups=waterCups(), goal=CUPS_PER_40OZ*2; if(cups<goal*0.5) O.push({t:`Water's low so far today.`,sub:"A glass now is a lovely start.",tab:"food"}); }catch(e){}
+    try{ const meds=(state.sentinel.medsList||[]), mt=state.today.medsTaken||{}, dn=meds.filter(m=>mt[m.id]).length; if(meds.length&&dn<meds.length) O.push({t:`Meds: ${dn}/${meds.length} taken today.`,tab:"food"}); }catch(e){}
+  }
+  return O.slice(0,4);
+}
+function quickNoticesCard(){ const Q=quickNotices(OS_MODE==="health"?"health":"creator");
+  return `<div class="gcard"><div class="sec-label">⚡ Quick notices</div>
+    ${Q.length?Q.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""}><span class="kn-dot"></span><span class="grow" style="text-align:left">${esc(o.t)}${o.sub?` <span class="soft" style="font-size:11px">${esc(o.sub)}</span>`:""}</span><span class="fr-chev">›</span></button>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">All caught up — nothing needs you right now. ✨</p>`}</div>`;
+}
+/* ===== Deep Patterns — reflective, longer-term observations (lives lower on the page) ===== */
+function deepPatternsCard(){ const N=kikoNoticed(OS_MODE==="health"?"health":"creator");
+  return `<section class="panel"><div class="card-head"><span class="label">🔮 Deep patterns</span></div>
+    <p class="soft" style="font-size:11px;margin:0 0 8px">Gentle longer-term things Kiko has noticed. 💜</p>
+    ${N.length?N.map(o=>`<div class="kn-row"><span class="kn-dot"></span><span>${esc(o.t)}</span></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">A few more tracked days and Kiko will spot trends and connections here. ❄️</p>`}</section>`;
+}
 function focusCard(F){ F=(F||[]).slice(0,3);
   if(!F.length) return `<div class="gcard"><div class="sec-label">🌸 Suggested focus</div><p class="soft" style="font-size:12.5px;margin:0">No nudges today — follow your joy. ✨</p></div>`;
   return `<div class="gcard"><div class="sec-label">🌸 Suggested focus</div>
@@ -2159,11 +2270,11 @@ function viewHome(){
   }
   const creator=OS_MODE!=="health";
   const _md=creator?"creator":"health";
-  const N=kikoNoticed(_md), F=suggestedFocus(_md);
+  const F=suggestedFocus(_md);
   const glance=`<section class="panel">
     ${glanceHeader()}
-    <div class="glance-cols">${creator?gameUpdatesCard():healthSnapshotCard()}${noticedCard(N)}</div>
-    <div style="margin-top:12px">${focusCard(F)}</div>
+    <div style="margin:0 0 12px">${focusCard(F)}</div>
+    <div class="glance-cols">${creator?gameUpdatesCard():healthSnapshotCard()}${quickNoticesCard()}</div>
     <p class="got-this">You've got this, ${esc(CONFIG.creator.name)}! ✨</p>
   </section>`;
   const items=creator?[
@@ -2171,8 +2282,11 @@ function viewHome(){
     {key:"gacha",label:"Gacha dailies",cols:4,html:cardGacha()},
     {key:"schedule",label:"Stream schedule",cols:4,html:cardSchedule()},
     {key:"contentops",label:"Stream prep",cols:4,html:cardContentOps()},
+    {key:"spark",label:"Creator spark",cols:4,html:cardCreatorSpark()},
+    {key:"cgrowth",label:"Creator growth",cols:4,html:cardCreatorGrowth()},
     {key:"braindump",label:"Brain-dump",cols:4,html:cardBrainDump()},
     {key:"goals",label:"Goals",cols:4,html:cardGoals()},
+    {key:"deeppatterns",label:"Deep patterns",cols:4,html:deepPatternsCard()},
     {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
   ]:[
     {key:"habits",label:"Daily habits",cols:4,html:cardHabits()},
@@ -2181,6 +2295,7 @@ function viewHome(){
     {key:"glance",label:"Dose & day glance",cols:4,html:cardGlance()},
     {key:"snowfox",label:"Snowfox",cols:4,html:cardSnowfox()},
     {key:"braindump",label:"Brain-dump",cols:4,html:cardBrainDump()},
+    {key:"deeppatterns",label:"Deep patterns",cols:4,html:deepPatternsCard()},
     {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
   ];
   return `${slipBanner()}<div class="home-fixed">${cardHero()}${glance}</div>${modularGrid(creator?"home":"homehealth",items)}${DISCLAIMER}`;
@@ -5415,13 +5530,13 @@ const H={
         return {...n,mounjaro,medsTaken:mt}; }); }
     if(k==="sleep") await setToday(n=>({...n,sleep:on?8:0}));   // "slept well" = log 8h on the chart
     // celebrate when the off-stream work set is freshly completed
-    if(on && OFFSTREAM_WORK.some(w=>w[0]===k) && offStreamAllDone()){ toast("off-stream prep done — amazing! 🎉"); popConfetti(); }
+    if(on && OFFSTREAM_WORK.some(w=>w[0]===k) && offStreamAllDone()){ toast("off-stream prep done — amazing! 🎉"); popConfetti(el.closest('.panel')); }
     else if(on) toast("checked in ✨");
     render(); },
   async streamPrepToggle(el){ const k=el.dataset.k; if(!k)return;
     const on=!((state.today.streamPrep||{})[k]);
     await setToday(n=>({...n,streamPrep:{...(n.streamPrep||{}),[k]:on}}));
-    if(on && streamPrepAllDone()){ toast("stream prep complete — go get 'em! 🎉"); popConfetti(); }
+    if(on && streamPrepAllDone()){ toast("stream prep complete — go get 'em! 🎉"); popConfetti(el.closest('.panel')); }
     render(); },
   // --- edit stream-prep + off-stream lists (add/remove, saved to the account) ---
   spEdit(){ state.spEdit=!state.spEdit; render(); },
@@ -5431,7 +5546,7 @@ const H={
     await setSent(n=>{ let l=(Array.isArray(n.streamPrepList)&&n.streamPrepList.length)?n.streamPrepList.slice():STREAM_PREP_DEFAULT.slice(); l=l.filter(p=>p.id!==id); return {...n,streamPrepList:l}; }); render(); },
   async offStreamXToggle(el){ const id=el.dataset.k; if(!id)return; const on=!((state.today.offStreamX||{})[id]);
     await setToday(n=>({...n,offStreamX:{...(n.offStreamX||{}),[id]:on}}));
-    if(on && offStreamAllDone()){ toast("off-stream prep done — amazing! 🎉"); popConfetti(); } else if(on) toast("nice work 💜");
+    if(on && offStreamAllDone()){ toast("off-stream prep done — amazing! 🎉"); popConfetti(el.closest('.panel')); } else if(on) toast("nice work 💜");
     render(); },
   async addOffStream(){ const inp=$("#osInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return; state.osDraft=null;
     await setSent(n=>{ const l=Array.isArray(n.offStreamExtra)?n.offStreamExtra.slice():[]; l.push({id:"os"+Date.now(),text:t}); return {...n,offStreamExtra:l}; }); toast("task added 🌙"); render(); },
@@ -5662,9 +5777,12 @@ const H={
   /* --- daily habits + gacha dailies --- */
   async habitToggle(el){ const id=el.dataset.v;
     const hi=$("#habitInput"); if(hi) state.habitDraft={text:hi.value,energy:($("#habitEnergy")||{}).value||"med"};   // keep a half-typed new habit
+    const willOn=!((state.today.habits||{})[id]);
     await setToday(n=>{ const habits={...(n.habits||{})}; const nv=!habits[id]; habits[id]=nv;
       const ex={}; if(id==="h_meds") ex.meds={am:nv,pm:nv};   // keep the Food AM/PM meds boxes in sync
-      return {...n,habits,...ex}; }); render(); },
+      return {...n,habits,...ex}; });
+    if(willOn){ const l=habitsList(), c=state.today.habits||{}; if(l.length&&l.every(h=>c[h.id])){ toast("all habits done — proud of you! 🎉"); popConfetti(el.closest('.panel')); } }
+    render(); },
   habitEdit(){ state.habitEdit=!state.habitEdit; render(); },
   async addHabitUI(){ const inp=$("#habitInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return;
     const en=($("#habitEnergy")&&$("#habitEnergy").value)||"med";
@@ -5678,7 +5796,29 @@ const H={
   /* --- creator daily goals (separate list, same energy-tagged shape) --- */
   async cgoalToggle(el){ const id=el.dataset.v;
     const ci=$("#cgoalInput"); if(ci) state.cgoalDraft={text:ci.value,energy:($("#cgoalEnergy")||{}).value||"med"};
-    await setToday(n=>({...n,cgoals:{...(n.cgoals||{}),[id]:!(n.cgoals||{})[id]}})); render(); },
+    const willOn=!((state.today.cgoals||{})[id]);
+    await setToday(n=>({...n,cgoals:{...(n.cgoals||{}),[id]:!(n.cgoals||{})[id]}}));
+    if(willOn){ const l=cgoalsList(), c=state.today.cgoals||{}; if(l.length&&l.every(h=>c[h.id])){ toast("all goals done — amazing! 🎉"); popConfetti(el.closest('.panel')); } }
+    render(); },
+  /* --- Creator growth checklist --- */
+  async cgrowthToggle(el){ const id=el.dataset.v;
+    const gi=$("#cgrowthInput"); if(gi) state.cgrowthDraft={text:gi.value,energy:($("#cgrowthEnergy")||{}).value||"med"};
+    const willOn=!((state.today.cgrowth||{})[id]);
+    await setToday(n=>({...n,cgrowth:{...(n.cgrowth||{}),[id]:!(n.cgrowth||{})[id]}}));
+    if(willOn){ const l=cgrowthList(), c=state.today.cgrowth||{}; if(l.length&&l.every(h=>c[h.id])){ toast("you put yourself out there — proud of you! 🎉"); popConfetti(el.closest('.panel')); } }
+    render(); },
+  cgrowthEdit(){ state.cgrowthEdit=!state.cgrowthEdit; render(); },
+  async addCgrowthUI(){ const inp=$("#cgrowthInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return;
+    const en=($("#cgrowthEnergy")&&$("#cgrowthEnergy").value)||"med"; state.cgrowthDraft=null;
+    await setSent(n=>{ const l=(Array.isArray(n.cgrowthList)&&n.cgrowthList.length)?n.cgrowthList.slice():CGROWTH_DEFAULT.slice(); l.push({id:"cgr"+Date.now(),text:t,energy:en}); return {...n,cgrowthList:l}; }); toast("growth action added 🌱"); render(); },
+  async delCgrowth(el){ const id=el.dataset.v; const gi=$("#cgrowthInput"); if(gi) state.cgrowthDraft={text:gi.value,energy:($("#cgrowthEnergy")||{}).value||"med"};
+    await setSent(n=>{ let l=(Array.isArray(n.cgrowthList)&&n.cgrowthList.length)?n.cgrowthList.slice():CGROWTH_DEFAULT.slice(); l=l.filter(h=>h.id!==id); return {...n,cgrowthList:l}; }); render(); },
+  /* --- Creator spark --- */
+  sparkNext(){ state.sparkIdx=(state.sparkIdx||0)+1; render(); },
+  async sparkSave(){ const ideas=sparkIdeas(); if(!ideas.length)return; const i=(((state.sparkIdx||0)%ideas.length)+ideas.length)%ideas.length; const idea=ideas[i].idea;
+    await setSent(n=>{ const l=Array.isArray(n.sparkVault)?n.sparkVault.slice():[]; if(!l.some(x=>x.text===idea)) l.push({id:"sk"+Date.now(),text:idea,date:TODAY}); return {...n,sparkVault:l}; }); toast("saved to your idea vault ✨"); },
+  async sparkToGoal(){ const ideas=sparkIdeas(); if(!ideas.length)return; const i=(((state.sparkIdx||0)%ideas.length)+ideas.length)%ideas.length; const idea=ideas[i].idea;
+    await setSent(n=>{ const l=(Array.isArray(n.cgoalsList)&&n.cgoalsList.length)?n.cgoalsList.slice():CGOALS_DEFAULT.slice(); l.push({id:"cg"+Date.now(),text:idea.length>60?idea.slice(0,58).trim()+"…":idea,energy:"med"}); return {...n,cgoalsList:l}; }); toast("added to Daily goals 🎯"); render(); },
   cgoalEdit(){ state.cgoalEdit=!state.cgoalEdit; render(); },
   async addCgoalUI(){ const inp=$("#cgoalInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return;
     const en=($("#cgoalEnergy")&&$("#cgoalEnergy").value)||"med"; state.cgoalDraft=null;
@@ -5705,7 +5845,10 @@ const H={
     await setSent(n=>{ const l=(Array.isArray(n.cgoalsWeekly)?n.cgoalsWeekly:[]).filter(h=>h.id!==id); return {...n,cgoalsWeekly:l}; }); render(); },
   async gachaToggle(el){ const id=el.dataset.v;
     const gi=$("#gachaInput"); if(gi) state.gachaDraft=gi.value;   // keep a half-typed new game
-    await setToday(n=>{ const gacha={...(n.gacha||{})}; gacha[id]=!gacha[id]; return {...n,gacha}; }); render(); },
+    const willOn=!((state.today.gacha||{})[id]);
+    await setToday(n=>{ const gacha={...(n.gacha||{})}; gacha[id]=!gacha[id]; return {...n,gacha}; });
+    if(willOn){ const l=gachaList(), c=state.today.gacha||{}; if(l.length&&l.every(g=>c[g.id])){ toast("all dailies cleared — yippee! 🎉"); popConfetti(el.closest('.panel')); } }
+    render(); },
   gachaEdit(){ state.gachaEdit=!state.gachaEdit; render(); },
   async addGachaUI(){ const inp=$("#gachaInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return;
     state.gachaDraft=null;
@@ -5917,6 +6060,25 @@ const H={
   async addSticky(){ await addSticky(""); },
   toggleRest(){ toggleTimer(); },
 
+  // --- Universal Voice Capture (#5) — low-friction thought catcher, wrist-kind ---
+  voiceOpen(){ voiceOpenModal(); },
+  voiceMic(){ voiceToggleMic(); },
+  async voiceSave(){
+    const ta=$("#voiceText"); if(!ta){return;}
+    const text=(ta.value||"").trim();
+    if(!text){ toast("nothing to save yet 🌱"); ta.focus(); return; }
+    const cat=($("#voiceCat")&&$("#voiceCat").value)||"random";
+    voiceStopMic();
+    const entry={id:"v"+Date.now(),ts:Date.now(),date:TODAY,cat,text};
+    let bank=[]; try{bank=JSON.parse(localStorage.getItem("mifu-context-bank")||"[]");}catch(_){}
+    bank.unshift(entry);
+    try{localStorage.setItem("mifu-context-bank",JSON.stringify(bank.slice(0,500)));}catch(_){}
+    $("#modal").innerHTML="";
+    const lbl=(VOICE_CATS.find(c=>c[0]===cat)||["","💭","note"]);
+    toast(`${lbl[1]} saved to ${lbl[2]} 💗`);
+    try{ popConfetti($("#voiceFab")); }catch(_){}
+  },
+
   // --- Planner ---
   plnFilter(el){ capturePlnDraft(); state.plannerSpoon=el.dataset.v; render(); },
   async addTask(){ const text=($("#plnText").value||"").trim(); if(!text){ toast("type a task"); return; }
@@ -6012,7 +6174,7 @@ const H={
   calAdd(el){ calEventModal(el.dataset.date); },
   calEvent(el){ calEventModal(null,el.dataset.eid); },
   calLink(el){ const u=el.dataset.url; if(u) window.open(u,"_blank","noopener"); },
-  closeModal(){ $("#modal").innerHTML=""; },
+  closeModal(){ try{voiceStopMic();}catch(_){} $("#modal").innerHTML=""; },
   noop(){},
   // --- modular layout ---
   toggleLock(){ const v=localStorage.getItem("layout-locked")==="1"?"0":"1"; localStorage.setItem("layout-locked",v); applyPrefs(); toast(v==="1"?"Layout locked 🔒":"Layout unlocked 🔓"); },
@@ -6390,6 +6552,63 @@ document.addEventListener("change",e=>{
   }
 });
 window._lastPtr="mouse"; document.addEventListener("pointerdown",e=>{ window._lastPtr=e.pointerType||"mouse"; },true);   // pen/touch must not trigger native HTML5 drags
+/* ===================== UNIVERSAL VOICE CAPTURE (#5) ===================== */
+const VOICE_CATS=[
+  ["stream","🔴","Stream Idea"],
+  ["content","🎬","Content Idea"],
+  ["task","✅","Task"],
+  ["journal","📓","Journal Thought"],
+  ["personal","🌸","Personal Note"],
+  ["random","💭","Random"],
+];
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+let voiceRec=null, voiceBaseText="";
+function voiceOpenModal(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const canSpeak = !IS_IOS && !!SR;
+  const cats=VOICE_CATS.map(([v,e,l])=>`<option value="${v}">${e} ${l}</option>`).join("");
+  const hint = IS_IOS
+    ? `iOS voice input works best through your Apple keyboard — tap the 🎤 mic on your keyboard and start talking. 💗`
+    : (canSpeak
+        ? `Tap 🎙️ Start talking and I'll write it down — or just type. You can always fix the words after.`
+        : `Your browser can't do live voice here, so just type or use your keyboard's mic. Still totally low-friction. 💗`);
+  $("#modal").innerHTML=`<div class="modal-bg" data-act="closeModal"><div class="modal" data-act="noop" style="max-width:480px">
+    <div class="card-head"><h3 style="font-size:16px">🎙️ Capture a thought</h3><button class="btn" data-act="closeModal">✕</button></div>
+    <p class="soft" style="font-size:12px;margin:0 0 10px;line-height:1.5">${hint}</p>
+    <textarea id="voiceText" class="inp" rows="5" placeholder="What's on your mind?" style="width:100%;resize:vertical;font-size:15px;line-height:1.55"></textarea>
+    ${canSpeak?`<button class="btn" id="voiceMicBtn" data-act="voiceMic" style="margin-top:8px">🎙️ Start talking</button>`:""}
+    <div class="field" style="margin-top:12px"><div class="label">Save as</div>
+      <select class="inp" id="voiceCat">${cats}</select></div>
+    <button class="btn btn-grad" data-act="voiceSave" style="width:100%;margin-top:12px">💾 Save to Kiko's Context Bank</button>
+    <p class="soft" style="font-size:10.5px;margin:10px 0 0">Stays right here on your device — feeds Kiko's context, no outside services. 🫧</p>
+  </div></div>`;
+  const ta=$("#voiceText"); if(ta){ setTimeout(()=>{ ta.focus(); },60); }
+}
+function voiceToggleMic(){
+  if(voiceRec){ voiceStopMic(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if(!SR){ toast("voice isn't available — type away 🌱"); return; }
+  const ta=$("#voiceText"); if(!ta)return;
+  voiceBaseText = ta.value ? ta.value.replace(/\s*$/,"")+" " : "";
+  try{
+    voiceRec=new SR(); voiceRec.lang="en-US"; voiceRec.interimResults=true; voiceRec.continuous=true;
+    voiceRec.onresult=ev=>{ let txt=""; for(let i=0;i<ev.results.length;i++){ txt+=ev.results[i][0].transcript; } ta.value=voiceBaseText+txt; };
+    voiceRec.onerror=()=>{ toast("mic hiccup — keep typing 🌸"); voiceStopMic(); };
+    voiceRec.onend=()=>{ voiceStopMic(); };
+    voiceRec.start();
+    const b=$("#voiceMicBtn"); if(b){ b.textContent="⏹ Stop"; } const f=$("#voiceFab"); if(f)f.classList.add("listening");
+  }catch(_){ toast("couldn't start the mic — type away 🌱"); voiceRec=null; }
+}
+function voiceStopMic(){ if(voiceRec){ try{voiceRec.stop();}catch(_){} voiceRec=null; } const b=$("#voiceMicBtn"); if(b){ b.textContent="🎙️ Start talking"; } const f=$("#voiceFab"); if(f)f.classList.remove("listening"); }
+
+/* shortcut: Alt+R or Ctrl+Space — never while typing in a field */
+document.addEventListener("keydown",e=>{
+  const t=e.target, typing = t && (t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable);
+  if(typing) return;
+  if((e.altKey && (e.key==="r"||e.key==="R")) || (e.ctrlKey && e.code==="Space")){
+    e.preventDefault(); voiceOpenModal();
+  }
+});
+
 document.addEventListener("click",async e=>{ const el=e.target.closest("[data-act]"); if(!el)return; const fn=H[el.dataset.act];
   if(fn){ try{ await fn(el); }catch(err){ console.error(err); toast("hmm, try again"); } } });
 /* ===== 🎨 mood-board: freeform drag + resize of cards (Milanote-style) ===== */
@@ -6438,7 +6657,7 @@ document.addEventListener("click",async e=>{ const el=e.target.closest("[data-ac
 })();
 /* ===== 🕐 hero clock — keeps the big 24h clock honest without re-rendering the page ===== */
 setInterval(()=>{ try{ const c=document.getElementById("heroClock"); if(!c)return; c.textContent=nowHM();
-  const d=document.getElementById("heroDate"); if(d)d.textContent=new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+  const d=document.getElementById("heroDate"); if(d)d.textContent=logicalDisplayDate().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:"Europe/Amsterdam"});
 }catch(e){} },15000);
 // global undo — Ctrl+Z / ⌘Z rolls back the last data change, unless you're typing in a field (native undo wins there)
 document.addEventListener("keydown",e=>{
