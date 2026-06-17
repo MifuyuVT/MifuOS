@@ -986,7 +986,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-17.streamprep";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-17.nojiggle";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1485,7 +1485,13 @@ async function render(){
     if(state.tab==='planner'){ try{ wireTaskDnD(); }catch(e){ console.error(e); } } // board drag (mouse) — touch uses ◀▶
     if(state.tab==='trends'){ try{ paintTrendChart(); }catch(e){ console.error(e); } }
     if(state.tab==='art'){ try{ if(state.art&&state.art.notan) artNotanPaint(); }catch(e){} }   // repaint the value-checker canvas after innerHTML
-    if(MODULAR_TABS.includes(state.tab)){ requestAnimationFrame(()=>{try{layoutHome();}catch(e){}}); setTimeout(()=>{try{layoutHome();}catch(e){}},150); setTimeout(()=>{try{layoutHome();}catch(e){}},520); }
+    if(MODULAR_TABS.includes(state.tab)){
+      // Position the masonry cards SYNCHRONOUSLY now — before the browser paints — so a toggle never
+      // shows cards stacked-then-snapping (that one-frame reflow was the "whole page jiggles" bug).
+      try{layoutHome();}catch(e){}
+      // follow-up passes only catch late async content (images finishing); with stable heights they
+      // produce identical positions, so they don't move anything visibly.
+      requestAnimationFrame(()=>{try{layoutHome();}catch(e){}}); setTimeout(()=>{try{layoutHome();}catch(e){}},150); setTimeout(()=>{try{layoutHome();}catch(e){}},520); }
     if(state.tab==='kiko'){ KIKO.open=false; const cc=$("#kikoChat"); if(cc)cc.classList.add("hidden"); try{ paintKiko(); }catch(e){} }   // fill the Ask-Kiko chat panel
     if(state.tab==='memories'){ if(state.media===undefined&&!state._mediaLoading){ loadMedia().then(()=>{ if(state.tab==='memories') render(); }); } try{ wireMedia(); }catch(e){} }   // lazy-load the media row + wire upload/caption inputs
     if(state.tab==='journal'){ try{ wireJrPage(); }catch(e){} }   // attach the daily-page auto-save
@@ -2249,54 +2255,73 @@ function cardBirthdayPrep(){
   </section>`;
 }
 /* ===== Stream prep — a per-stream checklist that flips to off-stream work on non-stream days ===== */
+/* both lists are editable + saved on the sentinel; stream-prep checks live per-day on today.streamPrep,
+   off-stream built-ins reuse the check-in system, and custom off-stream tasks live on today.offStreamX. */
 const STREAM_PREP_DEFAULT=[
-  ["title","🏷️","Twitch title + tags"],
-  ["thumb","🖼️","Thumbnail"],
-  ["discord","📣","Discord announcement"],
-  ["youtube","📺","YouTube premiere / stream"],
-  ["scene","🎬","Scene + overlays ready"],
+  {id:"title",em:"🏷️",text:"Twitch title + tags"},
+  {id:"thumb",em:"🖼️",text:"Thumbnail"},
+  {id:"discord",em:"📣",text:"Discord announcement"},
+  {id:"youtube",em:"📺",text:"YouTube premiere / stream"},
+  {id:"scene",em:"🎬",text:"Scene + overlays ready"},
 ];
+function streamPrepList(){ const l=state.sentinel.streamPrepList; return (Array.isArray(l)&&l.length)?l:STREAM_PREP_DEFAULT; }
 /* today's stream from the calendar/schedule (matches the weekday slot) */
 function todayStreamSlot(){ const wd=DOW_ORDER[(new Date().getDay()+6)%7];
   const slots=slotsForDate(new Date(TODAY+"T00:00"))||[]; return slots.find(s=>s.day===wd&&(s.show||s.text))||null; }
-/* the off-stream content work she can only really do on non-stream days */
+/* off-stream content work — 4 built-ins (wired to the check-in system) + her own custom tasks */
 const OFFSTREAM_WORK=[["emails","✉️","Reply to emails"],["sponsors","🤝","Work on sponsorships"],["coverSong","🎤","Cover-song progress"],["madeArt","🎨","Make art"]];
-function offStreamAllDone(){ return OFFSTREAM_WORK.every(w=>ciOn(w[0])); }
-function streamPrepAllDone(){ const c=state.today.streamPrep||{}; return STREAM_PREP_DEFAULT.every(p=>c[p[0]]); }
+function offStreamExtra(){ const l=state.sentinel.offStreamExtra; return Array.isArray(l)?l:[]; }
+function offStreamAllDone(){ const x=state.today.offStreamX||{}; return OFFSTREAM_WORK.every(w=>ciOn(w[0])) && offStreamExtra().every(e=>x[e.id]); }
+function streamPrepAllDone(){ const c=state.today.streamPrep||{}; return streamPrepList().every(p=>c[p.id]); }
 function cardContentOps(){
-  const slot=todayStreamSlot();
+  const slot=todayStreamSlot(), ed=!!state.spEdit;
   if(slot){
-    const show=slot.show||slot.text||"Stream";
-    const checks=state.today.streamPrep||{};
-    const done=STREAM_PREP_DEFAULT.filter(p=>checks[p[0]]).length, total=STREAM_PREP_DEFAULT.length, pct=total?Math.round(done/total*100):0;
+    const show=slot.show||slot.text||"Stream"; const list=streamPrepList(); const checks=state.today.streamPrep||{};
+    const done=list.filter(p=>checks[p.id]).length, total=list.length, pct=total?Math.round(done/total*100):0;
     return `<section class="panel">
-      <div class="card-head"><span class="label">🎬 Stream prep</span><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span></div>
+      <div class="card-head"><span class="label">🎬 Stream prep</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span><button class="btn" data-act="spEdit">${ed?'done':'edit'}</button></span></div>
       <div style="font-size:14px;margin-bottom:2px"><b>${esc(show)}</b> <span class="soft">· stream today${slot.time?" · "+esc(slot.time):""}</span></div>
       <p class="soft" style="font-size:11.5px;margin:0 0 8px">Let's get ready — tap each as you go 💜</p>
       <div class="ck-prog"><span style="width:${pct}%"></span></div>
-      <div class="gt-list">${STREAM_PREP_DEFAULT.map(([k,em,l])=>`<button class="ck-row" data-act="streamPrepToggle" data-k="${k}"><span class="ck-box ${checks[k]?'on':''}">${checks[k]?'✓':''}</span><span class="ck-icon">${em}</span><span class="ck-name ${checks[k]?'ck-donetxt':''}">${esc(l)}</span></button>`).join("")}</div>
+      <div class="gt-list">${list.map(p=>`<button class="ck-row" data-act="streamPrepToggle" data-k="${p.id}"><span class="ck-box ${checks[p.id]?'on':''}">${checks[p.id]?'✓':''}</span><span class="ck-icon">${p.em||'📝'}</span><span class="ck-name ${checks[p.id]?'ck-donetxt':''}">${esc(p.text)}</span>${ed?`<span class="ck-del" data-act="delStreamPrep" data-v="${p.id}" title="remove">✕</span>`:''}</button>`).join("")}</div>
+      ${ed?`<div class="gt-add"><input class="inp" id="spInput" placeholder="add a prep step…" value="${esc(state.spDraft||'')}"><button class="btn btn-grad" data-act="addStreamPrep">add</button></div>`:''}
     </section>`;
   }
-  // not a stream day → off-stream content work
-  const done=OFFSTREAM_WORK.filter(w=>ciOn(w[0])).length, total=OFFSTREAM_WORK.length, pct=total?Math.round(done/total*100):0;
+  // not a stream day → off-stream content work (built-ins + custom)
+  const extra=offStreamExtra(), xchecks=state.today.offStreamX||{};
+  const total=OFFSTREAM_WORK.length+extra.length;
+  const done=OFFSTREAM_WORK.filter(w=>ciOn(w[0])).length + extra.filter(e=>xchecks[e.id]).length;
+  const pct=total?Math.round(done/total*100):0;
   return `<section class="panel">
-    <div class="card-head"><span class="label">🌙 Off-stream prep</span><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span></div>
+    <div class="card-head"><span class="label">🌙 Off-stream prep</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span><button class="btn" data-act="spEdit">${ed?'done':'edit'}</button></span></div>
     <p class="soft" style="font-size:11.5px;margin:0 0 8px">No stream today — a calm day for the behind-the-scenes work. 🌸</p>
     <div class="ck-prog"><span style="width:${pct}%"></span></div>
-    <div class="gt-list">${OFFSTREAM_WORK.map(([k,em,l])=>`<button class="ck-row" data-act="ciToggle" data-k="${k}"><span class="ck-box ${ciOn(k)?'on':''}">${ciOn(k)?'✓':''}</span><span class="ck-icon">${em}</span><span class="ck-name ${ciOn(k)?'ck-donetxt':''}">${esc(l)}</span></button>`).join("")}</div>
+    <div class="gt-list">${OFFSTREAM_WORK.map(([k,em,l])=>`<button class="ck-row" data-act="ciToggle" data-k="${k}"><span class="ck-box ${ciOn(k)?'on':''}">${ciOn(k)?'✓':''}</span><span class="ck-icon">${em}</span><span class="ck-name ${ciOn(k)?'ck-donetxt':''}">${esc(l)}</span></button>`).join("")}${extra.map(e=>`<button class="ck-row" data-act="offStreamXToggle" data-k="${e.id}"><span class="ck-box ${xchecks[e.id]?'on':''}">${xchecks[e.id]?'✓':''}</span><span class="ck-icon">📝</span><span class="ck-name ${xchecks[e.id]?'ck-donetxt':''}">${esc(e.text)}</span>${ed?`<span class="ck-del" data-act="delOffStream" data-v="${e.id}" title="remove">✕</span>`:''}</button>`).join("")}</div>
+    ${ed?`<div class="gt-add"><input class="inp" id="osInput" placeholder="add an off-stream task…" value="${esc(state.osDraft||'')}"><button class="btn btn-grad" data-act="addOffStream">add</button></div>`:''}
   </section>`;
 }
-/* little celebration burst (respects reduced-motion / calm) */
-function popConfetti(){
+/* celebration popper — confetti bursts OUTWARD from the finished card (like a party popper / firework),
+   peaks, then falls with gravity. Pass the card element so it pops right where you tapped. Respects Calm. */
+function popConfetti(anchor){
   try{ if(document.body.classList.contains("calm")||matchMedia("(prefers-reduced-motion:reduce)").matches) return;
     const colors=["#758ac6","#ff9ed8","#a98fe0","#9fc3e8","#6fc3ab","#f3a978"];
+    const r=(anchor&&anchor.getBoundingClientRect)?anchor.getBoundingClientRect():null;
+    const cx=r?r.left+r.width/2:window.innerWidth/2;
+    const cy=r?r.top+Math.min(r.height*0.45,140):window.innerHeight*0.4;   // burst from near the top-middle of the card
     const cont=document.createElement("div"); cont.style.cssText="position:fixed;inset:0;z-index:9500;pointer-events:none;overflow:hidden";
     document.body.appendChild(cont);
-    for(let i=0;i<26;i++){ const p=document.createElement("div"); const c=colors[i%colors.length]; const sz=6+Math.random()*7;
-      p.style.cssText=`position:absolute;top:36%;left:${18+Math.random()*64}%;width:${sz}px;height:${sz*0.6}px;background:${c};border-radius:2px;`;
-      p.animate([{transform:"translate(0,0) rotate(0deg)",opacity:1},{transform:`translate(${(Math.random()-0.5)*340}px,${200+Math.random()*280}px) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:1200+Math.random()*600,easing:"cubic-bezier(.2,.7,.3,1)"});
+    for(let i=0;i<32;i++){ const p=document.createElement("div"); const c=colors[i%colors.length]; const sz=6+Math.random()*6;
+      p.style.cssText=`position:absolute;left:${cx}px;top:${cy}px;width:${sz}px;height:${sz*0.55}px;background:${c};border-radius:2px;will-change:transform,opacity;`;
+      const ang=-Math.PI/2+(Math.random()-0.5)*Math.PI*1.5;   // fan upward & out, like a popper
+      const power=90+Math.random()*150, bx=Math.cos(ang)*power, by=Math.sin(ang)*power;   // burst peak
+      const fall=160+Math.random()*200, rot=Math.random()*720-360;
+      p.animate([
+        {transform:"translate(-50%,-50%) rotate(0deg)",opacity:1,offset:0},
+        {transform:`translate(calc(-50% + ${bx}px),calc(-50% + ${by}px)) rotate(${rot*0.4}deg)`,opacity:1,offset:0.32},   // shoot out & peak
+        {transform:`translate(calc(-50% + ${bx*1.15}px),calc(-50% + ${by+fall}px)) rotate(${rot}deg)`,opacity:0,offset:1} // gravity pulls them down
+      ],{duration:1100+Math.random()*600,easing:"cubic-bezier(.15,.6,.4,1)"});
       cont.appendChild(p); }
-    setTimeout(()=>cont.remove(),2000);
+    setTimeout(()=>cont.remove(),1900);
   }catch(e){}
 }
 
@@ -5398,6 +5423,20 @@ const H={
     await setToday(n=>({...n,streamPrep:{...(n.streamPrep||{}),[k]:on}}));
     if(on && streamPrepAllDone()){ toast("stream prep complete — go get 'em! 🎉"); popConfetti(); }
     render(); },
+  // --- edit stream-prep + off-stream lists (add/remove, saved to the account) ---
+  spEdit(){ state.spEdit=!state.spEdit; render(); },
+  async addStreamPrep(){ const inp=$("#spInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return; state.spDraft=null;
+    await setSent(n=>{ const l=(Array.isArray(n.streamPrepList)&&n.streamPrepList.length)?n.streamPrepList.slice():STREAM_PREP_DEFAULT.slice(); l.push({id:"sp"+Date.now(),em:"📝",text:t}); return {...n,streamPrepList:l}; }); toast("prep step added 🎬"); render(); },
+  async delStreamPrep(el){ const id=el.dataset.v; const inp=$("#spInput"); if(inp) state.spDraft=inp.value;
+    await setSent(n=>{ let l=(Array.isArray(n.streamPrepList)&&n.streamPrepList.length)?n.streamPrepList.slice():STREAM_PREP_DEFAULT.slice(); l=l.filter(p=>p.id!==id); return {...n,streamPrepList:l}; }); render(); },
+  async offStreamXToggle(el){ const id=el.dataset.k; if(!id)return; const on=!((state.today.offStreamX||{})[id]);
+    await setToday(n=>({...n,offStreamX:{...(n.offStreamX||{}),[id]:on}}));
+    if(on && offStreamAllDone()){ toast("off-stream prep done — amazing! 🎉"); popConfetti(); } else if(on) toast("nice work 💜");
+    render(); },
+  async addOffStream(){ const inp=$("#osInput"); const t=((inp&&inp.value)||"").trim(); if(!t)return; state.osDraft=null;
+    await setSent(n=>{ const l=Array.isArray(n.offStreamExtra)?n.offStreamExtra.slice():[]; l.push({id:"os"+Date.now(),text:t}); return {...n,offStreamExtra:l}; }); toast("task added 🌙"); render(); },
+  async delOffStream(el){ const id=el.dataset.v; const inp=$("#osInput"); if(inp) state.osDraft=inp.value;
+    await setSent(n=>{ const l=(Array.isArray(n.offStreamExtra)?n.offStreamExtra:[]).filter(e=>e.id!==id); return {...n,offStreamExtra:l}; }); render(); },
   memSearch(){ const el=$("#memSearchInput"); state.memQuery=el?String(el.value||"").trim():""; render(); },
   memSearchClear(){ state.memQuery=""; render(); },
   memBunny(){ state.memBunny=!state.memBunny; render(); },
