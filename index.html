@@ -1290,7 +1290,8 @@ function layoutHome(){
      The browser tells us the REAL resolved track count (auto-fill expands in the computed value). */
   let colCount=0;
   try{ colCount=(((getComputedStyle(grid).gridTemplateColumns)||"").match(/\S+/g)||[]).length; }catch(e){}
-  if(!colCount) colCount=Math.max(3,Math.min(24,Math.floor((grid.clientWidth+gap)/(72+gap))));
+  if(!colCount){ const w=grid.clientWidth; colCount = w<=640?1 : w<=1040?2 : 3; }   // safe breakpoint fallback (never tiny columns)
+  colCount=Math.max(1,Math.min(3,colCount));   // hard cap: this grid is 3 columns max, so a bad read can never explode into slivers
   const widgets=[...grid.querySelectorAll(".home-widget")];
   if(widgets.some(w=>w.classList.contains("resizing"))) return;   // don't fight a live resize drag; reflow on release
   // TRUE masonry: place each card into the column slot where it sits highest, so a tall card never
