@@ -179,7 +179,7 @@
   .care-cols>.panel{margin:0;}
   @media(max-width:860px){ .care-cols{grid-template-columns:1fr;} }
   /* health: PCOS (left) + Mounjaro (right) */
-  .health-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+  .health-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch;}
   .health-col{display:flex;flex-direction:column;gap:16px;min-width:0;}
   .health-col>section{margin:0;}
   @media(max-width:860px){ .health-cols{grid-template-columns:1fr;} }
@@ -433,7 +433,7 @@
   .glance-head{display:flex;gap:12px;align-items:center;margin-bottom:14px;}
   .glance-fox{font-size:28px;}
   .glance-head h2{font-family:var(--display);font-size:20px;}
-  .glance-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+  .glance-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;}
   @media(max-width:860px){ .glance-cols{grid-template-columns:1fr;} .hero-clockwrap{margin-left:0;text-align:left;width:100%;} }
   .gcard{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff;min-width:0;}
   /* section labels recede in soft muted tone instead of shouting bright pink (less colour noise) */
@@ -459,10 +459,15 @@
   .tier-later{background:#eceef5;color:#8b8fa8;}
   .tier-urgent{background:#fde4e4;color:#c0566a;}
   /* === 🎨 art studio (ported from Eggie OS, snowfox palette) === */
-  .art-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+  .art-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;}
   .art-cols>*{min-width:0;}
   .art-span2{grid-column:1/-1;}
   @media(max-width:860px){ .art-cols{grid-template-columns:1fr;} }
+  /* Toolbox 2-column grid */
+  .tb-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .tb-grid>*{min-width:0;}
+  .tb-span2{grid-column:1/-1;}
+  @media(max-width:720px){.tb-grid{grid-template-columns:1fr;}}
   .hbtn{text-align:left;border:1.5px solid var(--line-2);border-radius:13px;padding:9px 11px;background:#fff;transition:.15s;}
   .hbtn.done{border-color:#bfe9d8;background:#f1fbf6;} .hbtn:hover{border-color:var(--peri);}
   .check{width:18px;height:18px;border-radius:7px;border:2px solid var(--line-2);background:#fff;flex:none;} .check.on{background:var(--mint);border-color:var(--mint);}
@@ -968,6 +973,57 @@
   img.emoji{ height:1em; width:1em; margin:0 .05em 0 .1em; vertical-align:-0.1em; display:inline !important; }
   .tab-emoji img.emoji{ height:20px; width:20px; margin:0; vertical-align:middle; }
   .card-head img.emoji, h2 img.emoji, h3 img.emoji{ height:1.2em; width:1.2em; vertical-align:-0.15em; }
+  /* ===== GLOBAL HEADER ===== */
+  #global-header{display:flex;align-items:center;gap:10px;padding:8px 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);position:sticky;top:0;z-index:40;min-height:44px;flex-wrap:wrap;}
+  .gh-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;}
+  .gh-clock-wrap{text-align:right;}
+  .gh-clock{font-size:15px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.03em;}
+  .gh-date-str{font-size:10px;color:var(--ink-soft);}
+  .gh-energy{display:flex;gap:3px;}
+  .gh-energy-btn{border:1.5px solid var(--line);background:rgba(255,255,255,.7);border-radius:8px;padding:4px 9px;font-size:15px;cursor:pointer;transition:all .15s;line-height:1;touch-action:manipulation;}
+  .gh-energy-btn.on.energy-low{background:#dde8fb;border-color:var(--peri-deep);}
+  .gh-energy-btn.on.energy-medium{background:#fffaed;border-color:#c9a93a;}
+  .gh-energy-btn.on.energy-high{background:#fdf0fb;border-color:var(--sakura-deep);}
+  /* ===== PLANNER REDESIGN ===== */
+  .pln-grid{display:flex;gap:14px;align-items:flex-start;}
+  .pln-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;}
+  @media(max-width:680px){.pln-grid{flex-direction:column;}}
+  .pln-sec{background:#fff;border-radius:14px;border:1px solid var(--line);padding:12px 14px;}
+  .pln-sec.s-overdue{border-color:rgba(192,86,106,.5);background:rgba(253,228,228,.45);}
+  .pln-sec.s-today{border-color:rgba(180,118,74,.4);background:rgba(253,235,215,.4);}
+  .pln-sec.s-urgent{border-color:rgba(204,100,60,.35);background:rgba(255,242,232,.35);}
+  .pln-sec.s-energy{border-color:rgba(169,143,224,.3);background:rgba(240,236,255,.2);}
+  .pln-sh{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+  .pln-sh-ttl{font-size:11px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.07em;margin:0;}
+  .pln-sec.s-overdue .pln-sh-ttl{color:#b84060;}
+  .pln-sec.s-today .pln-sh-ttl{color:#9e6030;}
+  .pln-sec.s-urgent .pln-sh-ttl{color:#b05020;}
+  .pln-cnt{font-size:11px;color:var(--ink-soft);background:rgba(169,143,224,.13);padding:1px 7px;border-radius:99px;margin-left:auto;}
+  .pln-row{display:flex;align-items:flex-start;gap:7px;padding:5px 0;border-bottom:1px solid var(--line);}
+  .pln-row:last-child{border-bottom:none;}
+  .pln-row-body{flex:1;min-width:0;}
+  .pln-rt{font-size:13px;line-height:1.35;color:var(--ink);word-break:break-word;}
+  .pln-rt.done-text{text-decoration:line-through;opacity:.5;}
+  .pln-rm{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;align-items:center;}
+  .pln-badge{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:99px;letter-spacing:.03em;white-space:nowrap;}
+  .pln-badge.pri-urgent{background:rgba(192,60,60,.14);color:#b84040;}
+  .pln-badge.pri-high{background:rgba(169,143,224,.22);color:var(--peri-deep);}
+  .pln-badge.pri-low{background:rgba(150,200,150,.2);color:#4a844a;}
+  .pln-badge.en-low{background:#dde8fb;color:var(--peri-deep);}
+  .pln-badge.en-medium{background:#fffaed;color:#8a6a10;}
+  .pln-badge.en-high{background:#fdf0fb;color:var(--sakura-deep);}
+  .pln-badge.cat-pill{background:rgba(169,143,224,.1);color:var(--lav-deep);}
+  .pln-empty-sm{font-size:11.5px;color:var(--ink-soft);text-align:center;padding:5px 0;}
+  .pln-stats{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;}
+  .pln-stat{display:flex;flex-direction:column;align-items:center;padding:6px 10px;background:rgba(169,143,224,.08);border-radius:10px;min-width:52px;}
+  .pln-stat-n{font-size:17px;font-weight:700;color:var(--ink);line-height:1;}
+  .pln-stat-l{font-size:9px;color:var(--ink-soft);text-align:center;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+  .pln-stat.has-alert .pln-stat-n{color:#b84060;}
+  .pln-add-bar{display:flex;gap:8px;align-items:center;}
+  .pln-add-bar .inp{flex:1;min-width:0;}
+  .pln-more{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
+  .pln-rem-preview{background:#fff;border-radius:14px;border:1px solid var(--line);padding:10px 14px;}
+  .pln-rem-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);padding:2px 0;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
@@ -1003,6 +1059,7 @@
     <span class="avatar"><img src="AYAYA.png" alt="Mifu" /></span>
   </div>
 </div>
+<div id="global-header"></div>
 <main id="view"><div class="boot-sk" aria-busy="true" aria-label="Loading your space">
   <div class="panel sk-card"><div class="skeleton sk-title"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line" style="width:68%"></div></div>
   <div class="panel sk-card"><div class="skeleton sk-title"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line" style="width:55%"></div></div>
@@ -1021,7 +1078,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.schedEdit";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.toolboxGrid";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1388,7 +1445,7 @@ function manageCardsModal(tab){
     <button class="btn" data-act="resetLayout" data-tab="${tab}" style="margin-top:12px">↺ reset this page's layout</button>
   </div></div>`;
 }
-const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerSpoon:"all", trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week" };
+const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerEnergy:"all", energyLevel:"medium", plnMoreOpen:false, plnShowAll:false, trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week" };
 try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
 const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
 
@@ -1495,6 +1552,7 @@ async function render(){
     if(animate){ v.classList.remove('anim'); void v.offsetWidth; v.classList.add('anim');
       clearTimeout(state._animT); state._animT=setTimeout(()=>{ const vv=$("#view"); if(vv) vv.classList.remove('anim'); },1000); }
     v.innerHTML = fn();
+    renderGlobalHeader();
     renderStickies();
     if(state.tab==='care'){ try{ state.breathOn ? startBreath() : stopBreath(); }catch(_){}
       if(state.media===undefined && !state._mediaLoading){ loadMedia().then(()=>{ if(state.tab==='care') render(); }); } }   // loadMedia owns the _mediaLoading guard; pre-setting it here made loadMedia bail, leaving media undefined → infinite re-render loop
@@ -1895,6 +1953,24 @@ function ciDays(k){ if(ciOn(k))return 0;
   return last?daysBetween(last,TODAY):null; }
 function ciWeek(k){ const wk=artMonday(TODAY); const set=new Set(((state.sentinel.checkinLog||{})[k]||[]).filter(d=>d>=wk&&d<=TODAY)); if(ciOn(k))set.add(TODAY); return set.size; }
 function nowHM(){ const d=new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
+function renderGlobalHeader(){
+  const h=document.getElementById("global-header"); if(!h) return;
+  const time=nowHM();
+  const date=new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  const el=state.energyLevel||"medium";
+  const creator=OS_MODE!=="health";
+  h.innerHTML=`<span class="mode-pill ${creator?"mode-creator":"mode-health"}">${creator?"🎀 Creator OS":"❄️ Health OS"}</span>
+    <span style="font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap">${creator?"Mifu's Creator OS":"Mifu's Health OS"}</span>
+    <div class="gh-right">
+      <div class="gh-clock-wrap">
+        <div class="gh-clock" id="ghClock">${time}</div>
+        <div class="gh-date-str">${date}</div>
+      </div>
+      <div class="gh-energy">
+        ${[["low","🌙"],["medium","🌤️"],["high","☀️"]].map(([v,em])=>`<button class="gh-energy-btn energy-${v}${el===v?" on":""}" data-act="setEnergy" data-v="${v}" title="${v} energy">${em}</button>`).join("")}
+      </div>
+    </div>`;
+}
 function cardHero(){
   const creator=OS_MODE!=="health"; const d=new Date();
   const date=d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
@@ -1905,13 +1981,11 @@ function cardHero(){
       <div class="hero-title"><div class="label">Welcome to</div><h1>Mifu's ${creator?"Creator":"Health"} OS 🌸</h1><div class="soft" style="font-size:13px;margin-top:2px">Kiko is here to ${creator?"help":"support"} you. 💜</div></div>
       <div class="hero-clockwrap"><div class="hero-clock" id="heroClock">${nowHM()}</div><div class="hero-date" id="heroDate">${date}</div></div>
     </div>
-    ${creator
-      ? `<div class="label" style="margin:16px 0 7px;letter-spacing:.08em">Did you create today?</div>
-         <div class="chiprow">${defs.map(([k,em,l])=>{ const short={streamed:"Streamed",ytVideo:"YouTube video",ytShort:"YouTube Short"}[k]||l; return `<button class="chiptog ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span>${ciOn(k)?'✓':em}</span>${esc(short)}</button>`; }).join("")}</div>
-         <p class="soft" style="font-size:11px;margin:8px 0 0">Just tap if you happen to do one — no pressure to do these daily. 💜</p>`
-      : `<div class="label" style="margin:16px 0 8px;letter-spacing:.08em">TODAY'S CHECK-INS</div>
+    ${!creator
+      ? `<div class="label" style="margin:16px 0 8px;letter-spacing:.08em">TODAY'S CHECK-INS</div>
          <div class="ci-grid">${defs.map(([k,em,l])=>`<button class="ci-btn ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span class="ci-ic">${em}</span><span>${l}</span></button>`).join("")}</div>
-         <p class="soft" style="font-size:11.5px;text-align:center;margin:10px 0 0">✨ Click any check-in above when you complete it!</p>`}
+         <p class="soft" style="font-size:11.5px;text-align:center;margin:10px 0 0">✨ Click any check-in above when you complete it!</p>`
+      : ""}
   </section>`;
 }
 /* deterministic observations — each one traceable to a check-in or stored number; ticking today resets it */
@@ -2182,6 +2256,17 @@ function suggestedFocus(mode){
     try{ const tg=foodTargets(), tt=foodTotals(); if(foodToday().length&&tt.fiber<tg.fiber*0.5) push({t:"Fibre's running low today — psyllium or some veggies could help. 🌿",tab:"food",cat:"fiber"}); }catch(e){}
     try{ (state.sentinel.medsList||[]).forEach(m=>{ if(m.refill){ const dd=daysBetween(TODAY,m.refill); if(dd>=0&&dd<=5) push({t:`Your ${m.name} refill is coming up — worth sorting before you run low. 💊`,tab:"settings",cat:"meds",urgent:true}); } }); }catch(e){}
   }
+  // 🗒️ planner task nudges — energy-aware, shown in both OS modes
+  try{ const _pt=(state.sentinel.tasks||[]).filter(t=>!t.done);
+    const _el=state.energyLevel||"medium";
+    const _ov=_pt.filter(t=>t.due&&t.due<TODAY);
+    const _td=_pt.filter(t=>t.due===TODAY);
+    const _urg=_pt.filter(t=>(t.priority||"medium")==="urgent"&&!_ov.some(x=>x.id===t.id)&&!_td.some(x=>x.id===t.id));
+    if(_ov.length) prio.push({t:`You have ${_ov.length} overdue task${_ov.length>1?"s":""} — start there first. 📋`,tab:"planner",cat:"planner",urgent:true});
+    else if(_td.length) F.push({t:`${_td.length} task${_td.length>1?"s":""} due today. 📌`,tab:"planner",cat:"planner"});
+    else if(_urg.length) F.push({t:`${_urg.length} urgent task${_urg.length>1?"s":""} waiting for attention. 🔥`,tab:"planner",cat:"planner"});
+    else if(_el!=="high"){ const _m=_pt.filter(t=>normEnergy(t.energy||t.spoon)===_el); if(_m.length) F.push({t:`${_m.length} ${_el}-energy task${_m.length>1?"s":""} ready for today. ⚡`,tab:"planner",cat:"planner"}); }
+  }catch(e){}
   // NOTE: things Mifu tells Kiko (kikoMemory) are CONTEXT, not tasks — they must never be echoed
   // here as Suggested Focus items. Suggested Focus only ever shows actionable, data-driven nudges.
   // learn from what she taps: float her engaged categories up; urgent/time-sensitive stay first
@@ -2746,7 +2831,7 @@ function viewArt(){
         <button class="btn" data-act="artReframe">↻ another reminder</button>
         <button class="btn" data-act="inspoPick" title="decision paralysis? let the fox choose">🦊 pick something for me</button>
       </div>
-      <p class="soft" style="font-size:11px;text-align:center;margin:10px 0 0">the 50% rule (Drawabox): half your art time is allowed to be pure play — that's not slacking, it's the curriculum 💗</p>
+      <p class="soft" style="font-size:11px;text-align:center;margin:8px 0 0">the 50% rule: half your practice time can be pure play — that IS the curriculum 💗</p>
     </section>`;
   const challengesCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">🌱 Challenges</h2><span class="label">tiny + weekly</span></div>
       <div class="card-head" style="margin:4px 0 2px"><span class="label">🌱 today's tiny challenge</span><button class="btn" data-act="artRoll" data-scope="day" style="padding:2px 8px">↻</button></div>
@@ -2772,7 +2857,6 @@ function viewArt(){
         <input class="inp" id="artNote" placeholder="what did you make? (optional)" style="flex:1;min-width:140px"/>
         <button class="btn btn-grad" data-act="artLogMin">＋ log</button>
       </div>
-      <p class="soft" style="font-size:11.5px;margin:10px 0 0">No streaks to break, no red numbers. A blank week just means you rested — that's allowed too. 🌙</p>
       ${log.length?`<details class="acc" style="margin-top:8px"><summary>📜 art rhythm (${log.length} entries)</summary><div class="acc-body">${log.slice(-20).reverse().map(a=>`<div class="listrow"><span class="grow" style="font-size:12px">${fmtDate(a.date)}${a.min?` · ${a.min} min`:""}${a.note?" · "+esc(a.note):""}</span></div>`).join("")}</div></details>`:""}
     </section>`;
   const timerCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">⏲️ Practice timer</h2><div style="display:flex;gap:8px;align-items:center"><button class="btn" data-act="artFocusEnter" title="hide everything except play">⛶ focus</button><span class="label">gesture / warm-ups</span></div></div>
@@ -2786,7 +2870,6 @@ function viewArt(){
         ${t.on?`<button class="btn btn-grad" data-act="artTimerStop">⏹ stop</button><button class="btn" data-act="artTimerSkip">⏭ next pose</button>`:`<button class="btn btn-grad" data-act="artTimerStart">▶ start</button>`}
       </div>
       ${pendingChip}
-      <p class="soft" style="font-size:11.5px;margin:10px 0 0;text-align:center">A fresh subject each round. Don't aim for pretty — aim for loose. 🖍️</p>
     </section>`;
   const cnt=sent.artCount||{label:"heads",n:0,goal:100};
   const cPct=Math.min(1,(cnt.n||0)/(cnt.goal||100)), cDash=(cPct*213.6).toFixed(1);
@@ -2796,7 +2879,7 @@ function viewArt(){
         <svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="34" fill="none" stroke="#eef0fa" stroke-width="9"/><circle cx="43" cy="43" r="34" fill="none" stroke="url(#artCntG)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${cDash} 213.6" transform="rotate(-90 43 43)"/><defs><linearGradient id="artCntG"><stop offset="0%" stop-color="#758ac6"/><stop offset="100%" stop-color="#ff9ed8"/></linearGradient></defs><text x="43" y="40" text-anchor="middle" style="font-size:17px;font-weight:700;fill:var(--ink)">${cnt.n||0}</text><text x="43" y="56" text-anchor="middle" style="font-size:10px;fill:#9b96b6">of ${cnt.goal||100}</text></svg>
         <button class="btn btn-grad" data-act="artCountInc" style="font-size:15px;padding:10px 18px">＋1 ${esc(cnt.label.replace(/s$/,""))}</button>
       </div>
-      <p class="soft" style="font-size:11px;text-align:center;margin:10px 0 0">the 100 heads challenge, mifu-style: 5–10 min each, no deadline — the pile grows when it grows 💗</p>
+      <p class="soft" style="font-size:10.5px;text-align:center;margin:7px 0 0">5–10 min each, no deadline — the pile grows when it grows 💗</p>
     </section>`;
   const ideasCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">💡 Ideas dump</h2><span class="pill pill-lav">${(sent.artIdeas||[]).length} idea${(sent.artIdeas||[]).length===1?"":"s"}</span></div>
       <div style="display:flex;gap:8px;margin-bottom:12px"><input class="inp" id="ideaText" placeholder="that piece I suddenly want to draw…"/><button class="btn btn-grad" data-act="artIdeaAdd">＋ park it</button></div>
@@ -2819,7 +2902,7 @@ function viewArt(){
             ${s2.text?`<div class="soft" style="font-size:11.5px;${s2.done?'text-decoration:line-through':''}">${esc(s2.text)}</div>`:""}
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto"><button class="chiptog ${s2.done?'on':''}" data-act="inspoDone" data-v="${s2.id}" style="font-size:10.5px;padding:3px 9px">${s2.done?'✓ tried it!':'mark tried'}</button><button class="ft-ic" data-act="inspoDel" data-v="${s2.id}" style="color:var(--sakura-deep)">🗑</button></div>
           </div>
-        </div>`;}).join("")}</div>`:`<p class="soft" style="font-size:12px;margin:0">Trending tweet? Style you want to try? Drop the link so it stops living in 47 open tabs — cards with images show the picture itself. 💗</p>`}
+        </div>`;}).join("")}</div>`:`<p class="soft" style="font-size:12px;margin:0">Drop a link or idea — cards with images show the picture. Stops things living in 47 open tabs. 💗</p>`}
     </section>`;
   const em=A.emote;
   const chk=`background:repeating-conic-gradient(#e9e6f4 0 25%,#ffffff 0 50%);background-size:14px 14px`;
@@ -2837,20 +2920,20 @@ function viewArt(){
         ${emRow("#313338","#dbdee1","Discord · dark",[48,22],22)}
         ${emRow("#ffffff;border:1px solid var(--line)","#1f1633","light mode",[56,28],28)}
         <div style="${chk};border-radius:10px;padding:9px 11px;margin-top:6px"><div style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:#9b96b6;margin-bottom:5px">transparency check</div><img src="${em.data}" style="width:72px;height:72px;object-fit:contain"/></div>`
-      :`<p class="soft" style="font-size:12px;margin:0 0 8px">Upload an emote/badge PNG → see it at REAL chat sizes on Twitch-dark, Discord-dark, light, and a transparency checkerboard — with size-limit checks. No more uploading to find out it's mud at 28px. 💗</p>
+      :`<p class="soft" style="font-size:11.5px;margin:0 0 8px">Upload a PNG → see it at real chat sizes (Twitch, Discord, light) with size-limit checks. 💗</p>
         <button class="btn btn-grad" data-act="artEmotePick">🖼 choose a PNG</button>`}
     </section>`;
   const nSteps=Math.max(2,Math.min(6,A.notanSteps||3));
   const valueCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">◐ Value checker</h2>${A.notan?`<button class="btn" data-act="artNotanClear">✕ clear</button>`:`<span class="label">squint, but scientific</span>`}</div>
       <input type="file" id="notanFile" accept="image/*" style="display:none"/>
-      <p class="soft" style="font-size:12px;margin:0 0 8px">Drop your WIP in → it collapses to ${A.notan?nSteps:"2–6"} values. If it reads here, it reads everywhere; if it's mud here, that's the fix. 🌗</p>
+      <p class="soft" style="font-size:11.5px;margin:0 0 8px">Drop your WIP in → collapses to ${A.notan?nSteps:"2–6"} values. If it reads here, it reads anywhere. 🌗</p>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn ${A.notan?'':'btn-grad'}" data-act="artNotanPick">🖼 ${A.notan?"different image":"choose your WIP"}</button>
         <span class="label">values</span><div class="seg">${[2,3,4,5,6].map(v=>`<button data-act="artNotanSteps" data-v="${v}" class="${nSteps===v?'on':''}">${v}</button>`).join("")}</div>
       </div>
       ${A.notan?`<canvas id="notanCv" style="max-width:100%;border-radius:10px;margin-top:10px;border:1px solid var(--line)"></canvas>`:""}
     </section>`;
-  const paletteCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">🎨 Palette & ramps</h2></div>
+  const paletteCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">🎨 Palette & ramps</h2></div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
         <label class="art-chip">base <input type="color" id="artBase" value="${pBase}" style="width:34px;height:24px;border:none;background:none;padding:0;cursor:pointer"/></label>
         <button class="btn" data-act="artPaletteRoll">🎲 random base</button>
@@ -2858,12 +2941,12 @@ function viewArt(){
       </div>
       ${sw(pal)}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><span class="label">🃏 limited-palette challenge — draw with only these</span><button class="btn btn-grad" data-act="artLimited">🎲 roll 3</button></div>
-      ${A.limited?sw(A.limited):`<p class="soft" style="font-size:12px;margin:8px 0 0">Roll three random swatches and make something using <i>only</i> those. Great for learning colour mixing.</p>`}
-      <div class="label" style="margin:14px 0 4px">🪜 value ramp of your base <span class="muted">· light → dark, for shading picks</span></div>
+      ${A.limited?sw(A.limited):`<p class="soft" style="font-size:11.5px;margin:6px 0 0">Draw with only these three — great for learning colour mixing.</p>`}
+      <div class="label" style="margin:10px 0 4px">🪜 value ramp <span class="muted">· light → dark</span></div>
       ${sw(genRamp(pBase))}
-      <div class="label" style="margin:10px 0 4px">⛅ two-value cel pair <span class="muted">· base + hue-shifted shadow</span></div>
+      <div class="label" style="margin:8px 0 4px">⛅ cel pair <span class="muted">· base + hue-shifted shadow</span></div>
       ${sw(celPair(pBase))}
-      <p class="soft" style="font-size:11px;margin:10px 0 0">Tap any swatch to copy its hex 💗</p>
+      <p class="soft" style="font-size:11px;margin:7px 0 0">Tap any swatch to copy its hex 💗</p>
     </section>`;
   const specsCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">📏 Platform specs</h2><span class="label">verified 2026-06-10</span></div>
       ${ART_SPECS.map(([n2,s2])=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><div style="font-size:12.5px;font-weight:700">${n2}</div><div class="soft" style="font-size:11.5px;margin-top:1px">${s2}</div></div>`).join("")}
@@ -2874,7 +2957,6 @@ function viewArt(){
   const live2dCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">🧩 Live2D cut prep</h2><div style="display:flex;gap:8px;align-items:center"><span class="pill ${l2n===LIVE2D_ITEMS.length?'pill-mint':'pill-lav'}">${l2n}/${LIVE2D_ITEMS.length}</span><button class="btn" data-act="l2dReset" title="new model — clear all ticks">↺</button></div></div>
       <input class="inp" id="l2dName" value="${esc(l2.name||"")}" placeholder="model / outfit name (optional)…" style="margin-bottom:8px"/>
       ${LIVE2D_ITEMS.map(([k,l])=>`<button class="hbtn ${l2.items&&l2.items[k]?'done':''}" data-act="l2dToggle" data-k="${k}" style="display:flex;gap:9px;align-items:center;width:100%;margin-top:5px;text-align:left"><span class="check ${l2.items&&l2.items[k]?'on':''}"></span><span style="font-size:12.5px">${l}</span></button>`).join("")}
-      <p class="soft" style="font-size:11px;margin:8px 0 0">the layer-separation rules from Live2D's official docs — tick as you cut, before export 💗</p>
     </section>`;
   const guidesCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">📐 Drawing guides & overlays</h2></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
@@ -2889,7 +2971,7 @@ function viewArt(){
   const boardCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">🖼️ Mood board</h2><span class="label">drag anything anywhere · auto-saves</span></div>
       ${boardCtrls}
       ${boardInner}
-      <p class="soft" style="font-size:11.5px;margin:10px 0 0">Paste image links, jot notes, drop colour chips — then drag them into a layout. Grab the ◢ corner to resize. ❄️</p>
+      <p class="soft" style="font-size:11.5px;margin:10px 0 0">Paste links, notes, colour chips — drag into layout, grab ◢ to resize. ❄️</p>
     </section>`;
   const packNew=ART_PACK.filter(p=>!res.some(r=>r.url===p.url)).length;
   const libraryCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">📚 Tools & tutorials</h2>${packNew?`<button class="btn btn-grad" data-act="artResPack" title="adds the research-verified pose/anatomy/colour links — all free, all checked alive">🌟 add research pack (${packNew})</button>`:`<span class="label">your own library</span>`}</div>
@@ -3241,18 +3323,29 @@ function viewToolbox(){
   const totalMin=(tb.steps||[]).reduce((a,s)=>a+(typeof s==="object"?Number(s.min||0):0),0);
   return `<div class="page narrow">
   <section class="panel"><div class="card-head"><h2 style="font-size:18px">🧰 Toolbox</h2><span class="pill pill-gray">brain helpers</span></div>
-    <p class="soft" style="font-size:12px;margin:0">Little machines for the hard parts — breaking things down, reading scary messages, finding words, guessing time, sorting a full brain. ${DEMO?"<b>(needs live mode)</b>":""}</p></section>
+    <p class="soft" style="font-size:12px;margin:0">Little machines for the hard parts. ${DEMO?"<b>(needs live mode)</b>":""}</p></section>
+  <div class="tb-grid">
   <section class="panel">
     <div class="card-head"><span class="label">✨ Magic breakdown</span>${chili(tb.spice)}</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Type the scary task; get tiny physical steps. More 🌶️ = smaller pieces. The first step is always the easiest way in.</p>
+    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Type the scary task; get tiny steps. More 🌶️ = smaller pieces.</p>
     <div style="display:flex;gap:6px"><input class="inp" id="tbTask" placeholder="the task that won't start itself…" value="${esc(tb.task||'')}"><button class="btn btn-grad" data-act="tbBreak" ${tb.busy==='break'?'disabled':''}>${tb.busy==='break'?'…':'break it down'}</button></div>
-    ${tb.steps?`<div class="tb-steps" style="margin-top:10px">${totalMin?`<div class="label" style="margin-bottom:4px">~${totalMin} min all-in (honest minutes, not optimistic ones)</div>`:""}${tb.steps.map((s,i)=>`<div class="listrow"><span class="soft" style="min-width:20px;font-size:11px">${i+1}.</span><span class="grow" style="font-size:12.5px">${esc(tbStepText(s))}</span>${typeof s==="object"&&s.min?`<span class="label num">~${Number(s.min)}m</span>`:""}<button class="x" data-act="tbBreakStep" data-i="${i}" title="still too big — break this step smaller">🪓</button></div>`).join("")}
-      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-grad" data-act="tbStepsToPlanner">🗒️ add all to planner</button><button class="btn" data-act="tbClear">clear</button></div></div>`:""}
+    ${tb.steps?`<div class="tb-steps" style="margin-top:10px">${totalMin?`<div class="label" style="margin-bottom:4px">~${totalMin} min total</div>`:""}${tb.steps.map((s,i)=>`<div class="listrow"><span class="soft" style="min-width:20px;font-size:11px">${i+1}.</span><span class="grow" style="font-size:12.5px">${esc(tbStepText(s))}</span>${typeof s==="object"&&s.min?`<span class="label num">~${Number(s.min)}m</span>`:""}<button class="x" data-act="tbBreakStep" data-i="${i}" title="break this smaller">🪓</button></div>`).join("")}
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-grad" data-act="tbStepsToPlanner">🗒️ add to planner</button><button class="btn" data-act="tbClear">clear</button></div></div>`:""}
+  </section>
+  <section class="panel">
+    <div class="label" style="margin-bottom:6px">⏱️ Time estimator</div>
+    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Honest ranges — includes setup, transitions, and decision pauses.</p>
+    <div style="display:flex;gap:6px"><input class="inp" id="tbETask" placeholder="how long will … actually take?" value="${esc(tb.eTask||'')}"><button class="btn btn-grad" data-act="tbEstimate" ${tb.busy==='est'?'disabled':''}>${tb.busy==='est'?'…':'estimate'}</button></div>
+    ${tb.eOut?(tb.eOut.likely?`<div class="soft-card" style="margin-top:8px;font-size:12.5px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline"><span><b style="font-size:15px">${esc(tb.eOut.likely)}</b> <span class="label">realistic</span></span>${tb.eOut.bestCase?`<span class="soft">${esc(tb.eOut.bestCase)} <span class="label">if everything cooperates</span></span>`:""}</div>
+        ${tb.eOut.why?`<div class="soft" style="margin-top:6px;line-height:1.5">${esc(tb.eOut.why)}</div>`:""}
+        ${(tb.eOut.parts||[]).length?`<div style="margin-top:8px">${tb.eOut.parts.map(p2=>`<div style="display:flex;gap:8px;padding:2px 0;font-size:12px"><span class="grow">• ${esc(p2.text)}</span><span class="label num">~${Number(p2.min)||"?"}m</span></div>`).join("")}</div>`:""}
+      </div>`:`<div class="soft-card" style="margin-top:8px;font-size:12.5px"><b>${esc(tb.eOut.estimate||"")}</b> · <span class="soft">${esc(tb.eOut.note||"")}</span></div>`):""}
   </section>
   <section class="panel">
     <div class="label" style="margin-bottom:6px">⚖️ Tone judge <span class="muted">· how does it actually read?</span></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Paste a message you received and your brain is spiralling about — get an honest read of what it's actually saying (and what it's NOT). RSD first-aid. 💗</p>
-    <textarea class="inp" id="tbTText" rows="3" placeholder="paste the message here…">${esc(tb.tText||'')}</textarea>
+    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Paste a message you're spiralling about — RSD first-aid. 💗</p>
+    <textarea class="inp" id="tbTText" rows="2" placeholder="paste the message here…">${esc(tb.tText||'')}</textarea>
     <button class="btn btn-grad" data-act="tbTone" style="margin-top:8px" ${tb.busy==='tone'?'disabled':''}>${tb.busy==='tone'?'reading the room…':'⚖️ read it for me'}</button>
     ${tb.tOut?`<div class="soft-card" style="margin-top:10px">
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${(tb.tOut.vibe||[]).map(v=>`<span class="pill pill-lav">${esc(v)}</span>`).join("")}</div>
@@ -3264,29 +3357,20 @@ function viewToolbox(){
   <section class="panel">
     <div class="label" style="margin-bottom:6px">🪄 Formalizer</div>
     <p class="soft" style="font-size:11.5px;margin:0 0 8px">Paste what you want to say; pick how it should sound.</p>
-    <textarea class="inp" id="tbFText" rows="3" placeholder="the raw words…">${esc(tb.fText||'')}</textarea>
+    <textarea class="inp" id="tbFText" rows="2" placeholder="the raw words…">${esc(tb.fText||'')}</textarea>
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
       <select class="inp" id="tbFTone" style="max-width:200px">${["professional","friendly","sociable","more formal","shorter","softer / kinder","more assertive","easier to read"].map(t=>`<option ${tb.fTone===t?'selected':''}>${t}</option>`).join("")}</select>
       <button class="btn btn-grad" data-act="tbFormal" ${tb.busy==='formal'?'disabled':''}>${tb.busy==='formal'?'…':'rewrite'}</button></div>
     ${tb.fOut?`<div class="soft-card" style="margin-top:8px;font-size:12.5px;white-space:pre-wrap">${esc(tb.fOut)}</div><button class="btn" data-act="tbCopyF" style="margin-top:6px">📋 copy</button>`:""}
   </section>
-  <section class="panel">
-    <div class="label" style="margin-bottom:6px">⏱️ Time estimator</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">ADHD time-blindness antidote — honest ranges that include the hidden time (setup, transitions, decision pauses).</p>
-    <div style="display:flex;gap:6px"><input class="inp" id="tbETask" placeholder="how long will … actually take?" value="${esc(tb.eTask||'')}"><button class="btn btn-grad" data-act="tbEstimate" ${tb.busy==='est'?'disabled':''}>${tb.busy==='est'?'…':'estimate'}</button></div>
-    ${tb.eOut?(tb.eOut.likely?`<div class="soft-card" style="margin-top:8px;font-size:12.5px">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline"><span><b style="font-size:15px">${esc(tb.eOut.likely)}</b> <span class="label">realistic</span></span>${tb.eOut.bestCase?`<span class="soft">${esc(tb.eOut.bestCase)} <span class="label">if everything cooperates</span></span>`:""}</div>
-        ${tb.eOut.why?`<div class="soft" style="margin-top:6px;line-height:1.5">${esc(tb.eOut.why)}</div>`:""}
-        ${(tb.eOut.parts||[]).length?`<div style="margin-top:8px">${tb.eOut.parts.map(p2=>`<div style="display:flex;gap:8px;padding:2px 0;font-size:12px"><span class="grow">• ${esc(p2.text)}</span><span class="label num">~${Number(p2.min)||"?"}m</span></div>`).join("")}</div>`:""}
-      </div>`:`<div class="soft-card" style="margin-top:8px;font-size:12.5px"><b>${esc(tb.eOut.estimate||"")}</b> · <span class="soft">${esc(tb.eOut.note||"")}</span></div>`):""}
-  </section>
-  <section class="panel">
+  <section class="panel tb-span2">
     <div class="label" style="margin-bottom:6px">🧠 Brain-dump compiler</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Pour everything out, unsorted — it comes back as tidy groups.</p>
-    <textarea class="inp" id="tbCText" rows="4" placeholder="everything in your head, in any order…">${esc(tb.cText||'')}</textarea>
+    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Pour everything out unsorted — comes back as tidy groups.</p>
+    <textarea class="inp" id="tbCText" rows="2" placeholder="everything in your head, in any order…">${esc(tb.cText||'')}</textarea>
     <button class="btn btn-grad" data-act="tbCompile" style="margin-top:8px" ${tb.busy==='compile'?'disabled':''}>${tb.busy==='compile'?'…':'sort my brain'}</button>
-    ${tb.groups?`<div style="margin-top:10px">${tb.groups.map((g,gi)=>`<div class="soft-card" style="margin-bottom:8px"><div class="card-head" style="margin-bottom:6px"><span class="label">${esc(g.title)}</span><button class="btn" data-act="tbGroupToPlanner" data-i="${gi}" style="padding:3px 9px;font-size:11px">🗒️ → planner</button></div>${(g.items||[]).map(it=>`<div style="font-size:12.5px;padding:2px 0">• ${esc(it)}</div>`).join("")}</div>`).join("")}</div>`:""}
+    ${tb.groups?`<div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">${tb.groups.map((g,gi)=>`<div class="soft-card"><div class="card-head" style="margin-bottom:6px"><span class="label">${esc(g.title)}</span><button class="btn" data-act="tbGroupToPlanner" data-i="${gi}" style="padding:3px 9px;font-size:11px">🗒️ → planner</button></div>${(g.items||[]).map(it=>`<div style="font-size:12.5px;padding:2px 0">• ${esc(it)}</div>`).join("")}</div>`).join("")}</div>`:""}
   </section>
+  </div>
   </div>`;
 }
 /* ===================== PCOS / HEALTH ===================== */
@@ -4930,8 +5014,11 @@ function viewSettings(){
 
 /* ===================== PLANNER ===================== */
 const TASK_BUCKETS=[["personal","💜","Personal"],["health","💊","Health & appts"],["content","🎬","Content"],["hobbies","🎨","Hobbies"],["someday","🌙","Someday / maybe"]];
-const TASK_SPOONS=[["low","🌙","Low"],["some","🌤","Some"],["full","🌞","Full"]];
-function spoonMeta(s){ return TASK_SPOONS.find(x=>x[0]===s)||TASK_SPOONS[1]; }
+const TASK_ENERGY=[["low","🌙","Low"],["medium","🌤️","Medium"],["high","☀️","High"]];
+const TASK_PRIORITY=[["low","⬇️","Low"],["medium","→","Medium"],["high","⬆️","High"],["urgent","🔥","Urgent"]];
+function normEnergy(s){ return s==="some"?"medium":s==="full"?"high":(s||"medium"); }
+function energyMeta(s){ return TASK_ENERGY.find(x=>x[0]===normEnergy(s))||TASK_ENERGY[1]; }
+function spoonMeta(s){ return energyMeta(s); }
 /* ---- planner upgrades: status board, sorting lens, due dates, linked reminders ---- */
 const TASK_STATUSES=[["todo","🌱 To do"],["doing","🔆 Doing"],["done","✅ Done"]];
 function taskStatus(t){ return t.status||(t.done?"done":"todo"); }
@@ -4939,11 +5026,11 @@ function remByTask(){ const m={}; (state.sentinel.customReminders||[]).forEach(r
 function sortTasks(arr){
   const m=state.boardSort||"custom"; if(m==="custom")return arr;          // the lens never rearranges her saved order
   const bIdx=k=>{ const i=TASK_BUCKETS.findIndex(b=>b[0]===k); return i<0?99:i; };
-  const sIdx={low:0,some:1,full:2};                                       // gentle wins float up on hard days
+  const sIdx={low:0,medium:1,some:1,high:2,full:2};                       // gentle wins float up on hard days
   return arr.slice().sort((a,b)=>{
     if(m==="bucket"){ const d=bIdx(a.bucket)-bIdx(b.bucket); if(d)return d; return String(a.due||"9999").localeCompare(String(b.due||"9999")); }
     if(m==="due") return String(a.due||"9999-99").localeCompare(String(b.due||"9999-99"));
-    if(m==="spoon"){ const d=((sIdx[a.spoon]??1)-(sIdx[b.spoon]??1)); if(d)return d; return String(a.due||"9999").localeCompare(String(b.due||"9999")); }
+    if(m==="energy"){ const d=((sIdx[normEnergy(a.energy||a.spoon)]??1)-(sIdx[normEnergy(b.energy||b.spoon)]??1)); if(d)return d; return String(a.due||"9999").localeCompare(String(b.due||"9999")); }
     return 0; });
 }
 function duePill(t){
@@ -5008,49 +5095,112 @@ function taskBoard(list){
 /* keep the add-a-task form alive across filter/sort/view re-renders */
 function capturePlnDraft(){ const g=id=>{const e=document.getElementById(id);return e?e.value:null;};
   const t=g("plnText"); if(t==null) return;
-  state.plnDraft={text:t,bucket:g("plnBucket"),spoon:g("plnSpoon"),due:g("plnDue")}; }
+  state.plnDraft={text:t,bucket:g("plnBucket"),energy:g("plnEnergy"),priority:g("plnPriority"),emoji:g("plnEmoji"),due:g("plnDue")}; }
 function viewPlanner(){
-  if(state.plannerView===undefined){ try{state.plannerView=localStorage.getItem("mifu-planner-view")||"list";}catch(e){state.plannerView="list";} }
-  if(state.boardSort===undefined){ try{state.boardSort=localStorage.getItem("mifu-board-sort")||"custom";}catch(e){state.boardSort="custom";} }
   const tasks=(state.sentinel.tasks||[]);
-  const filt=state.plannerSpoon;
-  const shown=filt==="all"?tasks:tasks.filter(t=>t.spoon===filt);
-  const open=shown.filter(t=>!t.done), done=shown.filter(t=>t.done);
-  const byBucket=b=>sortTasks(open.filter(t=>t.bucket===b));
-  const board=state.plannerView==="board";
-  const SORTS=[["custom","⠿ custom"],["bucket","🗂 category"],["due","📅 due"],["spoon","🥄 spoons"]];
+  const today=TODAY;
+  const tomorrow=(()=>{ const d=new Date(today+"T00:00"); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
+  const wkEnd=(()=>{ const d=new Date(today+"T00:00"); d.setDate(d.getDate()+6); return d.toISOString().slice(0,10); })();
+  const el=state.energyLevel||"medium";
+  const showAll=!!state.plnShowAll;
+  const doneAll=tasks.filter(t=>t.done);
+  const doneToday=doneAll.filter(t=>t.completedAt===today);
+  const open=tasks.filter(t=>!t.done);
+  const seen=new Set();
+  const grab=(fn)=>{ const r=open.filter(t=>!seen.has(t.id)&&fn(t)); r.forEach(t=>seen.add(t.id)); return r; };
+  const priOrder={urgent:0,high:1,medium:2,low:3};
+  const urgencySort=(a,b)=>(priOrder[a.priority||"medium"]||2)-(priOrder[b.priority||"medium"]||2);
+  const overdue=grab(t=>t.due&&t.due<today).sort(urgencySort);
+  const dueToday=grab(t=>t.due===today).sort(urgencySort);
+  const dueWeek=grab(t=>t.due&&t.due>=tomorrow&&t.due<=wkEnd).sort(urgencySort);
+  const urgentRest=grab(t=>(t.priority||"medium")==="urgent");
+  const matchesEnergy=t=>{ const te=normEnergy(t.energy||t.spoon); if(showAll)return true; if(el==="low")return te==="low"; if(el==="medium")return te==="low"||te==="medium"; return true; };
+  const energyMatched=grab(t=>matchesEnergy(t));
+  const later=grab(()=>true);
+  const urgentCount=open.filter(t=>(t.priority||"medium")==="urgent").length;
+  const dueTodayCount=open.filter(t=>t.due===today).length;
+  const dueWeekCount=open.filter(t=>t.due&&t.due>=tomorrow&&t.due<=wkEnd).length;
+
+  function plnTaskRow(t){
+    const pri=t.priority||"medium"; const em2=energyMeta(t.energy||t.spoon);
+    const bm=TASK_BUCKETS.find(b=>b[0]===t.bucket)||TASK_BUCKETS[0]; const R=remByTask()[t.id];
+    const subLeft=(t.sub||[]).filter(s=>!s.done).length;
+    const priBadge=pri==="urgent"?`<span class="pln-badge pri-urgent">🔥 urgent</span>`:pri==="high"?`<span class="pln-badge pri-high">↑ high</span>`:pri==="low"?`<span class="pln-badge pri-low">↓ low</span>`:"";
+    return `<div class="pln-row">
+      <button class="x" data-act="toggleTask" data-v="${t.id}" style="color:${t.done?"var(--mint)":"var(--muted)"};font-size:16px;flex-shrink:0;padding-top:2px">${t.done?"●":"○"}</button>
+      <div class="pln-row-body">
+        <div class="pln-rt${t.done?" done-text":""}">${t.emoji?esc(t.emoji)+" ":""}${esc(t.text)}</div>
+        <div class="pln-rm">${priBadge}<span class="pln-badge en-${em2[0]}">${em2[1]}</span><span class="pln-badge cat-pill">${bm[1]}</span>${duePill(t)}${subLeft?`<span class="pln-badge cat-pill">▸${subLeft}</span>`:""}${R?remBellBtn(t,R):""}
+          <button class="x" data-act="taskEdit" data-v="${t.id}" style="font-size:11px;margin-left:auto;color:var(--muted)">✏️</button>
+          <button class="x" data-act="delTask" data-v="${t.id}" style="font-size:11px;color:var(--muted)">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  function mkSec(emoji,title,items,cls,emptyMsg){
+    const show=items.length>0||emptyMsg;
+    if(!show)return "";
+    return `<div class="pln-sec${cls?" "+cls:""}"><div class="pln-sh"><span class="pln-sh-ttl">${emoji} ${title}</span><span class="pln-cnt">${items.length}</span></div>${items.length?items.map(plnTaskRow).join(""):`<div class="pln-empty-sm">${emptyMsg}</div>`}</div>`;
+  }
+
+  const remPreview=(()=>{
+    try{
+      const active=activeReminders(); if(!active.length)return "";
+      const sorted=active.map(r=>({r,eff:nextReminderDate(r)})).sort((a,b)=>a.eff<b.eff?-1:1);
+      const todayCnt=sorted.filter(({eff})=>eff===today).length;
+      const next=sorted[0];
+      return `<div class="pln-rem-preview"><div class="pln-sh"><span class="pln-sh-ttl">⏰ Reminders</span><span class="pln-cnt">${active.length}</span></div>${todayCnt?`<div class="pln-rem-row">📅 <b>${todayCnt}</b> today</div>`:""}${next?`<div class="pln-rem-row">Next: ${esc(next.r.text)}${next.r.time?" · "+fmt12(next.r.time):""}</div>`:""}
+        <button class="btn" data-act="tab" data-tab="life" style="font-size:11px;margin-top:6px;padding:3px 9px">Open reminders →</button></div>`;
+    }catch(e){return "";}
+  })();
+
+  const draft=state.plnDraft||{};
+  const moreOpen=!!state.plnMoreOpen;
+  const energyNote=el==="low"?"🌙 Showing gentle tasks first.":el==="medium"?"🌤️ Low + medium tasks first.":"☀️ All tasks — full energy mode.";
+
+  const leftCol=[
+    mkSec("🚨","Overdue",overdue,"s-overdue","No overdue tasks. ✨"),
+    mkSec("📌","Due Today",dueToday,"s-today",""),
+    mkSec("📅","Due This Week",dueWeek,"",""),
+    doneAll.length?`<details class="acc"><summary style="font-size:12.5px">✅ Done (${doneAll.length}${doneToday.length?" · "+doneToday.length+" today":""})</summary><div class="acc-body">${doneAll.map(plnTaskRow).join("")}</div></details>`:""
+  ].filter(Boolean).join("");
+
+  const rightCol=[
+    urgentRest.length?mkSec("🔥","Urgent",urgentRest,"s-urgent",""):"",
+    `<div class="pln-sec s-energy"><div class="pln-sh"><span class="pln-sh-ttl">⚡ Energy Match</span><span class="pln-cnt">${energyMatched.length}</span></div><div style="font-size:10.5px;color:var(--ink-soft);margin-bottom:6px">${energyNote}</div>${energyMatched.length?energyMatched.map(plnTaskRow).join(""):`<div class="pln-empty-sm">No tasks matching your current energy.</div>`}${!showAll&&later.length?`<button class="btn" data-act="plnToggleAll" style="font-size:11px;margin-top:8px;width:100%">Show all tasks (${later.length} more)</button>`:""}</div>`,
+    showAll&&later.length?mkSec("🗂️","Backlog",later,"",""):"",
+    remPreview
+  ].filter(Boolean).join("");
+
   return `
-  <section class="panel">
-    <div class="card-head"><h2 style="font-size:18px">🗒️ Planner</h2>
-      <div class="seg"><button data-act="plnView" data-v="list" class="${board?'':'on'}">📋 List</button><button data-act="plnView" data-v="board" class="${board?'on':''}">🗂 Board</button></div></div>
-    <p class="soft" style="font-size:12px;margin:0 0 10px">One soft list. Tag each task by how many spoons it needs — on low days, filter to just the gentle ones. 🌙</p>
-    ${spoonBudgetBanner()}
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <div class="seg">
-        <button data-act="plnFilter" data-v="all" class="${filt==='all'?'on':''}">All</button>
-        ${TASK_SPOONS.map(([v,e,l])=>`<button data-act="plnFilter" data-v="${v}" class="${filt===v?'on':''}">${e} ${l}</button>`).join("")}
-      </div>
-      <div class="seg">${SORTS.map(([v,l])=>`<button data-act="plnSort" data-v="${v}" class="${(state.boardSort||'custom')===v?'on':''}">${l}</button>`).join("")}</div>
+  <section class="panel" style="padding-bottom:10px">
+    <div class="card-head" style="margin-bottom:6px"><h2 style="font-size:17px">🗒️ Planner</h2></div>
+    <div class="pln-stats">
+      ${overdue.length?`<div class="pln-stat has-alert"><div class="pln-stat-n">${overdue.length}</div><div class="pln-stat-l">Overdue</div></div>`:""}
+      <div class="pln-stat"><div class="pln-stat-n">${dueTodayCount}</div><div class="pln-stat-l">Today</div></div>
+      <div class="pln-stat"><div class="pln-stat-n">${dueWeekCount}</div><div class="pln-stat-l">This week</div></div>
+      ${urgentCount?`<div class="pln-stat has-alert"><div class="pln-stat-n">${urgentCount}</div><div class="pln-stat-l">Urgent</div></div>`:""}
+      <div class="pln-stat"><div class="pln-stat-n">${doneToday.length}</div><div class="pln-stat-l">Done today</div></div>
     </div>
-    <div class="soft-card">
-      <input class="inp" id="plnText" placeholder="add a task… (Enter)" value="${esc((state.plnDraft||{}).text||'')}">
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <select class="inp" id="plnBucket" style="max-width:175px">${TASK_BUCKETS.map(([v,e,l])=>`<option value="${v}" ${(state.plnDraft||{}).bucket===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
-        <select class="inp" id="plnSpoon" style="max-width:130px">${TASK_SPOONS.map(([v,e,l])=>`<option value="${v}" ${(((state.plnDraft||{}).spoon)||'some')===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
-        <span style="display:inline-flex;flex-direction:column;gap:2px;flex:1 1 140px;min-width:0;max-width:170px"><span class="soft" style="font-size:10px">due · optional</span><input class="inp" id="plnDue" type="date" value="${esc((state.plnDraft||{}).due||'')}"></span>
-        <button class="btn btn-grad" data-act="addTask">Add</button>
+    <div style="background:rgba(169,143,224,.06);border-radius:12px;padding:10px 12px">
+      <div class="pln-add-bar">
+        <input class="inp" id="plnText" placeholder="Add a task… (Enter)" value="${esc(draft.text||'')}">
+        <button class="btn btn-grad" data-act="addTask" style="white-space:nowrap;flex-shrink:0">＋ Add</button>
+        <button class="x" data-act="plnMoreToggle" title="more options" style="font-size:18px;padding:3px 7px;color:var(--muted)">⋯</button>
       </div>
+      ${moreOpen?`<div class="pln-more">
+        <select class="inp" id="plnBucket" style="max-width:155px">${TASK_BUCKETS.map(([v,e,l])=>`<option value="${v}" ${draft.bucket===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
+        <select class="inp" id="plnEnergy" style="max-width:115px">${TASK_ENERGY.map(([v,e,l])=>`<option value="${v}" ${(draft.energy||"medium")===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
+        <select class="inp" id="plnPriority" style="max-width:115px">${TASK_PRIORITY.map(([v,e,l])=>`<option value="${v}" ${(draft.priority||"medium")===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
+        <input class="inp" id="plnEmoji" placeholder="emoji" value="${esc(draft.emoji||'')}" style="max-width:60px">
+        <input class="inp" id="plnDue" type="date" value="${esc(draft.due||'')}" style="max-width:150px">
+      </div>`:""}
     </div>
   </section>
-  ${board?`<section class="panel">${taskBoard(shown)}</section>`:`
-  ${TASK_BUCKETS.map(([b,e,l])=>{ const items=byBucket(b); if(!items.length) return "";
-    return `<section class="panel"><div class="label" style="margin-bottom:8px">${e} ${l}</div>${items.map(taskRow).join("")}</section>`; }).join("")}
-  ${(function(){ const known=TASK_BUCKETS.map(b=>b[0]); const stray=sortTasks(open.filter(t=>!known.includes(t.bucket))); return stray.length?`<section class="panel"><div class="label" style="margin-bottom:8px">🗂 Other</div>${stray.map(taskRow).join("")}</section>`:""; })()}
-  ${open.length?"":`<section class="panel"><p class="soft" style="font-size:12.5px;text-align:center;margin:0">Nothing here right now — rest is allowed. 🌸</p></section>`}
-  ${done.length?`<details class="acc"><summary>✅ Done (${done.length})</summary><div class="acc-body">
-    ${done.map(t=>`<div class="listrow"><span class="grow soft" style="text-decoration:line-through">${esc(t.text)}</span>${duePill(t)}<button class="x" data-act="delTask" data-v="${t.id}">✕</button></div>`).join("")}
-  </div></details>`:''}`}
-  ${remindersCard()}
+  <div class="pln-grid">
+    <div class="pln-col">${leftCol||`<div class="pln-sec"><div class="pln-empty-sm">Nothing overdue or due soon. 🌸</div></div>`}</div>
+    <div class="pln-col">${rightCol}</div>
+  </div>
   ${DISCLAIMER}`;
 }
 /* board drag — native HTML5 for mouse; finger/Pencil use the ◀ ▶ buttons (iOS has no native drag) */
@@ -5886,7 +6036,7 @@ const H={
     catch(e){ toast("hiccup 🌧️"); } state.tb.busy=""; render(); },
   async tbStepsToPlanner(){ const steps=(state.tb&&state.tb.steps)||[]; if(!steps.length)return;
     const main=(state.tb.task||"task").slice(0,80);
-    await setSent(n=>({...n,tasks:[...(n.tasks||[]),{id:"t"+Date.now(),text:main,bucket:"personal",spoon:"some",done:false,status:"todo",sub:steps.map((s,i)=>({id:"s"+Date.now()+i,text:tbStepText(s).slice(0,140),done:false}))}]}));
+    await setSent(n=>({...n,tasks:[...(n.tasks||[]),{id:"t"+Date.now(),text:main,bucket:"personal",energy:"medium",priority:"medium",done:false,status:"todo",sub:steps.map((s,i)=>({id:"s"+Date.now()+i,text:tbStepText(s).slice(0,140),done:false}))}]}));
     toast("in the planner, broken down 🗒️✨"); render(); },
   async tbTone(){ tbCapture(); const t=(state.tb.tText||"").trim(); if(!t){ toast("paste the message first 🌸"); return; }
     if(DEMO||!SB){ toast("needs live mode ❄️"); return; }
@@ -5910,7 +6060,7 @@ const H={
     try{ const d=await aiCall("toolbox",{op:"compile",text:t}); state.tb.groups=(d&&d.groups)||null; if(d&&d.error)toast(d.error); }
     catch(e){ toast("hiccup 🌧️"); } state.tb.busy=""; render(); },
   async tbGroupToPlanner(el){ const g=((state.tb&&state.tb.groups)||[])[Number(el.dataset.i)]; if(!g||!(g.items||[]).length)return;
-    await setSent(n=>({...n,tasks:[...(n.tasks||[]),...g.items.map((it,i)=>({id:"t"+Date.now()+i,text:String(it).slice(0,140),bucket:"personal",spoon:"some",done:false,status:"todo",sub:[]}))]}));
+    await setSent(n=>({...n,tasks:[...(n.tasks||[]),...g.items.map((it,i)=>({id:"t"+Date.now()+i,text:String(it).slice(0,140),bucket:"personal",energy:"medium",priority:"medium",done:false,status:"todo",sub:[]}))]}));
     toast("“"+g.title+"” → planner 🗒️"); render(); },
   // --- 📓 journal page ---
   jrShift(el){ const d=Number(el.dataset.d)||0; state.jrRef=new Date(state.jrRef.getFullYear(),state.jrRef.getMonth()+d,1); render(); },
@@ -6310,16 +6460,23 @@ const H={
   },
 
   // --- Planner ---
-  plnFilter(el){ capturePlnDraft(); state.plannerSpoon=el.dataset.v; render(); },
+  setEnergy(el){ state.energyLevel=el.dataset.v; renderGlobalHeader(); render(); },
+  plnMoreToggle(){ capturePlnDraft(); state.plnMoreOpen=!state.plnMoreOpen; render(); },
+  plnToggleAll(){ capturePlnDraft(); state.plnShowAll=!state.plnShowAll; render(); },
+  plnFilter(el){ capturePlnDraft(); state.plannerEnergy=el.dataset.v; render(); },
   async addTask(){ const text=($("#plnText").value||"").trim(); if(!text){ toast("type a task"); return; }
-    const bucket=$("#plnBucket").value, spoon=$("#plnSpoon").value; const due=($("#plnDue")&&$("#plnDue").value)||"";
+    const bucket=($("#plnBucket")&&$("#plnBucket").value)||"personal";
+    const energy=($("#plnEnergy")&&$("#plnEnergy").value)||"medium";
+    const priority=($("#plnPriority")&&$("#plnPriority").value)||"medium";
+    const emoji=($("#plnEmoji")&&$("#plnEmoji").value)||"";
+    const due=($("#plnDue")&&$("#plnDue").value)||"";
     state.plnDraft=null;
-    await setSent(n=>({...n,tasks:[...(n.tasks||[]),{id:"t"+Date.now(),text,bucket,spoon,done:false,sub:[],status:"todo",...(due?{due}:{})}]})); toast("added 🗒️"); render(); },
+    await setSent(n=>({...n,tasks:[...(n.tasks||[]),{id:"t"+Date.now(),text,bucket,energy,priority,...(emoji?{emoji}:{}),done:false,sub:[],status:"todo",...(due?{due}:{})}]})); toast("added 🗒️"); render(); },
   async toggleTask(el){ const id=el.dataset.v;
     await setSent(n=>{ let c=(n.customReminders||[]).slice();
       const ts=(n.tasks||[]).map(t=>{ if(t.id!==id)return t; const done=!t.done;
         if(done) c=c.map(r=>r.taskId===id&&!r.done?{...r,done:true}:r);     // one thing, one ping — but unchecking never resurrects the ping
-        return {...t,done,status:done?"done":"todo"}; });
+        return {...t,done,status:done?"done":"todo",...(done?{completedAt:TODAY}:{})}; });
       return {...n,tasks:ts,customReminders:c}; });
     render(); },
   plnView(el){ capturePlnDraft(); state.plannerView=el.dataset.v; try{localStorage.setItem("mifu-planner-view",state.plannerView);}catch(e){} render(); },
@@ -6334,7 +6491,8 @@ const H={
       <div class="field"><div class="label">Task</div><input class="inp" id="teText" value="${esc(t.text)}"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
         <select class="inp" id="teBucket" style="max-width:175px">${TASK_BUCKETS.map(([v,e,l])=>`<option value="${v}" ${t.bucket===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
-        <select class="inp" id="teSpoon" style="max-width:130px">${TASK_SPOONS.map(([v,e,l])=>`<option value="${v}" ${(t.spoon||'some')===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
+        <select class="inp" id="teEnergy" style="max-width:115px">${TASK_ENERGY.map(([v,e,l])=>`<option value="${v}" ${normEnergy(t.energy||t.spoon||'medium')===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
+        <select class="inp" id="tePriority" style="max-width:115px">${TASK_PRIORITY.map(([v,e,l])=>`<option value="${v}" ${(t.priority||'medium')===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
         <span style="display:inline-flex;flex-direction:column;gap:2px;flex:1 1 140px;min-width:0"><span class="soft" style="font-size:10px">due · optional</span><input class="inp" id="teDue" type="date" value="${t.due||""}"></span>
       </div>
       <p class="soft" style="font-size:11px;margin:8px 0 12px">renaming also renames its linked reminder, so they stay one thing 💗</p>
@@ -6342,8 +6500,8 @@ const H={
     </div></div>`; },
   async taskEditSave(el){ const id=el.dataset.v; const g=i=>{const e2=$("#"+i);return e2?e2.value:"";};
     const text=(g("teText")||"").trim(); if(!text){ toast("the task needs some words 🌱"); return; }
-    const bucket=g("teBucket")||"personal", spoon=g("teSpoon")||"some", due=g("teDue")||"";
-    await setSent(n=>{ const ts=(n.tasks||[]).map(t=>t.id===id?{...t,text,bucket,spoon,due:due||undefined}:t);
+    const bucket=g("teBucket")||"personal", energy=g("teEnergy")||"medium", priority=g("tePriority")||"medium", due=g("teDue")||"";
+    await setSent(n=>{ const ts=(n.tasks||[]).map(t=>t.id===id?{...t,text,bucket,energy,priority,due:due||undefined}:t);
       const c=(n.customReminders||[]).map(r=>r.taskId===id&&!r.done?{...r,text}:r);   // linked ping keeps the new wording
       return {...n,tasks:ts,customReminders:c}; });
     $("#modal").innerHTML=""; toast("saved ✏️"); render(); },
@@ -6888,8 +7046,10 @@ document.addEventListener("click",async e=>{ const el=e.target.closest("[data-ac
   document.addEventListener("pointercancel",()=>{ if(rr){ rr.row.style.opacity=""; rr.row.style.boxShadow=""; rr=null; } },true);
 })();
 /* ===== 🕐 hero clock — keeps the big 24h clock honest without re-rendering the page ===== */
-setInterval(()=>{ try{ const c=document.getElementById("heroClock"); if(!c)return; c.textContent=nowHM();
-  const d=document.getElementById("heroDate"); if(d)d.textContent=logicalDisplayDate().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:"Europe/Amsterdam"});
+setInterval(()=>{ try{
+  const c=document.getElementById("heroClock"); if(c) c.textContent=nowHM();
+  const d=document.getElementById("heroDate"); if(d) d.textContent=logicalDisplayDate().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:"Europe/Amsterdam"});
+  const gc=document.getElementById("ghClock"); if(gc) gc.textContent=nowHM();
 }catch(e){} },15000);
 // global undo — Ctrl+Z / ⌘Z rolls back the last data change, unless you're typing in a field (native undo wins there)
 document.addEventListener("keydown",e=>{
@@ -7543,7 +7703,7 @@ async function execAgentAction(a){
     if(T==="undoLast"){ setTimeout(()=>{ try{ undoLast(); }catch(e){} },350); return "↩️ undoing your last change"; }
     if(T==="addTask"){ const due=(a.due&&/^\d{4}-\d{2}-\d{2}$/.test(a.due))?a.due:null;
       const bucket=TASK_BUCKETS.some(b=>b[0]===a.bucket)?a.bucket:"personal";   // unknown buckets would vanish from the list view
-      await setSent(n=>({...n,tasks:[...(n.tasks||[]),{id:"t"+Date.now(),text:a.text,bucket,spoon:a.spoon||"some",done:false,sub:[],status:"todo",...(due?{due}:{})}]}));
+      await setSent(n=>({...n,tasks:[...(n.tasks||[]),{id:"t"+Date.now(),text:a.text,bucket,energy:normEnergy(a.energy||a.spoon||"medium"),priority:a.priority||"medium",done:false,sub:[],status:"todo",...(due?{due}:{})}]}));
       return "🗒️ task: "+a.text+(due?" (due "+fmtDate(due)+")":""); }
     if(T==="setTaskDue"){ let hit=null;
       await setSent(n=>{ const ts=(n.tasks||[]).slice(); const i=findByText(ts,a.text,"text"); if(i<0)return n;
