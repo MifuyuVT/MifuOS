@@ -196,7 +196,7 @@
   /* CSS Grid masonry: 2 equal columns, items align to their own tops — no stretching, stable drag */
   .grid-modular{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap,16px);align-items:start;}
   .grid-col{display:contents;}
-  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);}
+  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);}
   .home-widget.span2{grid-column:1/-1;}
   @media(max-width:760px){ .grid-modular{grid-template-columns:1fr;} }
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
@@ -1087,7 +1087,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.gridFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.safariPaint";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
