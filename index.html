@@ -200,7 +200,7 @@
   @media(max-width:760px){ .grid-modular{columns:1;} }
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
-  .home-widget.dragsrc,#nav .tab.dragsrc{opacity:0;}
+  .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
   .home-widget.min>.panel,.home-widget.min>section{max-height:54px;overflow:hidden;}
   #nav .tab{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}   /* pan-y: finger/Pencil can still scroll the page from a tab; sideways drag reorders */
   .drag-clone{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:18px;box-shadow:0 16px 38px rgba(120,80,120,.34);opacity:.97;}
@@ -1086,7 +1086,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.creatorRestructure";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.dragFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -5915,7 +5915,7 @@ const H={
   async streamPrepToggle(el){ const k=el.dataset.k; if(!k)return;
     const on=!((state.today.streamPrep||{})[k]);
     await setToday(n=>({...n,streamPrep:{...(n.streamPrep||{}),[k]:on}}));
-    if(on && streamPrepAllDone()){ toast("stream prep complete — go get 'em! 🎉"); popConfetti(el.closest('.panel')); }
+    if(on && streamPrepAllDone()){ toast("stream prep complete — go get 'em! 🎉"); popConfetti(el.closest('.panel')); setLayout(state.tab,L=>{ delete L.min["contentops"]; }); }
     render(); },
   // --- edit stream-prep + off-stream lists (add/remove, saved to the account) ---
   spEdit(){ state.spEdit=!state.spEdit; render(); },
@@ -8033,6 +8033,7 @@ start();
     const fr=x.item.getBoundingClientRect();
     if(x.ghost){ x.ghost.style.transition="transform .2s cubic-bezier(.2,.8,.25,1),opacity .2s"; x.ghost.style.transform="translate("+fr.left+"px,"+fr.top+"px) scale(1)"; x.ghost.style.opacity="0"; const gh=x.ghost; setTimeout(()=>{ gh&&gh.remove(); },220); }
     x.item.classList.remove("dragsrc");
+    void x.item.offsetHeight; // force WebKit repaint — Safari sometimes keeps visibility:hidden cached without this
     if(x.isTab){ const order=[...x.c.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key)); commitTabs(order); }
     else {
       const grid=x.c.closest(".grid-modular")||x.c;
@@ -8044,7 +8045,7 @@ start();
       setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){}
     }
   },true);
-  document.addEventListener("pointercancel",()=>{ if(!d)return; if(d.ghost)d.ghost.remove(); if(d.item){d.item.classList.remove("dragsrc","resizing","reordering");} d=null; },true);
+  document.addEventListener("pointercancel",()=>{ if(!d)return; if(d.ghost)d.ghost.remove(); if(d.item){d.item.classList.remove("dragsrc","resizing","reordering"); void d.item.offsetHeight;} d=null; },true);
   document.addEventListener("click",e=>{ if(sc){ e.stopPropagation(); e.preventDefault(); sc=false; } },true);
   document.addEventListener("toggle",(e)=>{ if(e.target&&e.target.id==="foodMedsDetails"){ state.foodMedsOpen=e.target.open; }   // keep the meds list open while she ticks
     if(MODULAR_TABS.includes(state.tab)){ try{layoutHome();}catch(_){} } },true);
