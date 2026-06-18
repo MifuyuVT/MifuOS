@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -193,12 +193,12 @@
   /* modular layout — drag-reorder · resize · minimize/remove · masonry */
   /* masonry via CSS multi-column: each column flows independently so cards stack
      tightly at their own heights — no row-snapping, no gaps. span2 = full width. */
-  /* CSS Grid masonry: 2 equal columns, items align to their own tops — no stretching, stable drag */
-  .grid-modular{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap,16px);align-items:start;}
+  /* multicol masonry: each column fills independently — no row-height forcing, no gaps under short cards */
+  .grid-modular{columns:2;column-gap:var(--gap,16px);}
   .grid-col{display:contents;}
-  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);}
-  .home-widget.span2{grid-column:1/-1;}
-  @media(max-width:760px){ .grid-modular{grid-template-columns:1fr;} }
+  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);break-inside:avoid;-webkit-column-break-inside:avoid;margin-bottom:var(--gap,16px);width:100%;}
+  .home-widget.span2{column-span:all;-webkit-column-span:all;margin-top:var(--gap,16px);}
+  @media(max-width:760px){ .grid-modular{columns:1;} }
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
   .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
@@ -211,7 +211,7 @@
   .home-widget:hover .home-tools button,.home-tools button:hover{opacity:.95;}
   .home-resize{position:absolute;right:4px;bottom:4px;z-index:6;border:none;background:rgba(255,255,255,.72);border-radius:8px;font-size:14px;line-height:1;color:#9b8fae;cursor:nwse-resize;padding:4px 6px;opacity:.45;touch-action:none;user-select:none;-webkit-user-select:none;}
   .home-widget:hover .home-resize,.home-resize:hover{opacity:.95;}
-  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;grid-column:1/-1;width:100%;margin-top:4px;}
+  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;column-span:all;-webkit-column-span:all;width:100%;margin-top:4px;}
   body.locked .home-tools,body.locked .home-resize,body.locked .home-add{display:none!important;}
   #lockChip.on{background:#fde2f2;color:var(--sakura-deep);}
   @media (hover:none){ .home-tools button,.home-resize{opacity:.92;} .home-tools button{padding:7px 9px;font-size:14px;} .home-resize{padding:6px 9px;font-size:15px;} .sticky-tools button{width:24px;height:24px;font-size:13px;} .sticky-head{height:32px;} }
@@ -1087,7 +1087,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.safariPaint";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.multicolDragFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -8024,7 +8024,8 @@ start();
     if(d.mode==="resize"){ const unit=d.startW/d.startCols||d.startW; let nc=Math.round((d.startW+(e.clientX-d.sx))/unit); nc=Math.max(1,Math.min(2,nc)); if(nc!==d.cols){ d.cols=nc; d.item.classList.toggle("span2", nc>=2); d.item.dataset.c=cForSpan(nc); } const nh=Math.max(120,Math.round(d.startH+(e.clientY-d.sy))); d.h=nh; if(d.panel)d.panel.style.minHeight=nh+"px"; d.item.dataset.h=nh; relayoutSoon(); return; }
     moveGhost(e.clientX,e.clientY);
     const el=document.elementFromPoint(e.clientX,e.clientY), over=el&&el.closest(d.itemSel);
-    if(over&&over!==d.item&&(over.parentElement===d.c||over.closest(".grid-modular")===d.c)){ const r=over.getBoundingClientRect(), before=d.horiz?(e.clientX<r.left+r.width/2):(e.clientY<r.top+r.height/2); const ref=before?over:over.nextSibling; if(ref!==d.item){ flipReorder(d.c, ()=>d.c.insertBefore(d.item, ref)); } }
+    if(over&&over!==d.item&&(over.parentElement===d.c||over.closest(".grid-modular")===d.c)){ const r=over.getBoundingClientRect(), before=d.horiz?(e.clientX<r.left+r.width/2):(e.clientY<r.top+r.height/2); const ref=before?over:over.nextSibling; if(ref!==d.item) d.dropRef=ref; }
+    // tab reorder still does live-move (tabs are a flat row, no jumping); home widgets only commit on drop
   },true);
   document.addEventListener("pointerup",()=>{
     if(!d)return; const x=d; d=null; try{x.cap.releasePointerCapture(x.pid);}catch(_){}
@@ -8033,16 +8034,14 @@ start();
     sc=true; setTimeout(()=>sc=false,350);
     const fr=x.item.getBoundingClientRect();
     if(x.ghost){ x.ghost.style.transition="transform .2s cubic-bezier(.2,.8,.25,1),opacity .2s"; x.ghost.style.transform="translate("+fr.left+"px,"+fr.top+"px) scale(1)"; x.ghost.style.opacity="0"; const gh=x.ghost; setTimeout(()=>{ gh&&gh.remove(); },220); }
+    if(!x.isTab && x.dropRef!==undefined) x.c.insertBefore(x.item, x.dropRef||null);
     x.item.classList.remove("dragsrc");
-    void x.item.offsetHeight; // force WebKit repaint — Safari sometimes keeps visibility:hidden cached without this
+    void x.item.offsetHeight; // force WebKit repaint
     if(x.isTab){ const order=[...x.c.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key)); commitTabs(order); }
     else {
       const grid=x.c.closest(".grid-modular")||x.c;
       const tab=grid.getAttribute("data-tab")||x.c.getAttribute("data-tab");
-      const cols=[...grid.querySelectorAll(".grid-col")];
-      let order;
-      if(cols.length>1){ const co=cols.map(c=>[...c.querySelectorAll(".home-widget")].map(it=>it.getAttribute("data-w"))); order=[]; const ml=Math.max(co[0].length,co[1]?.length||0); for(let i=0;i<ml;i++) co.forEach(c=>{ if(c[i]) order.push(c[i]); }); }
-      else order=[...x.c.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key));
+      const order=[...grid.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key));
       setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){}
     }
   },true);
