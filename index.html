@@ -107,7 +107,7 @@
   .scale button.on{background:linear-gradient(135deg,var(--peri),var(--sakura));border-color:var(--peri);color:#fff;}
   .scale-ends{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:3px;}
   .field{margin:12px 0;} .field>.label{margin-bottom:6px;}
-  .chiptog{border:1.5px solid var(--line-2);border-radius:999px;padding:7px 13px;background:#fff;color:var(--ink-soft);font-size:12.5px;display:inline-flex;align-items:center;gap:7px;}
+  .chiptog{border:1.5px solid var(--line-2);border-radius:999px;padding:7px 13px;background:#fff;color:var(--ink-soft);font-size:12.5px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0;}
   .chiptog.on{background:#fde2f2;border-color:var(--sakura);color:var(--sakura-deep);}
   .chiprow{display:flex;flex-wrap:wrap;gap:7px;}
   .sitebtn{border:1.5px solid var(--line-2);border-radius:11px;padding:7px 11px;background:#fff;color:var(--ink-soft);font-size:12px;}
@@ -194,7 +194,7 @@
      Cards snap to whole columns so they always tile together with no orphan widths. */
   .grid-modular{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:8px;grid-auto-flow:row dense;gap:0 16px;}   /* row-gap 0: the gap lives inside the span math → uniform spacing */
   @media (max-width:1040px){ .grid-modular{grid-template-columns:repeat(2,minmax(0,1fr));} }
-  @media (max-width:640px){ .grid-modular{grid-template-columns:minmax(0,1fr);} }
+  @media (max-width:640px){ .grid-modular{grid-template-columns:repeat(2,minmax(0,1fr));} }
   .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);min-width:0;}
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
@@ -221,7 +221,7 @@
   }
   /* PWA / notch safe areas (installed on iPhone/iPad) */
   #rail{padding-left:calc(20px + env(safe-area-inset-left,0px));padding-right:calc(20px + env(safe-area-inset-right,0px));}
-  #addStickyBtn{bottom:calc(16px + env(safe-area-inset-bottom,0px));}
+  #addStickyBtn{bottom:calc(16px + env(safe-area-inset-bottom,0px));right:80px;}
   #restBtn{bottom:calc(16px + env(safe-area-inset-bottom,0px));}
   .sticky{max-width:calc(100vw - 16px);}   /* a sticky can never poke off-screen on a small device */
   /* instant, native-feeling taps — drag handles (grips, sticky head/corner, Kiko, tabs) keep their own touch-action */
@@ -287,7 +287,7 @@
   #voiceFab.listening{animation:voicePulse 1.1s ease-in-out infinite;}
   @keyframes voicePulse{0%,100%{box-shadow:0 8px 22px rgba(150,120,190,.4);}50%{box-shadow:0 8px 30px rgba(255,158,216,.75);transform:scale(1.05);}}
   /* notepad + timer bumped up one row so they clear the voice button */
-  #addStickyBtn{position:fixed;right:72px;bottom:80px;z-index:83;border:none;border-radius:999px;width:46px;height:46px;font-size:18px;background:linear-gradient(135deg,var(--peri),var(--sakura));color:#fff;box-shadow:var(--shadow);}
+  #addStickyBtn{position:fixed;right:80px;bottom:16px;z-index:83;border:none;border-radius:999px;width:46px;height:46px;font-size:18px;background:linear-gradient(135deg,var(--peri),var(--sakura));color:#fff;box-shadow:var(--shadow);}
   /* floating timer (rest + pomodoro focus) */
   #restBtn{position:fixed;right:16px;bottom:80px;z-index:83;border:1.5px solid var(--line-2);border-radius:999px;width:46px;height:46px;font-size:18px;background:#fff;box-shadow:var(--shadow);}
   #restWidget{position:fixed;right:16px;bottom:134px;z-index:82;width:236px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 32px rgba(120,110,160,.26);padding:12px;}
@@ -695,7 +695,7 @@
   .gt-box, .ck-box{ flex:0 0 auto; width:21px; height:21px; border-radius:7px; border:2px solid var(--line-2);
     display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#fff; background:#fff; transition:.14s; }
   .gt-box.on, .ck-box.on{ background:var(--mint,#6fc3ab); border-color:var(--mint,#6fc3ab); }
-  .gt-name, .ck-name{ flex:1; min-width:0; font-size:13.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gt-name, .ck-name{ flex:1; min-width:0; font-size:13.5px; color:var(--ink); word-break:break-word; }
   .gt-donetxt, .ck-donetxt{ color:var(--muted); text-decoration:line-through; }
   .gt-del, .ck-del{ flex:0 0 auto; color:var(--muted); font-size:13px; padding:2px 6px; border-radius:6px; }
   .gt-del:hover, .ck-del:hover{ color:var(--sakura-deep); }
@@ -747,7 +747,7 @@
     scrollbar-width:none;
   }
   #sidebar::-webkit-scrollbar{ display:none; }
-  #sidebar.sb-collapsed{ width:64px; flex-basis:64px; }
+  #sidebar.sb-collapsed{ width:72px; flex-basis:72px; box-shadow:2px 0 12px rgba(160,130,200,.13); }
   #main-col{ flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
   /* desktop rail: just a thin gradient line, no tabs */
   #rail{
@@ -842,7 +842,8 @@
   #sidebar .tab.active .tab-emoji{
     background:#fff; box-shadow:0 1px 5px rgba(236,116,191,.22);
   }
-  #sidebar.sb-collapsed .tab{ padding:8px; justify-content:center; gap:0; }
+  #sidebar.sb-collapsed .tab{ padding:10px; justify-content:center; gap:0; }
+  #sidebar.sb-collapsed .tab-emoji{ width:36px; height:36px; font-size:18px; }
   #sidebar.sb-collapsed .tab-label{ display:none; }
   #sidebar.sb-collapsed .tab.active::before{ display:none; }
   /* sidebar group labels + dividers */
@@ -924,7 +925,7 @@
     .rail-right{ display:flex!important; align-items:center; gap:9px; margin-left:auto; }
     /* floating buttons shift up to clear the bottom bar */
     #voiceFab{ bottom:calc(68px + env(safe-area-inset-bottom,0px)); }
-    #addStickyBtn{ bottom:calc(132px + env(safe-area-inset-bottom,0px)); right:62px; }
+    #addStickyBtn{ bottom:calc(16px + env(safe-area-inset-bottom,0px)); right:calc(80px + env(safe-area-inset-right,0px)); }
     #restBtn{ bottom:calc(132px + env(safe-area-inset-bottom,0px)); }
     #restWidget{ bottom:calc(186px + env(safe-area-inset-bottom,0px)); }
     .toast{ bottom:calc(76px + env(safe-area-inset-bottom,0px)); }
@@ -944,7 +945,12 @@
   @media (max-width:560px){
     #sidebar nav#nav{ width:auto; flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity; }
   }
+  /* twemoji: keep images inline and text-sized so they don't blow up into giant icons */
+  img.emoji{ height:1em; width:1em; margin:0 .05em 0 .1em; vertical-align:-0.1em; display:inline !important; }
+  .tab-emoji img.emoji{ height:20px; width:20px; margin:0; vertical-align:middle; }
+  .card-head img.emoji, h2 img.emoji, h3 img.emoji{ height:1.2em; width:1.2em; vertical-align:-0.15em; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="app-shell">
@@ -987,7 +993,7 @@
 <div id="stickyLayer"></div>
 <button id="voiceFab" data-act="voiceOpen" title="Capture a thought (Alt+R)" aria-label="Capture a thought by voice or text">🎙️</button>
 <button id="addStickyBtn" data-act="addSticky" title="New sticky note">🗒️+</button>
-<button id="restBtn" data-act="toggleRest" title="Breathing &amp; rest timer">🫧</button>
+<button id="restBtn" data-act="toggleRest" title="Pomodoro &amp; rest timer">🍅</button>
 <div id="restWidget" class="hidden"></div>
 <div id="kiko" title="Ask Kiko ❄️ (drag to throw!)"><div class="kiko-sprite" id="kikoSprite"></div></div>
 <div id="kikoBubble" class="hidden" data-act="kikoToggle"></div>
@@ -996,7 +1002,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.voice";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.noheart";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1305,15 +1311,21 @@ const DB = {
 };
 
 /* ===================== STATE + A11Y ===================== */
-const PREF={ calm:false, text:false, focus:false };
+const TEXT_MIN=13, TEXT_MAX=22, TEXT_DEFAULT=14;
+const PREF={ calm:false, textSize:TEXT_DEFAULT, focus:false };
+function applyTextZoom(size){
+  const z=(size/TEXT_DEFAULT).toFixed(4);
+  const col=document.getElementById("main-col"); if(col) col.style.zoom=z;
+}
 function applyPrefs(){
   try{
     PREF.calm=localStorage.getItem("mifu-calm")==="1";
-    PREF.text=localStorage.getItem("mifu-text")==="1";
+    const sz=parseInt(localStorage.getItem("mifu-textsize"),10);
+    PREF.textSize=(sz>=TEXT_MIN&&sz<=TEXT_MAX)?sz:TEXT_DEFAULT;
     PREF.focus=localStorage.getItem("mifu-focus")==="1";
   }catch{}
   document.body.classList.toggle("calm",PREF.calm);
-  document.body.classList.toggle("text-lg",PREF.text);
+  applyTextZoom(PREF.textSize);
   const locked=localStorage.getItem("layout-locked")==="1";
   document.body.classList.toggle("locked",locked);
   const lc=document.getElementById("lockChip"); if(lc){ lc.textContent=locked?"🔒":"🔓"; lc.className="chip"+(locked?" on":""); }
@@ -1349,7 +1361,7 @@ function layoutHome(){
   // Parsing getComputedStyle was fragile on iOS Safari — it split minmax() into stray tokens
   // and reported far too many columns, which squeezed cards into overlapping slivers. Width-based is bulletproof.
   const vw=window.innerWidth||grid.clientWidth||1200;
-  const colCount = vw>1040 ? 3 : vw>640 ? 2 : 1;
+  const colCount = vw>1040 ? 3 : 2;
   const widgets=[...grid.querySelectorAll(".home-widget")];
   if(widgets.some(w=>w.classList.contains("resizing"))) return;   // don't fight a live resize drag; reflow on release
   // TRUE masonry: place each card into the column slot where it sits highest, so a tall card never
@@ -1516,6 +1528,7 @@ async function render(){
     if(state.tab==='kiko'){ KIKO.open=false; const cc=$("#kikoChat"); if(cc)cc.classList.add("hidden"); try{ paintKiko(); }catch(e){} }   // fill the Ask-Kiko chat panel
     if(state.tab==='memories'){ if(state.media===undefined&&!state._mediaLoading){ loadMedia().then(()=>{ if(state.tab==='memories') render(); }); } try{ wireMedia(); }catch(e){} }   // lazy-load the media row + wire upload/caption inputs
     if(state.tab==='journal'){ try{ wireJrPage(); }catch(e){} }   // attach the daily-page auto-save
+    try{ if(window.twemoji) twemoji.parse(document.body,{folder:'svg',ext:'.svg'}); }catch(_){}
   }catch(e){ console.error(e); v.innerHTML=`<div class="panel"><h3>aw, a little hiccup ❄️</h3><p class="soft">${esc(e&&e.message||e)}</p><p class="soft" style="font-size:11px">(If you see this, screenshot it for me and I'll fix it fast.)</p></div>`; }
 }
 
@@ -1757,7 +1770,7 @@ function cardGacha(){
   const off=state.gachaWeek||0, mon=gachaWeekMonday(off); const map=gachaByDate();
   const days=[]; for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(d.getDate()+i); days.push(d.toLocaleDateString("en-CA")); }
   const dowH=["M","T","W","T","F","S","S"];
-  const gridHead=`<div class="gt-grow gt-ghead"><span class="gt-glabel"></span>${dowH.map(x=>`<span class="gt-cell">${x}</span>`).join("")}</div>`;
+  const gridHead=`<div class="gt-grow gt-ghead"><span class="gt-glabel"></span>${dowH.map((x,i)=>{ const isToday=days[i]===TODAY; return `<span class="gt-cell${isToday?' gt-today-col':''}">${isToday?`<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--sakura);color:#fff;font-size:10px;font-weight:700;line-height:1">${x}</span>`:x}</span>`; }).join("")}</div>`;
   const gridBody=list.map(g=>`<div class="gt-grow"><span class="gt-glabel">${esc(g.name)}</span>${days.map(d=>{ const ok=gachaCheckedOn(map,g.id,d); const past=d<TODAY;
     // checked → green ✓ · genuinely missed PAST day → red ✗ · today-not-yet or future → neutral gray ○
     const cls=ok?'ok':(past?'no':'pend'), ch=ok?'✓':(past?'✗':'○');
@@ -1784,10 +1797,9 @@ function cardGacha(){
 function cardBrainDump(){
   const caps=(state.sentinel.captures||[]).slice().reverse();
   return `<section class="panel">
-    <div class="label" style="margin-bottom:6px">Brain-dump 🧠</div>
-    <p class="soft" style="font-size:12px;margin:0 0 8px">Park a thought — it stays right here. Pin 📌 any of them to a floating sticky.</p>
-    <div style="display:flex;gap:8px"><input class="inp" id="capInput" placeholder="anything on your mind… (Enter)"><button class="btn btn-grad" data-act="capAdd">add</button></div>
-    ${caps.length?`<div style="margin-top:10px">${caps.map(c=>`<div class="listrow"><span class="grow" style="font-size:12.5px">${esc(c.text)}</span><button class="x" data-act="capPin" data-v="${c.id}" title="pin to a sticky">📌</button><button class="x" data-act="capDel" data-v="${c.id}">✕</button></div>`).join("")}</div>`:''}
+    <div class="card-head"><span class="label">🎙️ Voice dump</span><button class="btn btn-grad" data-act="voiceOpen">＋ capture a thought</button></div>
+    <p class="soft" style="font-size:12px;margin:0 0 8px">Tap the button or the pink FAB — your thought lands here instantly. Pin 📌 any to a sticky.</p>
+    ${caps.length?`<div>${caps.map(c=>`<div class="listrow"><span class="soft" style="font-size:10px;margin-right:6px;flex-shrink:0">${(VOICE_CATS.find(x=>x[0]===c.cat)||["","💭"])[1]}</span><span class="grow" style="font-size:12.5px">${esc(c.text)}</span><button class="x" data-act="capPin" data-v="${c.id}" title="pin to a sticky">📌</button><button class="x" data-act="capDel" data-v="${c.id}">✕</button></div>`).join("")}</div>`:`<p class="soft" style="font-size:12.5px;margin:8px 0 0">Nothing captured yet — tap the button or use Alt+R to park a thought! 🌸</p>`}
   </section>`;
 }
 
@@ -2011,7 +2023,7 @@ function kikoCorrData(days){
 }
 function kikoCorrelations(mode){
   let rows; try{ rows=kikoCorrData(45); }catch(e){ return []; }
-  if(rows.length<5) return [];
+  if(rows.length<3) return [];
   const col=k=>rows.map(r=>r[k]);
   const C=[];
   const add=(a,b,opt)=>{ const A=col(a),B=col(b),pairs=[]; for(let i=0;i<rows.length;i++){ if(A[i]!=null&&B[i]!=null)pairs.push([A[i],B[i]]); }
@@ -2043,11 +2055,26 @@ function kikoNoticed(mode){
   const prio=[], O=[];
   try{ kikoCorrelations(mode).forEach(o=>prio.push(o)); }catch(e){}
   if(mode==="creator"){
-    // game beats live only in the Game Updates box — keep them out of here
+    // peek at today's health data to make observations feel personal
+    const _m=state.today.mind||{}, _sl=Number(state.today.sleep||0);
+    const _energy=_m.energy, _mood=_m.mood;
+    // ── streak / week observations ──
     try{ const wkS=ciWeek("streamed"); if(wkS>=3) O.push({t:`You've streamed ${wkS} days this week — lovely momentum! 💜`}); }catch(e){}
-    try{ const wkA=ciWeek("madeArt"); if(wkA>=3) O.push({t:`You've made art ${wkA} days this week — your hands have been busy! 🎨`}); }catch(e){}
+    try{ const wkA=ciWeek("madeArt"); if(wkA>=3) O.push({t:`You've made art ${wkA} days this week — your hands have been really busy! 🎨`}); }catch(e){}
     try{ const wkY=ciWeek("ytShort")+ciWeek("ytVideo"); if(wkY>=2) O.push({t:`You've uploaded ${wkY} times to YouTube this week — staying visible! ▶️`}); }catch(e){}
     try{ const gl=(state.sentinel.goalsWeek||[]); const done=gl.filter(g=>g&&g.done).length; if(gl.length&&done&&done>=Math.ceil(gl.length/2)) O.push({t:`You've cleared ${done}/${gl.length} weekly goals — over halfway. 🌷`}); }catch(e){}
+    // ── cross-data: energy/mood × creator activity ──
+    try{ const dArt=ciDays("madeArt");
+      if(dArt!=null&&dArt>=5&&_energy>=4) O.push({t:`Kiko noticed you haven't drawn in ${dArt} days — but your energy is at ${_energy}/5 today! Great time to pick up that pencil and draw something cute. 🎨`});
+      else if(dArt!=null&&dArt>=5&&_mood>=4) O.push({t:`No art in ${dArt} days, and your mood is looking bright today — sounds like the perfect excuse to doodle something. 🌸`});
+      else if(dArt!=null&&dArt>=7) O.push({t:`It's been ${dArt} days since you last drew something — even a tiny sketch counts! 🎨`}); }catch(e){}
+    try{ const dSh=ciDays("ytShort");
+      if(dSh!=null&&dSh>=7&&_energy>=3) O.push({t:`Shorts have been quiet for ${dSh} days — energy looks okay today, even a quick clip from a VOD would do! 🎬`}); }catch(e){}
+    try{ if(_energy!=null&&_energy<=1) O.push({t:`Energy's low today — Kiko says: rest IS part of the creative process. A good nap makes better art than a burnt-out stream. 🌙`}); }catch(e){}
+    // ── affirmation fallback so creator Kiko noticed is never empty ──
+    if(!O.length&&!prio.length){
+      const AFF=["You're building something real, one stream and one drawing at a time. Kiko believes in you. 🌸","Consistency beats perfection — showing up counts, even on slow days. 💜","Kiko noticed you're still here and still creating. That's the whole thing. ✨","Rest days are part of the creative schedule too. Recharge, come back stronger. 🦊","Your audience loves you for showing up as yourself. Keep doing that. 💗","Small channels with big hearts grow into something beautiful. This is that story. 🌱","Every piece of art, every stream, every short — it's all adding up. 🎨"];
+      O.push({t:AFF[Math.floor(Date.now()/86400000)%AFF.length]}); }
   } else {
     try{ const wl=(state.sentinel.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate); const u=CONFIG.weightUnit||"kg";
       if(wl.length>=2){ const d2=wl[wl.length-1].w-wl[wl.length-2].w;
@@ -2064,6 +2091,26 @@ function kikoNoticed(mode){
       else if(di===1) O.push({t:`Your next Mounjaro shot is tomorrow. 💉`}); } }catch(e){}
     try{ const c=state.sentinel.cycle||{}; if(c.lastStart){ const dx=daysBetween(c.lastStart,TODAY); if(dx>=45) O.push({t:`${dx} days since your last period — common with PCOS, but worth a gentle note for your doctor. 🌙`}); } }catch(e){}
     try{ const hl=habitsList(), hc=(state.today||{}).habits||{}; if(hl.length&&hl.every(h=>hc[h.id])) O.push({t:`All your daily habits are done today — lovely. ✨`}); }catch(e){}
+    // ── Day-1 observations: fire from today's logged data alone ──
+    try{ const m=state.today.mind||{};
+      if(m.energy!=null){ if(m.energy<=1) O.push({t:`Energy is at ${m.energy}/5 today — a rest-and-recover day. No pressure to push through. 🌙`});
+        else if(m.energy>=4) O.push({t:`Energy at ${m.energy}/5 today — a good day to tackle something you've been putting off! ⚡`}); }
+      if(m.mood!=null&&m.mood<=1) O.push({t:`Mood is low today (${m.mood}/5) — Kiko sees you. You don't have to be "on" right now. 💜`});
+      if(m.anxiety!=null&&m.anxiety<=1) O.push({t:`Anxiety's high today — try to keep the to-do list short and be extra gentle with yourself. 🫂`}); }catch(e){}
+    try{ const mj=state.today.mounjaro||{};
+      if(mj.nausea!=null&&mj.nausea<=1) O.push({t:`Nausea's rough today — bland foods, slow sips, and small portions are your best friends right now. 💗`});
+      else if(mj.nausea!=null&&mj.nausea>=4) O.push({t:`Low nausea today — a good sign. Note what you ate so you can repeat it! 🥄`});
+      if(mj.foodnoise!=null&&mj.foodnoise<=1) O.push({t:`Food noise is loud today — that's the PCOS talking, not hunger. A high-protein snack can help quiet it. 🍩`}); }catch(e){}
+    try{ const sl=Number(state.today.sleep||0); if(sl>=1){
+      if(sl<6) O.push({t:`Only ${sl} hour${sl!==1?"s":""} of sleep last night — your body may feel it today. A gentle pace is a smart pace. 🌙`});
+      else if(sl>=8) O.push({t:`${sl} hours of sleep — well rested! That tends to carry into your energy and mood today. 💤`}); } }catch(e){}
+    try{ const w40=water40(), goal=CUPS_PER_40OZ*2;
+      if(w40>=goal) O.push({t:`Water goal hit today — that directly helps with nausea and food noise. Great job! 🥤`});
+      else if(w40===0&&new Date().getHours()>=14) O.push({t:`No water logged yet today — even one 40oz now makes a difference for nausea and energy. 💧`}); }catch(e){}
+    // ── Affirmation fallback: so the card is NEVER empty ──
+    if(!O.length&&!prio.length){
+      const AFF=["Managing PCOS and Mounjaro while creating is genuinely hard work. You're doing it. 💜","Every check-in you log is a gift to future-you — Kiko is keeping it safe. ✨","Rest is part of the plan, not a detour from it. 🌙","Your body is doing a lot right now. Be kind to it today. 💗","Small consistent days build the life you're after. You're already in it. 🌱","Kiko is proud of you for showing up, even on the hard ones. 🦊","You are allowed to have a low-output day and still count it as a win. 🌸"];
+      O.push({t:AFF[Math.floor(Date.now()/86400000)%AFF.length]}); }
   }
   return [...prio,...O].slice(0,6);
 }
@@ -2179,11 +2226,11 @@ function quickNoticesCard(){ const Q=quickNotices(OS_MODE==="health"?"health":"c
   return `<div class="gcard"><div class="sec-label">⚡ Quick notices</div>
     ${Q.length?Q.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""}><span class="kn-dot"></span><span class="grow" style="text-align:left">${esc(o.t)}${o.sub?` <span class="soft" style="font-size:11px">${esc(o.sub)}</span>`:""}</span><span class="fr-chev">›</span></button>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">All caught up — nothing needs you right now. ✨</p>`}</div>`;
 }
-/* ===== Deep Patterns — reflective, longer-term observations (lives lower on the page) ===== */
+/* ===== Kiko noticed — reflective observations (lives lower on the page) ===== */
 function deepPatternsCard(){ const N=kikoNoticed(OS_MODE==="health"?"health":"creator");
-  return `<section class="panel"><div class="card-head"><span class="label">🔮 Deep patterns</span></div>
-    <p class="soft" style="font-size:11px;margin:0 0 8px">Gentle longer-term things Kiko has noticed. 💜</p>
-    ${N.length?N.map(o=>`<div class="kn-row"><span class="kn-dot"></span><span>${esc(o.t)}</span></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">A few more tracked days and Kiko will spot trends and connections here. ❄️</p>`}</section>`;
+  return `<section class="panel"><div class="card-head"><span class="label">🦊 Kiko noticed</span></div>
+    <p class="soft" style="font-size:11px;margin:0 0 8px">Things Kiko is keeping an eye on for you. 💜</p>
+    ${N.length?N.map(o=>`<div class="kn-row"><span class="kn-dot"></span><span>${esc(o.t)}</span></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">All caught up — Kiko's watching and will flag things as they come. ❄️</p>`}</section>`;
 }
 function focusCard(F){ F=(F||[]).slice(0,3);
   if(!F.length) return `<div class="gcard"><div class="sec-label">🌸 Suggested focus</div><p class="soft" style="font-size:12.5px;margin:0">No nudges today — follow your joy. ✨</p></div>`;
@@ -2261,8 +2308,8 @@ function viewHome(){
       <section class="panel"><div class="card-head"><span class="label">Just today 🌙</span><button class="btn" data-act="pref" data-f="focus">exit focus</button></div>
         <h2 style="font-size:20px">${greeting()}, ${esc(CONFIG.creator.name)} ${CONFIG.creator.emoji}</h2>
         <p class="soft" style="font-size:12.5px;margin:4px 0 12px">One gentle tap at a time. That's a whole check-in. ❄️</p>
-        ${scaleRow("Mood — low → bright","mindSet","mood",m.mood,"low","bright")}
-        ${scaleRow("Anxiety","mindSet","anxiety",m.anxiety,"calm","high")}
+        ${scaleRow("Mood","mindSet","mood",m.mood,"low","bright")}
+        ${scaleRow("Anxiety","mindSet","anxiety",m.anxiety,"stressed","calm")}
         ${scaleRow("Energy","mindSet","energy",m.energy,"empty","full")}
       </section>
       ${cardBrainDump()}
@@ -2284,9 +2331,9 @@ function viewHome(){
     {key:"contentops",label:"Stream prep",cols:4,html:cardContentOps()},
     {key:"spark",label:"Creator spark",cols:4,html:cardCreatorSpark()},
     {key:"cgrowth",label:"Creator growth",cols:4,html:cardCreatorGrowth()},
-    {key:"braindump",label:"Brain-dump",cols:4,html:cardBrainDump()},
+    {key:"braindump",label:"Voice dump",cols:4,html:cardBrainDump()},
     {key:"goals",label:"Goals",cols:4,html:cardGoals()},
-    {key:"deeppatterns",label:"Deep patterns",cols:4,html:deepPatternsCard()},
+    {key:"deeppatterns",label:"Kiko noticed",cols:4,html:deepPatternsCard()},
     {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
   ]:[
     {key:"habits",label:"Daily habits",cols:4,html:cardHabits()},
@@ -2294,8 +2341,8 @@ function viewHome(){
     {key:"weight",label:"Weight trend",cols:4,html:cardWeightTrend()},
     {key:"glance",label:"Dose & day glance",cols:4,html:cardGlance()},
     {key:"snowfox",label:"Snowfox",cols:4,html:cardSnowfox()},
-    {key:"braindump",label:"Brain-dump",cols:4,html:cardBrainDump()},
-    {key:"deeppatterns",label:"Deep patterns",cols:4,html:deepPatternsCard()},
+    {key:"braindump",label:"Voice dump",cols:4,html:cardBrainDump()},
+    {key:"deeppatterns",label:"Kiko noticed",cols:4,html:deepPatternsCard()},
     {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
   ];
   return `${slipBanner()}<div class="home-fixed">${cardHero()}${glance}</div>${modularGrid(creator?"home":"homehealth",items)}${DISCLAIMER}`;
@@ -3260,13 +3307,138 @@ function cycleStats(cyc){
   return { h:withGap, count:h.length, gaps, avgGap:avg(gaps), minGap:gaps.length?Math.min(...gaps):null, maxGap:gaps.length?Math.max(...gaps):null, avgLen:avg(lens) };
 }
 /* combined Health tab — PCOS on the left, Mounjaro on the right (stacks on narrow screens) */
+function viewDailyCheckin(){
+  const m=state.today.mind||{}, mj=state.today.mounjaro||{}, p=state.today.pcos||{};
+  const w40=water40();
+  return `
+  <section class="panel">
+    <div class="card-head"><div class="label">📊 How's today?</div><button class="btn" data-act="healthReport" title="30-day summary for your doctor">📋 Doctor report</button></div>
+    <p class="soft" style="font-size:11px;margin:0 0 12px">Everything in one place — fill this once. &nbsp;0 = rough / bad · 5 = great / none 💗</p>
+
+    <div class="label" style="margin-bottom:6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Wellbeing</div>
+    ${scaleRow("Energy","mindSet","energy",m.energy,"depleted","full")}
+    ${scaleRow("Mood","mindSet","mood",m.mood,"low","bright")}
+    ${scaleRow("Anxiety / calm","mindSet","anxiety",m.anxiety,"stressed","calm")}
+
+    <div class="label" style="margin:14px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Symptoms</div>
+    ${scaleRow("Nausea","mjSet","nausea",mj.nausea,"rough","fine")}
+    ${scaleRow("Bloating","mjSet","belly",mj.belly,"severe","none")}
+    ${scaleRow("Fatigue / heaviness","mjSet","fatigue",mj.fatigue,"heavy","none")}
+    ${scaleRow("Food noise / cravings","mjSet","foodnoise",mj.foodnoise,"loud","quiet")}
+    ${scaleRow("Constipation","mjSet","constipation",mj.constipation,"severe","none")}
+    ${scaleRow("Diarrhea","mjSet","diarrhea",mj.diarrhea,"severe","none")}
+    ${scaleRow("Reflux / heartburn","mjSet","reflux",mj.reflux,"severe","none")}
+    ${scaleRow("Acne flare","pcosSet","acne",p.acne,"severe","clear")}
+    ${scaleRow("Scalp hair shedding","pcosSet","shedding",p.shedding,"heavy","none")}
+
+    <div class="label" style="margin:14px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Basics</div>
+    <div class="field"><div class="label">Water today <span class="soft" style="text-transform:none;letter-spacing:0;font-weight:500">· goal 2–3 × 40oz</span></div>
+      <div class="hcount"><button class="step" data-act="waterCup" data-v="-1">−</button><span>${w40%1?w40.toFixed(1):w40}</span><button class="step" data-act="waterCup" data-v="1">＋</button><span class="soft" style="font-size:12px;font-family:var(--sans)">× 40oz 🥤</span></div></div>
+    <div class="field"><div class="label">Sleep last night</div>
+      <div class="hcount"><button class="step" data-act="sleepStep" data-v="-1">−</button><span>${(state.today.sleep!=null?state.today.sleep:0)}</span><button class="step" data-act="sleepStep" data-v="1">＋</button><span class="soft" style="font-size:12px;font-family:var(--sans)">hrs 🌙</span></div></div>
+
+    <div class="label" style="margin:14px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Gentle habits</div>
+    <p class="soft" style="font-size:11px;margin:0 0 8px">No targets to fail — just a soft tally. 🌱</p>
+    <div class="chiprow">
+      ${chiptog("Moved my body","pcosToggle","moved",p.moved)}
+      ${chiptog("Balanced meals","pcosToggle","balanced",p.balanced)}
+      ${chiptog("Protein with meals","pcosToggle","protein",p.protein)}
+      ${chiptog("Eased sugar spikes","pcosToggle","lowsugar",p.lowsugar)}
+      ${chiptog("Smaller meals","mjToggle","smallerMeals",mj.smallerMeals)}
+      ${chiptog("Fiber / veggies","mjToggle","fiber",mj.fiber)}
+    </div>
+  </section>`;
+}
 function viewHealth(){
-  const pc=viewPcos().split(DISCLAIMER)[0];
-  const mj=viewMj().split(DISCLAIMER)[0];
-  return `<div class="health-cols">
-    <div class="health-col">${pc}</div>
-    <div class="health-col">${mj}</div>
-  </div>${DISCLAIMER}`;
+  const p=state.today.pcos||{}, cyc=state.sentinel.cycle||{};
+  const cur=currentDose();
+  const log=(state.sentinel.injectionLog||[]).slice().reverse();
+  const doses=CONFIG.mounjaro.doses, sites=CONFIG.mounjaro.sites;
+  const unit=CONFIG.weightUnit||"kg";
+  const wl=(state.sentinel.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate);
+  const firstShot=(state.sentinel.injectionLog||[]).slice().sort(cmpDate)[0];
+  const journeyStart=firstShot?firstShot.date:(wl[0]?wl[0].date:null);
+  const weeksOnMj=journeyStart?Math.floor(daysBetween(journeyStart,TODAY)/7):0;
+  let startW=null; if(wl.length){ const after=wl.find(x=>!journeyStart||x.date>=journeyStart); startW=(after||wl[0]).w; }
+  const nowW=wl.length?wl[wl.length-1].w:null;
+  const lost=(startW!=null&&nowW!=null)?-(nowW-startW):null;
+  const lostStr=lost==null?"—":(Math.abs(lost)<0.05?"±0":(lost>0?"↓ ":"↑ ")+Math.abs(lost).toFixed(1)+" "+unit);
+  const lostColor=lost==null?"var(--ink)":(lost>0?"#3a9d83":(lost<-0.05?"var(--sakura-deep)":"var(--ink))"));
+  const trendNote=lost==null?`Log a weight or two and your progress since starting will show here. ⚖️`:`Since starting${journeyStart?` ~${weeksOnMj} week${weeksOnMj===1?'':'s'} ago`:''}: ${startW} → ${nowW} ${unit}. Every direction is data, not a verdict — be kind to yourself. ❄️`;
+  const st=cycleStats(cyc);
+  const dx=cyc.lastStart?daysBetween(cyc.lastStart,TODAY):null;
+  const months=dx!=null?dx/30.44:null;
+  const longGap=dx!=null&&dx>=45;
+  return `
+  ${viewDailyCheckin()}
+
+  <details class="acc"><summary>💉 Mounjaro journey</summary><div class="acc-body">
+    <div class="soft-card" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+      <div><div class="label">Current dose</div><div class="bignum">${cur?cur.dose:'—'} mg</div></div>
+      <div><div class="label">Weight so far</div><div class="bignum" style="color:${lostColor}">${lostStr}</div></div>
+      <div class="grow" style="min-width:160px"><p class="soft" style="font-size:11.5px;margin:0">${trendNote}</p></div>
+    </div>
+    <div class="label" style="margin-bottom:6px">💉 Log this week's shot</div>
+    <p class="soft" style="font-size:12px;margin:0 0 10px">${siteHint()}</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="field"><div class="label">Date</div><input class="inp" type="date" id="shotDate" value="${TODAY}"></div>
+      <div class="field"><div class="label">Time</div><input class="inp" type="time" id="shotTime" value="20:00"></div>
+    </div>
+    <div class="field"><div class="label">Dose (mg)</div><select class="inp" id="shotDose">${doses.map(d=>`<option value="${d}" ${cur&&cur.dose===d?'selected':''}>${d} mg</option>`).join("")}</select></div>
+    <div class="field"><div class="label">Injection site (rotate!)</div><div class="chiprow" id="siteRow">
+      ${sites.map(s2=>`<button class="sitebtn" data-act="pickSite" data-v="${esc(s2)}">${esc(s2)}</button>`).join("")}</div>
+      <input type="hidden" id="shotSite" value=""></div>
+    <div class="field" id="afterField"><div class="label">~30 min after — how do you feel?</div>
+      <div class="scale">${[0,1,2,3,4,5].map(i=>`<button data-act="mjAfter" data-v="${i}">${i}</button>`).join("")}</div>
+      <div class="scale-ends"><span>rough</span><span>fine</span></div></div>
+    <div class="field"><div class="label">Note (optional)</div><input class="inp" type="text" id="shotNote" placeholder="how it went…"></div>
+    <button class="btn btn-grad" data-act="logShot">Log shot ❄️</button>
+    <div class="label" style="margin:14px 0 6px">📜 Injection history</div>
+    ${log.length?log.map(s2=>`<div class="listrow"><div><b>${fmtDate(s2.date)}</b> ${s2.time?`<span class="soft">· ${esc(s2.time)}</span>`:''}
+      <div class="soft" style="font-size:11.5px">${s2.dose} mg · ${esc(s2.site||'—')}${s2.after!=null?` · after ${s2.after}/5`:''}${s2.note?` · ${esc(s2.note)}`:''}</div></div>
+      <span class="grow"></span><button class="x" data-act="delShot" data-v="${s2.id}">✕</button></div>`).join("")
+      :`<p class="soft" style="font-size:12.5px">No shots logged yet — your first one starts the rotation helper. 🦊</p>`}
+    <details style="margin-top:14px"><summary class="soft" style="font-size:12px;cursor:pointer">🩺 When to check in with your doctor</summary>
+      <p class="soft" style="font-size:12px;margin:8px 0 4px">Most tummy stuff settles. Gentle reasons to call your care team — a reminder, never a diagnosis:</p>
+      <ul style="font-size:12px;color:var(--ink-soft);padding-left:18px">
+        <li>Severe stomach pain radiating to your back</li><li>Relentless vomiting or signs of dehydration</li>
+        <li>Gallbladder-type pain (upper-right belly), fever, or yellowing skin/eyes</li><li>Anything that simply feels wrong</li>
+      </ul>
+    </details>
+  </div></details>
+
+  <details class="acc"><summary>🌙 Cycle tracker</summary><div class="acc-body">
+    <div class="soft-card">
+      ${cyc.lastStart
+        ?`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="bignum">Day ${dx}</span><span class="soft" style="font-size:12px">since your last period started (${fmtDate(cyc.lastStart)})${months>=1.5?` · ~${months.toFixed(1)} months`:''}</span></div>`
+        :`<p class="soft" style="font-size:12.5px;margin:0">No period logged yet — log a start whenever you need to. ❄️</p>`}
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-grad" data-act="cycleStart">Log period start</button>
+        <button class="btn" data-act="cycleEnd">Log period end</button>
+      </div>
+      <div class="field"><div class="label">Flow today (optional)</div><div class="chiprow">
+        ${["light","med","heavy"].map(f=>`<button class="sitebtn ${state.today.flow===f?'on':''}" data-act="pcosSet" data-f="flow" data-v="${f}">${f}</button>`).join("")}</div></div>
+      ${st.count?`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
+          <div><div class="label">Logged</div><div style="font-weight:700">${st.count} period${st.count===1?'':'s'}</div></div>
+          ${st.avgGap?`<div><div class="label">Avg cycle</div><div style="font-weight:700">~${st.avgGap}d</div></div>`:''}
+          ${st.gaps&&st.gaps.length>1?`<div><div class="label">Range</div><div style="font-weight:700">${st.minGap}–${st.maxGap}d</div></div>`:''}
+          ${st.avgLen?`<div><div class="label">Avg length</div><div style="font-weight:700">~${st.avgLen}d</div></div>`:''}
+        </div>`:''}
+      <p class="soft" style="font-size:11px;margin-top:8px">Cycles vary a lot with PCOS — long or skipped months are common, and that's okay. 🦊</p>
+      ${longGap?`<div class="disc" style="margin-top:8px">${CONFIG.creator.snow}<span>It's been ${months>=2?`about ${Math.round(months)} months`:'a longer stretch'} since your last period — worth a gentle mention to your doctor next time. No alarm, just a note. 🦊</span></div>`:''}
+      ${st.count?`<details style="margin-top:8px;border:none;background:transparent;padding:0;box-shadow:none"><summary style="font-size:12px">📜 Period history (${st.count}) · tap ✕ to remove a mistaken log</summary>
+        <div style="margin-top:6px">${st.h.slice().reverse().map(x=>`<div class="listrow"><span class="grow" style="font-size:12px">${fmtDate(x.start)}${x.end?` – ${fmtDate(x.end)}`:''} ${x.flow?`<span class="soft">· ${esc(x.flow)}</span>`:''}</span>${x.gap!=null?`<span class="soft" style="font-size:11px">+${x.gap}d</span>`:''}<button class="x" data-act="delPeriod" data-start="${esc(x.start)}" data-end="${esc(x.end||'')}" title="remove">✕</button></div>`).join("")}</div></details>`:''}
+    </div>
+  </div></details>
+
+  <details class="acc"><summary>💗 Notes &amp; extras</summary><div class="acc-body">
+    <div class="label" style="margin-bottom:6px">What helps me feel better</div>
+    <textarea class="inp" id="helpsNote" placeholder="things that make a rough health day softer…" style="min-height:80px">${esc(state.sentinel.helps||"")}</textarea>
+    <div style="margin-top:8px;margin-bottom:14px"><button class="btn btn-grad" data-act="saveHelps">Save</button></div>
+    ${scaleRow("Unwanted hair / hirsutism (check in weekly)","pcosSet","hirsutism",p.hirsutism,"none","heavy")}
+  </div></details>
+
+  ${DISCLAIMER}`;
 }
 function waterCups(){ return (state.today&&state.today.mounjaro&&state.today.mounjaro.water)||0; }
 function water40(){ return waterCups()/CUPS_PER_40OZ; }            // her unit: full 40oz cups
@@ -3306,7 +3478,7 @@ function buildHealthReport(){
   const st=cycleStats(s.cycle||{});
   if((s.cycle||{}).lastStart){ const dx=daysBetween(s.cycle.lastStart,TODAY); R.push(`Last period start: ${fmtDate(s.cycle.lastStart)} (${dx} days ago).${st.avgGap?` Avg cycle ~${st.avgGap}d over ${st.count} logged.`:""}${dx>=45?" Note: a longer gap, common with PCOS.":""}`); }
   else R.push("No periods logged.");
-  const pcKeys=[["fatigue","Fatigue"],["bloating","Bloating"],["cravings","Cravings"],["acne","Acne"],["shedding","Hair shedding"]];
+  const pcKeys=[["acne","Acne"],["shedding","Hair shedding"]];  // fatigue/bloating/cravings now consolidated into mounjaro fields
   const pcLines=pcKeys.map(([k,l])=>{ const vals=[]; for(let i=0;i<range;i++){ const d=dayAgo(-i); const v=byDate[d]&&byDate[d].pcos&&byDate[d].pcos[k]; if(v!=null)vals.push(v); } const a=avg(vals); return a!=null?`${l} ${a.toFixed(1)}/5`:null; }).filter(Boolean);
   if(pcLines.length) R.push("Avg PCOS symptoms: "+pcLines.join(", ")+".");
   R.push("");
@@ -3341,38 +3513,22 @@ function showHealthReport(){
   </div></div>`;
 }
 function viewPcos(){
-  const p=state.today.pcos||{}, m=state.today.mind||{}, mj=state.today.mounjaro||{}, cyc=state.sentinel.cycle||{};
+  const p=state.today.pcos||{}, cyc=state.sentinel.cycle||{};
   const st=cycleStats(cyc);
   const dx=cyc.lastStart?daysBetween(cyc.lastStart,TODAY):null;
   const months=dx!=null?dx/30.44:null;
   const longGap=dx!=null&&dx>=45;
-  const w40=water40();
   return `
   <section class="panel">
     <div class="card-head"><h2 style="font-size:18px">❄️ PCOS — your patterns</h2><button class="btn" data-act="healthReport" title="a tidy 30-day summary for your doctor">📋 Doctor report</button></div>
-    <p class="soft" style="font-size:12px;margin:0 0 4px">Your daily check-in lives right here. ❄️</p>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:4px">📊 How's today feeling?</div>
-    <p class="soft" style="font-size:11px;margin:0 0 8px">A daily tap on each — these feed your Trends. 💗</p>
-    ${scaleRow("Energy","mindSet","energy",m.energy,"low","high")}
-    ${scaleRow("Anxiety","mindSet","anxiety",m.anxiety,"calm","stressed")}
-    ${scaleRow("Mood","mindSet","mood",m.mood,"low","bright")}
-    ${scaleRow("Nausea","mjSet","nausea",mj.nausea,"ok","rough")}
-    ${scaleRow("Cravings","pcosSet","cravings",p.cravings,"quiet","loud")}
-    <div class="field"><div class="label">Water today <span class="soft" style="text-transform:none;letter-spacing:0;font-weight:500">· goal 2–3 × 40oz</span></div>
-      <div class="hcount"><button class="step" data-act="waterCup" data-v="-1">−</button><span>${w40%1?w40.toFixed(1):w40}</span><button class="step" data-act="waterCup" data-v="1">＋</button><span class="soft" style="font-size:12px;font-family:var(--sans)">× 40oz 🥤</span></div></div>
-    <div class="field"><div class="label">Sleep last night</div>
-      <div class="hcount"><button class="step" data-act="sleepStep" data-v="-1">−</button><span>${(state.today.sleep!=null?state.today.sleep:0)}</span><button class="step" data-act="sleepStep" data-v="1">＋</button><span class="soft" style="font-size:12px;font-family:var(--sans)">hrs 🌙</span></div></div>
+    <p class="soft" style="font-size:12px;margin:0 0 4px">PCOS-specific symptoms and gentle habits — fill the shared daily check-in above once. ❄️</p>
   </section>
 
   <section class="panel">
     <div class="label" style="margin-bottom:4px">🌸 PCOS symptoms</div>
-    ${scaleRow("Energy / fatigue","pcosSet","fatigue",p.fatigue,"none","heavy")}
-    ${scaleRow("Bloating","pcosSet","bloating",p.bloating)}
-    ${scaleRow("Acne flare","pcosSet","acne",p.acne)}
-    ${scaleRow("Scalp hair shedding","pcosSet","shedding",p.shedding)}
+    <p class="soft" style="font-size:11px;margin:0 0 8px">Skin + hair signals that are specific to PCOS — 0 = rough day · 5 = fine. 💗</p>
+    ${scaleRow("Acne flare","pcosSet","acne",p.acne,"severe","clear")}
+    ${scaleRow("Scalp hair shedding","pcosSet","shedding",p.shedding,"heavy","none")}
     <div class="label" style="margin:14px 0 6px">🌱 Gentle, supportive habits</div>
     <p class="soft" style="font-size:11.5px;margin:0 0 8px">No targets to fail — just a soft tally on the days they happen.</p>
     <div class="chiprow">
@@ -3451,15 +3607,11 @@ function viewMj(){
   </section>
 
   <section class="panel">
-    <div class="label" style="margin-bottom:4px">🩹 Daily side-effect check</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">A daily tap, just like your feelings check — usually loudest at the start and after a dose step, then it eases. Feeds the pattern-spotter.</p>
-    ${scaleRow("Nausea","mjSet","nausea",mj.nausea)}
-    ${scaleRow("Constipation","mjSet","constipation",mj.constipation)}
-    ${scaleRow("Diarrhea","mjSet","diarrhea",mj.diarrhea)}
-    ${scaleRow("Reflux / heartburn","mjSet","reflux",mj.reflux)}
-    ${scaleRow("Bloating / stomach pain","mjSet","belly",mj.belly)}
-    ${scaleRow("Fatigue","mjSet","fatigue",mj.fatigue)}
-    ${scaleRow("Appetite / 'food noise'","mjSet","foodnoise",mj.foodnoise,"quiet","loud")}
+    <div class="label" style="margin-bottom:4px">🩹 Mounjaro-specific side effects</div>
+    <p class="soft" style="font-size:11.5px;margin:0 0 8px">These three are specific to the medication — nausea, bloating, fatigue and food noise are in the shared daily check-in above. 0 = rough · 5 = fine.</p>
+    ${scaleRow("Constipation","mjSet","constipation",mj.constipation,"severe","none")}
+    ${scaleRow("Diarrhea","mjSet","diarrhea",mj.diarrhea,"severe","none")}
+    ${scaleRow("Reflux / heartburn","mjSet","reflux",mj.reflux,"severe","none")}
     <div class="label" style="margin:14px 0 6px">🌿 Supportive habits</div>
     <div class="chiprow">
       ${chiptog("Protein with meals","mjToggle","proteinMeals",mj.proteinMeals)}
@@ -3519,13 +3671,13 @@ function viewMj(){
 /* ===================== WEIGHT ===================== */
 function rollingAvg(arr){ if(!arr.length)return null; const l=arr.filter(x=>x.w!=null).slice(-4); return l.length?l.reduce((a,b)=>a+b.w,0)/l.length:null; }
 // everything the Withings Body Smart can report (manual entry + sync both use these keys)
-const BODYCOMP=[["w","Weight",CONFIG.weightUnit,"⚖️"],["bmi","BMI","","📐"],["fat","Body fat","%","🫧"],["muscle","Muscle","kg","💪"],["bone","Bone","kg","🦴"],["water","Body water","%","💧"],["visceral","Visceral fat","","🎯"],["hr","Heart rate","bpm","💓"]];
+const BODYCOMP=[["w","Weight",CONFIG.weightUnit,"⚖️"],["bmi","BMI","","📐"],["fat","Body fat","%","🫧"],["muscle","Muscle","kg","💪"],["bone","Bone","kg","🦴"],["water","Body water","%","💧"],["visceral","Visceral fat","","🎯"]];
 function bcLatest(wl,k){ const ent=wl.filter(x=>x[k]!=null); if(!ent.length)return null; const last=ent[ent.length-1], prev=ent.length>1?ent[ent.length-2]:null; return {v:last[k], date:last.date, d:prev?Math.round((last[k]-prev[k])*10)/10:null}; }
 function withBMI(wl){ // attach a derived bmi to entries that have weight + we know height
   const h=state.sentinel.heightCm; if(!h) return wl;
   return wl.map(x=> (x.w!=null && x.bmi==null) ? {...x, bmi: Math.round((x.w/Math.pow(h/100,2))*10)/10} : x);
 }
-const WT_COLORS={w:"#ef9ccb",bmi:"#9b8cf0",fat:"#f0869b",muscle:"#5fc59a",bone:"#c8a8ca",water:"#5ba6e8",visceral:"#f0b057",hr:"#7d83e6"};
+const WT_COLORS={w:"#ef9ccb",bmi:"#9b8cf0",fat:"#f0869b",muscle:"#5fc59a",bone:"#c8a8ca",water:"#5ba6e8",visceral:"#f0b057"};
 function wtYRange(vs){ if(!vs.length)return null; let mn=Math.min(...vs),mx=Math.max(...vs); if(mn===mx){mn-=1;mx+=1;} const p=(mx-mn)*0.12||1; return {mn:mn-p,mx:mx+p}; }
 function buildWeightChartSVG(keys,type){
   let wl=withBMI((state.sentinel.weightLog||[]).slice().sort(cmpDate));
@@ -3877,7 +4029,7 @@ function journalWriteContext(){
   const m=(state.today&&state.today.mind)||{};
   const lastShot=inj.length?inj[inj.length-1]:null;
   const ev=(sent.calendarEvents||[]).filter(e=> e.date<=TODAY && TODAY<=(e.endDate||e.date)).map(e=>e.title).slice(0,8);
-  const comp={}; try{ const wlb=withBMI(wl); ["bmi","fat","muscle","bone","water","visceral","hr"].forEach(k=>{ const mm=bcLatest(wlb,k); if(mm) comp[k]={v:mm.v,d:mm.d}; }); }catch(e){}
+  const comp={}; try{ const wlb=withBMI(wl); ["bmi","fat","muscle","bone","water","visceral"].forEach(k=>{ const mm=bcLatest(wlb,k); if(mm) comp[k]={v:mm.v,d:mm.d}; }); }catch(e){}
   let food=null; try{ if(foodToday().length){ const ft=foodTotals(), tg=foodTargets(); food={kcal:Math.round(ft.kcal),protein:Math.round(ft.protein),fiber:Math.round(ft.fiber),targetProtein:tg.protein,targetFiber:tg.fiber}; } }catch(e){}
   return { food, dateLabel:new Date(TODAY+"T00:00").toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}),
     unit:CONFIG.weightUnit, mjDay, mjWeek,
@@ -4406,7 +4558,8 @@ function buildSeries(){
   return { byDate, series:{
     mood:days.map(d=>pick(d,["mind","mood"])), anxiety:days.map(d=>pick(d,["mind","anxiety"])),
     energy:days.map(d=>pick(d,["mind","energy"])), nausea:days.map(d=>pick(d,["mounjaro","nausea"])),
-    cravings:days.map(d=>pick(d,["pcos","cravings"])), water:days.map(d=>pick(d,["mounjaro","water"])),
+    cravings:days.map(d=>pick(d,["mounjaro","foodnoise"])),  // consolidated from pcos.cravings → mj.foodnoise
+    water:days.map(d=>pick(d,["mounjaro","water"])),
     sleep:days.map(d=>pick(d,["sleep"])) } };
 }
 function patternSpotter(byDate){
@@ -4415,16 +4568,19 @@ function patternSpotter(byDate){
   const obs=[];
   const split=(P,Y)=>{ let hi=[],lo=[]; rows.forEach(r=>{const p=P(r),y=Y(r); if(p==null||y==null)return; (p?hi:lo).push(y);});
     const a=z=>z.length?z.reduce((x,y)=>x+y,0)/z.length:null; return {hi:a(hi),lo:a(lo),nHi:hi.length,nLo:lo.length}; };
+  // nausea: 0=rough(bad) 5=fine(good) — higher value = better, so "less nausea" = higher
   let s=split(r=>r.mounjaro&&r.mounjaro.water!=null?r.mounjaro.water>=6:null,r=>r.mounjaro?r.mounjaro.nausea:null);
-  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.nLo>=2&&s.hi<s.lo-0.3)obs.push("🥤 On higher-water days you noted less nausea.");
+  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.nLo>=2&&s.hi>s.lo+0.3)obs.push("🥤 On higher-water days you noted less nausea.");
   s=split(r=>r.mounjaro?(!!r.mounjaro.proteinMeals&&!!r.mounjaro.smallerMeals):null,r=>r.mounjaro?r.mounjaro.nausea:null);
-  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.hi<s.lo-0.3)obs.push("🍳 Nausea ran lower on days with protein + smaller meals.");
+  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.hi>s.lo+0.3)obs.push("🍳 Nausea ran gentler on days with protein + smaller meals.");
   s=split(r=>r.sleep!=null?r.sleep>=7:null,r=>r.mind?r.mind.mood:null);
   if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.nLo>=2&&s.hi>s.lo+0.3)obs.push("😴 Mood tended to be gentler after longer sleep.");
-  s=split(r=>r.mind&&r.mind.anxiety!=null?r.mind.anxiety>=3:null,r=>r.mind?r.mind.mood:null);
-  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.hi<s.lo-0.3)obs.push("🌧️ Mood tended to dip on higher-anxiety days — those may deserve extra softness.");
-  s=split(r=>r.pcos?!!r.pcos.moved:null,r=>r.pcos?r.pcos.cravings:null);
-  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.hi<s.lo-0.3)obs.push("🍩 Cravings were lower on days you moved your body.");
+  // anxiety: 0=stressed(bad) 5=calm(good) — low value = stressed
+  s=split(r=>r.mind&&r.mind.anxiety!=null?r.mind.anxiety<=2:null,r=>r.mind?r.mind.mood:null);
+  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.hi<s.lo-0.3)obs.push("🌧️ Mood tended to dip on higher-stress days — those deserve extra softness.");
+  // foodnoise: 0=loud(bad) 5=quiet(good) — higher value = better
+  s=split(r=>r.pcos?!!r.pcos.moved:null,r=>r.mounjaro?r.mounjaro.foodnoise:null);
+  if(s.hi!=null&&s.lo!=null&&s.nHi>=2&&s.hi>s.lo+0.3)obs.push("🍩 Food noise was quieter on days you moved your body.");
   if(!obs.length)obs.push("Nothing jumping out yet — your logs look gently varied. That's perfectly okay. ❄️");
   return `<ul style="padding-left:18px;font-size:13px">${obs.map(o=>`<li style="margin:6px 0">${o}</li>`).join("")}</ul>
     <p class="soft" style="font-size:11px;margin-top:6px">Gentle observations from your own logs — patterns, not proof, and never a diagnosis. Worth a mention to your care team if something rings true. ❄️🦊</p>`;
@@ -4432,10 +4588,10 @@ function patternSpotter(byDate){
 /* ----- animated visual trends chart ----- */
 const TREND_METRICS=[
   ["mood","🌤️","Mood",5,"up",["🌧️","🌞"]],
-  ["anxiety","🫂","Anxiety",5,"down",["calm","high"]],
+  ["anxiety","🫂","Anxiety",5,"up",["stressed","calm"]],   // 0=stressed(bad) 5=calm(good)
   ["energy","⚡","Energy",5,"up",["💤","⚡"]],
-  ["nausea","🤢","Nausea",5,"down",["ok","rough"]],
-  ["cravings","🍩","Cravings",5,"down",["quiet","loud"]],
+  ["nausea","🤢","Nausea",5,"up",["rough","fine"]],        // 0=rough(bad) 5=fine(good)
+  ["cravings","🍩","Food noise",5,"up",["loud","quiet"]],  // 0=loud(bad) 5=quiet(good); reads mj.foodnoise
   ["water","🥤","Water",15,"up",["low","lots"]],
   ["sleep","🌙","Sleep",12,"up",["short","long"]],
 ];
@@ -4641,8 +4797,12 @@ function viewSettings(){
     <p class="soft" style="font-size:12px;margin:0 0 10px">However today needs to feel. Saved on this device.</p>
     <div class="chiprow">
       ${chiptog("Calm mode (less motion, softer colours)","pref","calm",PREF.calm)}
-      ${chiptog("Larger text","pref","text",PREF.text)}
       ${chiptog("Focus mode (Home shows only today)","pref","focus",PREF.focus)}
+    </div>
+    <div class="field" style="margin-top:14px">
+      <div class="label" style="display:flex;justify-content:space-between;align-items:center">🔠 Text size <span class="soft" id="textSizeVal" style="font-size:12px">${PREF.textSize}px</span></div>
+      <input type="range" id="textSizeSlider" min="${TEXT_MIN}" max="${TEXT_MAX}" step="1" value="${PREF.textSize}" data-act="noop" oninput="H.setTextSize(this)" style="width:100%;margin-top:6px;accent-color:var(--sakura)">
+      <p class="soft" style="font-size:11px;margin:6px 0 0">Slide to taste — bigger or smaller. Saved on this device, stays put every time you open the app. 💗</p>
     </div>
   </section>
 
@@ -6039,6 +6199,10 @@ const H={
   async addJoy(){ const t=$("#joyInput").value.trim(); if(!t)return; await setSent(n=>({...n,joyJar:[...(n.joyJar||[]),t]})); toast("added to the jar 🫙"); render(); },
 
   pref(el){ const f=el.dataset.f; const cur=localStorage.getItem("mifu-"+f)==="1"; localStorage.setItem("mifu-"+f,cur?"0":"1"); applyPrefs(); render(); },
+  setTextSize(el){ let v=parseInt(el.value,10); if(isNaN(v))v=TEXT_DEFAULT; v=Math.max(TEXT_MIN,Math.min(TEXT_MAX,v));
+    try{ localStorage.setItem("mifu-textsize",String(v)); }catch(_){}
+    applyTextZoom(v); PREF.textSize=v;
+    const lbl=$("#textSizeVal"); if(lbl)lbl.textContent=v+"px"; },
   async addMed(){ const name=$("#medName").value.trim(); if(!name){ toast("name needed"); return; }
     await setSent(n=>({...n,medsList:[...(n.medsList||[]),{id:"m"+Date.now(),name,dose:$("#medDose").value.trim(),time:$("#medTime").value.trim()}]})); toast("added 💊"); render(); },
   async delMed(el){ await setSent(n=>({...n,medsList:(n.medsList||[]).filter(m=>m.id!==el.dataset.v)})); render(); },
@@ -6073,7 +6237,9 @@ const H={
     let bank=[]; try{bank=JSON.parse(localStorage.getItem("mifu-context-bank")||"[]");}catch(_){}
     bank.unshift(entry);
     try{localStorage.setItem("mifu-context-bank",JSON.stringify(bank.slice(0,500)));}catch(_){}
+    await setSent(n=>({...n,captures:[{id:entry.id,text,date:TODAY,cat},...(n.captures||[])]}));
     $("#modal").innerHTML="";
+    render();
     const lbl=(VOICE_CATS.find(c=>c[0]===cat)||["","💭","note"]);
     toast(`${lbl[1]} saved to ${lbl[2]} 💗`);
     try{ popConfetti($("#voiceFab")); }catch(_){}
@@ -6582,7 +6748,7 @@ function voiceOpenModal(){
     <button class="btn btn-grad" data-act="voiceSave" style="width:100%;margin-top:12px">💾 Save to Kiko's Context Bank</button>
     <p class="soft" style="font-size:10.5px;margin:10px 0 0">Stays right here on your device — feeds Kiko's context, no outside services. 🫧</p>
   </div></div>`;
-  const ta=$("#voiceText"); if(ta){ setTimeout(()=>{ ta.focus(); },60); }
+  const ta=$("#voiceText"); if(ta){ setTimeout(()=>{ ta.focus(); if(canSpeak) voiceToggleMic(); },60); }
 }
 function voiceToggleMic(){
   if(voiceRec){ voiceStopMic(); return; }
@@ -6769,8 +6935,8 @@ window.addEventListener('resize',()=>{ if(!dragInfo&&!resizeInfo) renderStickies
 window.addEventListener('resize',()=>{ try{ const c=$("#kikoChat"); if(c&&!c.classList.contains("hidden")){ applyKikoChatSize(c); positionKikoUI(); } }catch(e){} });   // keep the free-resized chat within the viewport on rotate/resize
 
 /* ===================== FLOATING TIMER (rest + pomodoro focus, pop-out) ===================== */
-const TIMER={ open:false, mode:"rest", running:false, iv:null, secs:300, total:300,
-  phase:"focus", workMin:25, breakMin:5, restMin:5, cycles:0 };
+const TIMER={ open:false, mode:"focus", running:false, iv:null, secs:1500, total:1500,
+  phase:"focus", workMin:25, breakMin:5, cycles:0 };
 let pipWin=null;
 function toggleTimer(){
   if(pipWin){ try{ pipWin.close(); }catch(_){} pipWin=null; }
@@ -6782,15 +6948,13 @@ function timerTarget(){ return pipWin ? pipWin.document.getElementById("timerHos
 function timerMarkup(){
   const mm=String(Math.floor(TIMER.secs/60)).padStart(2,'0'), ss=String(TIMER.secs%60).padStart(2,'0');
   const pct=Math.max(0,Math.min(1,TIMER.total?(1-TIMER.secs/TIMER.total):0)); const R=42,C=2*Math.PI*R;
-  const isFocus=TIMER.mode==="focus", onBreak=isFocus&&TIMER.phase==="break";
+  const onBreak=TIMER.phase==="break";
   const ring=onBreak?"#7ed0b0":"url(#rg)";
-  const presets=isFocus
-    ? [[25,5],[50,10],[15,3]].map(([w,b])=>`<button data-tpreset="${w}-${b}" class="${TIMER.workMin===w&&TIMER.breakMin===b?'on':''}">${w}/${b}</button>`).join("")
-    : [5,15,25].map(m=>`<button data-tpreset="${m}" class="${TIMER.restMin===m?'on':''}">${m}m</button>`).join("");
+  const presets=[[15,3],[25,5],[50,10]].map(([w,b])=>`<button data-tpreset="${w}-${b}" class="${TIMER.workMin===w&&TIMER.breakMin===b?'on':''}">${w}/${b}</button>`).join("");
   return `<div style="display:flex;justify-content:space-between;align-items:center">
-      <div class="seg" style="padding:2px"><button data-tmode="rest" class="${!isFocus?'on':''}">🫧 Rest</button><button data-tmode="focus" class="${isFocus?'on':''}">🍅 Focus</button></div>
+      <div style="font-family:var(--display);font-size:14px">🍅 Pomodoro</div>
       <div style="display:flex"><button class="timer-ic" data-tact="pop" title="Pop out (stay on top)">⧉</button><button class="timer-ic" data-tact="close" title="close">✕</button></div></div>
-    <div style="text-align:center;font-family:var(--display);font-size:13px;color:${onBreak?'#3a9d83':'var(--sakura-deep)'};margin-top:4px">${isFocus?(onBreak?'Break':'Focus')+' · round '+(TIMER.cycles+1):'Rest'}</div>
+    <div style="text-align:center;font-family:var(--display);font-size:13px;color:${onBreak?'#3a9d83':'var(--sakura-deep)'};margin-top:4px">${onBreak?'Break':'Focus'} · round ${TIMER.cycles+1}</div>
     <svg width="110" height="110" viewBox="0 0 110 110" style="display:block;margin:2px auto 0">
       <circle cx="55" cy="55" r="${R}" fill="none" stroke="#eee5f3" stroke-width="8"/>
       <circle cx="55" cy="55" r="${R}" fill="none" stroke="${ring}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${(C*(1-pct)).toFixed(1)}" transform="rotate(-90 55 55)"/>
@@ -6798,7 +6962,7 @@ function timerMarkup(){
     <div class="ring-time">${mm}:${ss}</div>
     <div class="seg" style="margin:8px auto 6px;justify-content:center;display:flex">${presets}</div>
     <div style="display:flex;gap:6px;justify-content:center"><button class="btn btn-grad" data-tact="toggle">${TIMER.running?'Pause':'Start'}</button><button class="btn" data-tact="reset">Reset</button></div>
-    <p class="soft" style="font-size:10.5px;text-align:center;margin:8px 0 0">${isFocus?'Focus, then a kind little break. 🍅':'No goal but rest. Stop whenever. ❄️'}</p>`;
+    <p class="soft" style="font-size:10.5px;text-align:center;margin:8px 0 0">Focus, then a kind little break. 🍅</p>`;
 }
 function paintTimer(){ const t=timerTarget(); if(!t) return; t.innerHTML=timerMarkup();
   t.querySelectorAll('[data-tmode]').forEach(b=>b.onclick=()=>setTimerMode(b.dataset.tmode));
@@ -6807,21 +6971,18 @@ function paintTimer(){ const t=timerTarget(); if(!t) return; t.innerHTML=timerMa
     if(a==="toggle") timerToggle(); else if(a==="reset") timerReset(); else if(a==="close") toggleTimer(); else if(a==="pop") popOutTimer(); });
 }
 function timerStop(){ if(TIMER.iv){ clearInterval(TIMER.iv); TIMER.iv=null; } }
-function setTimerMode(m){ TIMER.mode=m; TIMER.running=false; timerStop();
-  if(m==="rest"){ TIMER.total=TIMER.restMin*60; } else { TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=TIMER.workMin*60; }
+function setTimerMode(m){ TIMER.mode="focus"; TIMER.running=false; timerStop();
+  TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=TIMER.workMin*60;
   TIMER.secs=TIMER.total; paintTimer(); }
 function setTimerPreset(v){ TIMER.running=false; timerStop();
-  if(TIMER.mode==="rest"){ TIMER.restMin=Number(v); TIMER.total=TIMER.restMin*60; }
-  else { const [w,b]=v.split("-").map(Number); TIMER.workMin=w; TIMER.breakMin=b; TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=w*60; }
+  const [w,b]=v.split("-").map(Number); TIMER.workMin=w; TIMER.breakMin=b; TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=w*60;
   TIMER.secs=TIMER.total; paintTimer(); }
 function timerToggle(){ TIMER.running=!TIMER.running; timerStop(); if(TIMER.running) TIMER.iv=setInterval(timerTick,1000); paintTimer(); }
-function timerReset(){ TIMER.running=false; timerStop();
-  if(TIMER.mode==="focus"){ TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=TIMER.workMin*60; } TIMER.secs=TIMER.total; paintTimer(); }
+function timerReset(){ TIMER.running=false; timerStop(); TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=TIMER.workMin*60; TIMER.secs=TIMER.total; paintTimer(); }
 function timerTick(){
   TIMER.secs=Math.max(0,TIMER.secs-1);
   if(TIMER.secs===0){
-    if(TIMER.mode==="rest"){ TIMER.running=false; timerStop(); toast("rest done — well done 🦊"); }
-    else if(TIMER.phase==="focus"){ TIMER.phase="break"; TIMER.total=TIMER.breakMin*60; TIMER.secs=TIMER.total; toast("focus done — little break 🍵");
+    if(TIMER.phase==="focus"){ TIMER.phase="break"; TIMER.total=TIMER.breakMin*60; TIMER.secs=TIMER.total; toast("focus done — little break 🍵");
       if(KIKO.focus){ const g=KIKO.focus.goal; KIKO.focus=null; KIKO.log.push({role:"pet",text:"⏰ timer's up! how did “"+g+"” go? even a little counts — want another round, or a proper break? 💗"}); try{ H.openKikoChatPanel(); }catch(_){}}}
     else { TIMER.phase="focus"; TIMER.cycles++; TIMER.total=TIMER.workMin*60; TIMER.secs=TIMER.total; toast("break over — back to it ✨"); }
   }
@@ -7437,9 +7598,12 @@ async function execAgentAction(a){
       await setSent(n=>({...n,eggieRequests:[...(n.eggieRequests||[]),{id:"er"+Date.now(),date:TODAY,text:String(a.text).slice(0,500),tab:state.tab,status:"new"}]}));
       return "💌 noted for Eggie: "+a.text; }
     /* ===== app & comfort controls — Kiko can drive the whole hub ===== */
-    if(T==="setPref"){ const map={calm:"mifu-calm",text:"mifu-text",focus:"mifu-focus"}; const k=map[a.pref]; if(!k)return null;
+    if(T==="setPref"){
+      if(a.pref==="text"){ try{ localStorage.setItem("mifu-textsize",String(a.on?18:TEXT_DEFAULT)); }catch(e){} applyPrefs(); render();
+        return a.on?"🔠 text bumped up — fine-tune it with the slider in Settings":"🔠 text back to normal"; }
+      const map={calm:"mifu-calm",focus:"mifu-focus"}; const k=map[a.pref]; if(!k)return null;
       try{ localStorage.setItem(k,a.on?"1":"0"); }catch(e){} applyPrefs();
-      return ({calm:"❄️ calm mode ",text:"🔠 larger text ",focus:"🌙 focus mode "})[a.pref]+(a.on?"on":"off"); }
+      return ({calm:"❄️ calm mode ",focus:"🌙 focus mode "})[a.pref]+(a.on?"on":"off"); }
     if(T==="lockLayout"){ try{ localStorage.setItem("layout-locked",a.on?"1":"0"); }catch(e){} applyPrefs(); return a.on?"🔒 layout locked":"🔓 layout unlocked"; }
     if(T==="hideCard"||T==="showCard"){ const tab=["home","care","food"].includes(a.tab)?a.tab:"home";
       try{ if(!MODULAR_LABELS[tab]||!Object.keys(MODULAR_LABELS[tab]).length){ ({home:viewHome,care:viewCare,food:viewFood})[tab](); } }catch(e){}
