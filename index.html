@@ -51,6 +51,7 @@
   .num{font-variant-numeric:tabular-nums;} a{color:var(--lav-deep);}
   button{font-family:inherit;cursor:pointer;font-weight:600;} input,textarea,select{font-family:inherit;font-weight:500;}
   .label{font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+  .card-head>.label{font-size:13px;letter-spacing:.06em;background:linear-gradient(135deg,var(--peri-deep),var(--sakura-deep));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:20px;}
   .inp{background:#fff;border:1.5px solid var(--line-2);border-radius:12px;padding:9px 12px;color:var(--ink);font-size:13px;width:100%;outline:none;}
   .inp:focus{border-color:var(--peri);box-shadow:0 0 0 3px rgba(117,138,198,.14);}
@@ -192,9 +193,9 @@
   /* modular layout — drag-reorder · resize · minimize/remove · masonry */
   /* clean column model (Eggie / iPad style): 3 columns wide → 2 medium → 1 narrow.
      Cards snap to whole columns so they always tile together with no orphan widths. */
-  .grid-modular{columns:2;column-gap:16px;}
-  @media (min-width:1600px){ .grid-modular{columns:3;} }
-  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box;margin-bottom:16px;vertical-align:top;}
+  .grid-modular{display:flex;gap:0 16px;align-items:flex-start;}
+  .grid-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;}
+  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);min-width:0;}
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
   .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
@@ -207,7 +208,7 @@
   .home-widget:hover .home-tools button,.home-tools button:hover{opacity:.95;}
   .home-resize{position:absolute;right:4px;bottom:4px;z-index:6;border:none;background:rgba(255,255,255,.72);border-radius:8px;font-size:14px;line-height:1;color:#9b8fae;cursor:nwse-resize;padding:4px 6px;opacity:.45;touch-action:none;user-select:none;-webkit-user-select:none;}
   .home-widget:hover .home-resize,.home-resize:hover{opacity:.95;}
-  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;column-span:all;display:block;width:100%;box-sizing:border-box;}
+  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;}
   body.locked .home-tools,body.locked .home-resize,body.locked .home-add{display:none!important;}
   #lockChip.on{background:#fde2f2;color:var(--sakura-deep);}
   @media (hover:none){ .home-tools button,.home-resize{opacity:.92;} .home-tools button{padding:7px 9px;font-size:14px;} .home-resize{padding:6px 9px;font-size:15px;} .sticky-tools button{width:24px;height:24px;font-size:13px;} .sticky-head{height:32px;} }
@@ -312,6 +313,25 @@
   .cal-stream:hover{background:rgba(255,158,216,.30);}
   .cal-bday{font-size:10.5px;line-height:1.4;padding:2px 7px;border-radius:8px;background:rgba(201,184,240,.20);color:#6a52a6;border-left:3px solid var(--lav);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .12s;}
   .cal-bday:hover{background:rgba(201,184,240,.36);}
+  /* week view — horizontal list (date left, events right) */
+  .cal-wk-list{display:flex;flex-direction:column;}
+  .cal-wk-row{display:flex;gap:16px;align-items:flex-start;padding:12px 6px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:10px;transition:background .12s;}
+  .cal-wk-row:hover{background:rgba(169,143,224,.07);}
+  .cal-wk-row:last-child{border-bottom:none;}
+  .cal-wk-row.today{background:rgba(117,138,198,.07);}
+  .cal-wk-label{flex:0 0 68px;text-align:center;padding-top:2px;}
+  .cal-wk-dn{font-size:10px;font-weight:700;color:var(--lav-deep);text-transform:uppercase;letter-spacing:.06em;display:block;}
+  .cal-wk-row.today .cal-wk-dn{color:var(--sakura-deep);}
+  .cal-wk-dd{font-size:28px;font-weight:700;color:var(--ink);display:block;line-height:1;margin:2px 0;}
+  .cal-wk-row.today .cal-wk-dd{color:var(--peri-deep);}
+  .cal-wk-mo{font-size:10px;color:var(--ink-soft);display:block;}
+  .cal-wk-events{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;min-height:36px;justify-content:center;}
+  .cal-wk-ev{font-size:13px;line-height:1.45;padding:6px 12px;border-radius:8px;color:#3a3550;white-space:normal;word-break:break-word;cursor:pointer;transition:filter .12s;}
+  .cal-wk-ev:hover{filter:brightness(.93);}
+  .cal-wk-stream{font-size:13px;line-height:1.45;padding:6px 12px;border-radius:8px;background:rgba(255,158,216,.2);color:var(--sakura-deep);border-left:3px solid var(--sakura);white-space:normal;word-break:break-word;cursor:pointer;}
+  .cal-wk-bday{font-size:13px;line-height:1.45;padding:6px 12px;border-radius:8px;background:rgba(201,184,240,.22);color:#6a52a6;border-left:3px solid var(--lav);white-space:normal;word-break:break-word;cursor:pointer;}
+  .cal-wk-time{font-size:10.5px;font-weight:600;opacity:.7;margin-right:5px;}
+  .cal-wk-empty{font-size:11px;color:var(--muted);padding:2px 0;}
   /* agenda / reminders */
   .agenda-row{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);font-size:13px;}
   .agenda-row:last-child{border-bottom:none;}
@@ -1001,7 +1021,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.columns";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.streamTime";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1337,14 +1357,20 @@ function modularGrid(tab, items, addable){
   const L=modLayout(tab); MODULAR_LABELS[tab]={}; const byKey={};
   items.forEach(it=>{ byKey[it.key]=it; MODULAR_LABELS[tab][it.key]=it.label||it.key; });
   let order=L.order.filter(k=>byKey[k]); items.forEach(it=>{ if(!order.includes(it.key)) order.push(it.key); });
-  const cells=order.filter(k=>!L.hidden[k]).map(k=>{ const it=byKey[k]; const s=L.size[k]||{}; const cols=Math.max(3,s.c||it.cols||4); const min=!!L.min[k];
+  const visible=order.filter(k=>!L.hidden[k]);
+  const makeW=k=>{ const it=byKey[k]; const s=L.size[k]||{}; const cols=Math.max(3,s.c||it.cols||4); const min=!!L.min[k];
     return `<div class="home-widget ${min?'min':''}" data-w="${k}" data-tab="${tab}" data-h="${s.h||''}" data-c="${cols}">
       <div class="home-tools"><button class="home-grip" title="drag to move">⠿</button><button data-act="homeMin" data-w="${k}" data-tab="${tab}" title="${min?'expand':'minimize'}">${min?'＋':'–'}</button><button data-act="homeHide" data-w="${k}" data-tab="${tab}" title="remove">✕</button></div>
       <span class="home-resize" title="drag to resize">⤡</span>
-      ${it.html}</div>`; }).join("");
+      ${it.html}</div>`; };
+  const left=[], right=[];
+  visible.forEach((k,i)=>{ if(i%2===0) left.push(k); else right.push(k); });
   const hiddenN=Object.keys(L.hidden).filter(k=>L.hidden[k]&&byKey[k]).length;
-  const add= addable===false?"":`<button class="home-add" data-act="manageCards" data-tab="${tab}">＋ cards${hiddenN?` · ${hiddenN} hidden`:""}</button>`;
-  return `<div class="grid-modular" data-tab="${tab}">${cells}${add}</div>`;
+  const add=addable===false?"":`<button class="home-add" data-act="manageCards" data-tab="${tab}">＋ cards${hiddenN?` · ${hiddenN} hidden`:""}</button>`;
+  return `<div class="grid-modular" data-tab="${tab}">
+    <div class="grid-col" data-tab="${tab}">${left.map(makeW).join("")}</div>
+    <div class="grid-col" data-tab="${tab}">${right.map(makeW).join("")}${add}</div>
+  </div>`;
 }
 /* width preference → whole columns. Stored width (data-c) keeps its old 3-16 scale for
    back-compat: small/default → 1 col, mid → 2 cols, large → full. Clamped to what fits now. */
@@ -1362,7 +1388,7 @@ function manageCardsModal(tab){
     <button class="btn" data-act="resetLayout" data-tab="${tab}" style="margin-top:12px">↺ reset this page's layout</button>
   </div></div>`;
 }
-const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerSpoon:"all", trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all" };
+const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerSpoon:"all", trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week" };
 try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
 const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
 
@@ -5364,8 +5390,80 @@ function renderCalendar(){
   const events=sent.calendarEvents||[];
   const gameColor=sent.gameColor||GAME_COLOR_DEFAULT;
   const showStreams=state.calShowStreams!==false, showGames=state.calShowGames!==false, showEvents=state.calShowEvents!==false, showBdays=state.calShowBdays!==false;
-  if(!state.calRef){ const t=new Date(); state.calRef=new Date(t.getFullYear(),t.getMonth(),1); }
-  const ref=state.calRef, y=ref.getFullYear(), m=ref.getMonth();
+  const view=state.calView||"week";
+  if(!state.calRef) state.calRef=new Date();
+
+  const filterBar=`<div class="chiprow" style="margin-bottom:10px">
+    <button class="chiptog ${showEvents?'on':''}" data-act="calToggleEvents"><span>${showEvents?'✓':''}</span>📌 Events</button>
+    <button class="chiptog ${showBdays?'on':''}" data-act="calToggleBdays"><span>${showBdays?'✓':''}</span>🎂 Birthdays</button>
+    <button class="chiptog ${showStreams?'on':''}" data-act="calToggleStreams"><span>${showStreams?'✓':''}</span>🔴 Streams</button>
+    <button class="chiptog ${showGames?'on':''}" data-act="calToggleGames"><span>${showGames?'✓':''}</span>🎮 Games</button>
+  </div>`;
+  const viewToggle=`<div class="seg"><button class="${view==='week'?'on':''}" data-act="calViewWeek">📋 Week</button><button class="${view==='month'?'on':''}" data-act="calViewMonth">🗓️ Month</button></div>`;
+
+  if(view==="week"){
+    const ref=state.calRef instanceof Date?state.calRef:new Date();
+    const dow=ref.getDay(); const diffToMon=dow===0?-6:1-dow;
+    const monday=new Date(ref); monday.setDate(ref.getDate()+diffToMon);
+    const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+    const dayNames=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const days=dayNames.map((_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
+    const fmtS=(d)=>d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    const rangeStr=monday.getMonth()===sunday.getMonth()?
+      `${monday.toLocaleDateString("en-US",{month:"long",year:"numeric"})}, ${monday.getDate()}–${sunday.getDate()}`:
+      `${fmtS(monday)} – ${fmtS(sunday)}, ${sunday.getFullYear()}`;
+
+    const rows=days.map((d,i)=>{
+      const ds=d.toLocaleDateString("en-CA"), isToday=ds===TODAY, dayName=dayNames[i];
+      const monthShort=d.toLocaleDateString("en-US",{month:"short"});
+      const streamChips=showStreams?slotsForDate(d).filter(s=>s.day===dayName).map(s=>
+        `<div class="cal-wk-stream" data-act="editSchedule">🔴 ${s.time?esc(s.time)+" · ":""}${esc(s.show||s.title||"Stream")}</div>`
+      ).join(""):"";
+      const bdayChips=showBdays?(sent.birthdays||[]).filter(b=>(d.getMonth()+1)===Number(b.month)&&d.getDate()===Number(b.day)).map(b=>
+        `<div class="cal-wk-bday">🎂 ${esc(b.name)}</div>`
+      ).join(""):"";
+      const dayEvs=events.filter(ev=>ds>=ev.date&&ds<=(ev.endDate||ev.date)&&(gameSrc(ev)?showGames:showEvents));
+      const evChips=dayEvs.sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99")).map(ev=>{
+        const bg=gameSrc(ev)?gameSrcColor(ev,gameColor):(ev.color||CAL_COLORS[0]);
+        const ic=gameSrcIcon(ev);
+        const et=toLocal(ev.date,ev.time,ev.tz);
+        const linkable=gameSrc(ev)&&ev.url, act=linkable?`data-act="calLink" data-url="${esc(ev.url)}"`:`data-act="calEvent"`;
+        const timeStr=et?`<span class="cal-wk-time">${et.tTime}</span>`:(ev.time?`<span class="cal-wk-time">${fmt12(ev.time)}</span>`:"");
+        const multi=ev.endDate&&ev.endDate>ev.date, isEnd=multi&&ds===ev.endDate, suffix=multi?(isEnd?" · ends":" · starts"):"";
+        return `<div class="cal-wk-ev" style="background:${bg}" ${act} data-eid="${ev.id}">${ic}${timeStr}${esc(ev.title)}${suffix}</div>`;
+      }).join("");
+      const empty=!streamChips&&!bdayChips&&!evChips;
+      return `<div class="cal-wk-row${isToday?' today':''}" data-date="${ds}" data-act="calAdd">
+        <div class="cal-wk-label">
+          <span class="cal-wk-dn">${isToday?'Today':dayName}</span>
+          <span class="cal-wk-dd">${d.getDate()}</span>
+          <span class="cal-wk-mo">${monthShort}</span>
+        </div>
+        <div class="cal-wk-events">${streamChips}${bdayChips}${evChips}${empty?`<span class="cal-wk-empty">nothing planned 🌙</span>`:""}</div>
+      </div>`;
+    }).join("");
+
+    return `<div class="panel" style="max-width:860px;margin:0 auto">
+      <div class="card-head" style="flex-wrap:wrap;gap:10px">
+        <div><h2 style="font-size:18px">📅 ${rangeStr}</h2>
+          <div class="label" style="margin-top:2px">tap a day to add · 🔴 streams · 🎮 games · 📌 events</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          ${viewToggle}
+          <div style="display:flex;gap:6px"><button class="btn" data-act="calPrev">‹ prev</button><button class="btn" data-act="calToday">this week</button><button class="btn" data-act="calNext">next ›</button></div>
+        </div>
+      </div>
+      ${filterBar}
+      <div class="cal-wk-list">${rows}</div>
+      <p class="soft" style="font-size:11.5px;margin-top:12px">Nothing here is set in stone — tap any day to add or edit. 💗 Games refresh automatically every Friday.</p>
+    </div>
+    ${gamesTrackedCard(sent)}
+    ${calAgenda(sent)}`;
+  }
+
+  // ── Month view ──
+  const ref=state.calRef instanceof Date?state.calRef:new Date();
+  const y=ref.getFullYear(), m=ref.getMonth();
   const startDow=new Date(y,m,1).getDay();
   const gridStart=new Date(y,m,1-startDow);
   const monthName=ref.toLocaleDateString("en-US",{month:"long",year:"numeric"});
@@ -5378,25 +5476,25 @@ function renderCalendar(){
     const dayShort=dows[d.getDay()];
     const streamChips=showStreams?slotsForDate(d).filter(s=>s.day===dayShort).map(s=>`<div class="cal-stream" data-act="editSchedule" title="Stream day — tap to edit your schedule">🔴 ${s.time?esc(s.time)+" · ":""}${esc(s.show||s.title||"Stream")}</div>`).join(""):"";
     const bdayChips=showBdays?(sent.birthdays||[]).filter(b=>(d.getMonth()+1)===Number(b.month)&&d.getDate()===Number(b.day)).map(b=>`<div class="cal-bday" data-act="scrollAgenda" title="🎂 ${esc(b.name)}'s birthday">🎂 ${esc(b.name)}</div>`).join(""):"";
-    const dow=d.getDay();
-    // events show only on their actual day(s): single-day → one chip; multi-day → a "starts" chip on the
-    // first day and an "ends" chip on the last day (no long bar across the middle).
-    const dayEvents=events.filter(ev=> (ds===ev.date || ds===(ev.endDate||ev.date)) && (gameSrc(ev)?showGames:showEvents));
-    const evChips=dayEvents
-      .sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99")).map(ev=>{
-        const multi=ev.endDate&&ev.endDate>ev.date, isEnd=multi&&ds===ev.endDate, suffix=multi?(isEnd?" · ends":" · starts"):"";
-        const bg=gameSrc(ev)?gameSrcColor(ev,gameColor):(ev.color||CAL_COLORS[0]);
-        const ic=gameSrcIcon(ev);
-        const et=toLocal(ev.date,ev.time,ev.tz);
-        const linkable=gameSrc(ev)&&ev.url, act=linkable?`data-act="calLink" data-url="${esc(ev.url)}"`:`data-act="calEvent"`, lk=linkable?" 🔗":"";
-        const tip=esc((et?et.tTime+" "+CAL_TZ_LABEL+" — ":"")+ev.title+(multi?` (${fmtDate(ev.date)}–${fmtDate(ev.endDate)})`:"")+(ev.note?" — "+ev.note:"")+(linkable?" — (tap to open)":""));
-        return `<div class="cal-ev" draggable="${(!multi||!isEnd)?'true':'false'}" data-eid="${ev.id}" ${act} style="background:${bg}" title="${tip}">${ic}${esc(ev.title)}${suffix}${lk}</div>`;
-      }).join("");
+    const dayEvents=events.filter(ev=>(ds===ev.date||ds===(ev.endDate||ev.date))&&(gameSrc(ev)?showGames:showEvents));
+    const evChips=dayEvents.sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99")).map(ev=>{
+      const multi=ev.endDate&&ev.endDate>ev.date, isEnd=multi&&ds===ev.endDate, suffix=multi?(isEnd?" · ends":" · starts"):"";
+      const bg=gameSrc(ev)?gameSrcColor(ev,gameColor):(ev.color||CAL_COLORS[0]);
+      const ic=gameSrcIcon(ev);
+      const et=toLocal(ev.date,ev.time,ev.tz);
+      const linkable=gameSrc(ev)&&ev.url, act=linkable?`data-act="calLink" data-url="${esc(ev.url)}"`:`data-act="calEvent"`, lk=linkable?" 🔗":"";
+      const tip=esc((et?et.tTime+" "+CAL_TZ_LABEL+" — ":"")+ev.title+(multi?` (${fmtDate(ev.date)}–${fmtDate(ev.endDate)})`:"")+(ev.note?" — "+ev.note:"")+(linkable?" — (tap to open)":""));
+      return `<div class="cal-ev" draggable="${(!multi||!isEnd)?'true':'false'}" data-eid="${ev.id}" ${act} style="background:${bg}" title="${tip}">${ic}${esc(ev.title)}${suffix}${lk}</div>`;
+    }).join("");
     cells+=`<div class="cal-cell ${inMonth?"":"other"} ${isToday?"today":""}" data-date="${ds}" data-act="calAdd"><span class="cal-daynum">${d.getDate()}</span>${streamChips}${bdayChips}${evChips}</div>`;
   }
   return `<div class="panel" style="max-width:920px;margin:0 auto">
-    <div class="card-head"><div><h2 style="font-size:18px">📅 ${monthName}</h2><div class="label" style="margin-top:2px">tap a day to add · drag to move · 🔴 streams · 🎮 game updates ❄️🦊</div></div>
-      <div style="display:flex;gap:6px"><button class="btn" data-act="calPrev" title="previous month">‹</button><button class="btn" data-act="calToday">today</button><button class="btn" data-act="calNext" title="next month">›</button></div></div>
+    <div class="card-head"><div><h2 style="font-size:18px">📅 ${monthName}</h2><div class="label" style="margin-top:2px">tap a day to add · drag to move · 🔴 streams · 🎮 game updates</div></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${viewToggle}
+        <div style="display:flex;gap:6px"><button class="btn" data-act="calPrev">‹</button><button class="btn" data-act="calToday">today</button><button class="btn" data-act="calNext">›</button></div>
+      </div>
+    </div>
     <div class="chiprow" style="margin-bottom:8px">
       <button class="chiptog ${showEvents?'on':''}" data-act="calToggleEvents"><span>${showEvents?'✓':''}</span>📌 Events</button>
       <button class="chiptog ${showBdays?'on':''}" data-act="calToggleBdays"><span>${showBdays?'✓':''}</span>🎂 Birthdays</button>
@@ -6298,9 +6396,11 @@ const H={
   async capPin(el){ const c=(state.sentinel.captures||[]).find(x=>x.id===el.dataset.v); if(!c)return; await addSticky(c.text); toast("pinned to a sticky 📌"); },
 
   // --- Calendar ---
-  calPrev(){ state.calRef=new Date(state.calRef.getFullYear(),state.calRef.getMonth()-1,1); render(); },
-  calNext(){ state.calRef=new Date(state.calRef.getFullYear(),state.calRef.getMonth()+1,1); render(); },
-  calToday(){ const t=new Date(); state.calRef=new Date(t.getFullYear(),t.getMonth(),1); render(); },
+  calPrev(){ const v=state.calView||"week"; const r=state.calRef instanceof Date?new Date(state.calRef):new Date(); if(v==="week"){ r.setDate(r.getDate()-7); state.calRef=r; } else { state.calRef=new Date(r.getFullYear(),r.getMonth()-1,1); } render(); },
+  calNext(){ const v=state.calView||"week"; const r=state.calRef instanceof Date?new Date(state.calRef):new Date(); if(v==="week"){ r.setDate(r.getDate()+7); state.calRef=r; } else { state.calRef=new Date(r.getFullYear(),r.getMonth()+1,1); } render(); },
+  calToday(){ const v=state.calView||"week"; const t=new Date(); state.calRef=v==="month"?new Date(t.getFullYear(),t.getMonth(),1):t; render(); },
+  calViewWeek(){ state.calView="week"; if(!(state.calRef instanceof Date)) state.calRef=new Date(); render(); },
+  calViewMonth(){ state.calView="month"; const r=state.calRef instanceof Date?state.calRef:new Date(); state.calRef=new Date(r.getFullYear(),r.getMonth(),1); render(); },
   calAdd(el){ calEventModal(el.dataset.date); },
   calEvent(el){ calEventModal(null,el.dataset.eid); },
   calLink(el){ const u=el.dataset.url; if(u) window.open(u,"_blank","noopener"); },
@@ -7727,7 +7827,7 @@ start();
 (function(){
   let d=null, sc=false, rafL=0;
   const gridEl=()=>document.querySelector(".grid-modular");
-  function maxCols(){ const g=gridEl(); if(!g)return 2; try{ const cc=parseInt(getComputedStyle(g).columnCount||"0",10); if(cc>0)return cc; }catch(e){} return 2; }
+  function maxCols(){ const g=gridEl(); if(!g)return 2; const cc=g.querySelectorAll(".grid-col").length; return cc>0?cc:2; }
   function relayoutSoon(){ if(rafL)return; rafL=requestAnimationFrame(()=>{ rafL=0; try{layoutHome();}catch(_){} }); }
   function commitTabs(order){ try{ localStorage.setItem("tab-order",JSON.stringify(order)); }catch(e){} }
   function moveGhost(x,y,scale){ if(d&&d.ghost)d.ghost.style.transform="translate("+(x-d.gx)+"px,"+(y-d.gy)+"px) scale("+(scale||1.04)+")"; }
@@ -7766,9 +7866,16 @@ start();
     const fr=x.item.getBoundingClientRect();
     if(x.ghost){ x.ghost.style.transition="transform .2s cubic-bezier(.2,.8,.25,1),opacity .2s"; x.ghost.style.transform="translate("+fr.left+"px,"+fr.top+"px) scale(1)"; x.ghost.style.opacity="0"; const gh=x.ghost; setTimeout(()=>{ gh&&gh.remove(); },220); }
     x.item.classList.remove("dragsrc");
-    const order=[...x.c.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key));
-    if(x.isTab){ commitTabs(order); }
-    else { const tab=x.c.getAttribute("data-tab"); setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){} }
+    if(x.isTab){ const order=[...x.c.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key)); commitTabs(order); }
+    else {
+      const grid=x.c.closest(".grid-modular")||x.c;
+      const tab=grid.getAttribute("data-tab")||x.c.getAttribute("data-tab");
+      const cols=[...grid.querySelectorAll(".grid-col")];
+      let order;
+      if(cols.length>1){ const co=cols.map(c=>[...c.querySelectorAll(".home-widget")].map(it=>it.getAttribute("data-w"))); order=[]; const ml=Math.max(co[0].length,co[1]?.length||0); for(let i=0;i<ml;i++) co.forEach(c=>{ if(c[i]) order.push(c[i]); }); }
+      else order=[...x.c.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key));
+      setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){}
+    }
   },true);
   document.addEventListener("pointercancel",()=>{ if(!d)return; if(d.ghost)d.ghost.remove(); if(d.item){d.item.classList.remove("dragsrc","resizing","reordering");} d=null; },true);
   document.addEventListener("click",e=>{ if(sc){ e.stopPropagation(); e.preventDefault(); sc=false; } },true);
