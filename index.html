@@ -1021,7 +1021,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.streamTime";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.schedEdit";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1553,32 +1553,34 @@ function cardSchedule(){
   if(state.schedWeekOff===undefined)state.schedWeekOff=0;
   const off=state.schedWeekOff, wkISO=weekStartISO(off), ed=state.schedEdit;
   const slots=weekSlots(wkISO);
-  const wkEnd=(()=>{ const d=new Date(wkISO+"T00:00"); d.setDate(d.getDate()+6); return d.toLocaleDateString("en-CA"); })();
-  const label= off===0?"This week":off===1?"Next week":off===-1?"Last week":(off>0?`In ${off} wks`:`${-off} wks ago`);
-  const sorted=slots.slice().sort((a,b)=>DOW_ORDER.indexOf(a.day)-DOW_ORDER.indexOf(b.day));
+  const label=off===0?"This week":off===1?"Next week":off===-1?"Last week":(off>0?`In ${off} wks`:`${-off} wks ago`);
+  const byDay={}; slots.forEach(r=>{byDay[r.day]=r;});
   const nav=`<div style="display:flex;align-items:center;gap:4px">
-      <button class="btn" data-act="schedWeek" data-d="-1" title="earlier week">‹</button>
-      <button class="btn" data-act="schedWeekToday" title="jump to this week">${label}</button>
-      <button class="btn" data-act="schedWeek" data-d="1" title="later week">›</button>
-      <button class="btn" data-act="schedEdit">${ed?'done':'edit'}</button></div>`;
-  const daySel=(id,cur)=>`<select class="inp" data-sched="${id}" data-k="day" style="max-width:72px">${DOW_ORDER.map(dd=>`<option value="${dd}" ${cur===dd?'selected':''}>${dd}</option>`).join("")}</select>`;
+    <button class="btn" data-act="schedWeek" data-d="-1">‹</button>
+    <button class="btn" data-act="schedWeekToday">${label}</button>
+    <button class="btn" data-act="schedWeek" data-d="1">›</button>
+    <button class="btn" data-act="schedEdit">${ed?'done':'edit'}</button></div>`;
   let body;
   if(ed){
+    const rows=DOW_ORDER.map(day=>{
+      const r=byDay[day];
+      return `<div class="listrow sched-ed-row" data-day="${day}" style="gap:8px;align-items:center">
+        <span class="pill pill-lav" style="min-width:38px;text-align:center;flex-shrink:0">${day}</span>
+        <input class="inp sched-show" placeholder="what you're streaming" value="${esc(r?.show||'')}" style="flex:1;min-width:0">
+        <input class="inp sched-time" value="${esc(r?.time||'')}" style="max-width:64px" placeholder="${STREAM_TIME_DEFAULT}">
+      </div>`;
+    }).join("");
     const sug=streamSuggestions(wkISO);
-    body=`<div class="soft" style="font-size:10.5px;margin:2px 0 6px">Planning <b>${label.toLowerCase()}</b> (${fmtDate(wkISO)}–${fmtDate(wkEnd)}) — each week stands on its own, so flipping ‹ › gives you a fresh blank week with new ideas. ❄️</div>
-      <div class="label" style="margin:6px 0 4px">💡 Ideas for this week — tap to add</div>
-      <p class="soft" style="font-size:10px;margin:0 0 6px">🎮 = a real dated item from your game calendar · the rest are just cozy ideas (no set date)</p>
-      <div class="chiprow" style="margin-bottom:10px">${sug.map(s=>`<button class="chiptog ${s.real?'on':''}" data-act="addSchedSug" data-day="${s.day}" data-show="${esc(s.text)}"><span>＋</span>${s.day} · ${s.real?'🎮 ':''}${esc(s.text)}</button>`).join("")}</div>
-      ${sorted.map(r=>`<div style="display:flex;gap:6px;margin-bottom:6px">
-          ${daySel(r.id,r.day)}
-          <input class="inp" data-sched="${r.id}" data-k="show" value="${esc(r.show||'')}" placeholder="what you're streaming">
-          <input class="inp" data-sched="${r.id}" data-k="time" value="${esc(r.time||'')}" style="max-width:72px" placeholder="${STREAM_TIME_DEFAULT}">
-          <button class="x" data-act="delSched" data-v="${r.id}">✕</button></div>`).join("")}
-      <div style="margin-top:6px"><button class="btn btn-grad" data-act="addSched">+ add a day</button></div>`;
+    body=`${rows}
+    <div class="label" style="margin:14px 0 6px">💡 Ideas — tap to add</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">${sug.map(s=>`<button class="chiptog ${s.real?'on':''}" data-act="addSchedSug" data-day="${s.day}" data-show="${esc(s.text)}" style="white-space:normal;text-align:left;height:auto"><span>＋</span>${s.day} · ${s.real?'🎮 ':''}${esc(s.text)}</button>`).join("")}</div>`;
   } else {
-    body = sorted.length
-      ? sorted.map(r=>`<div class="listrow"><span class="pill pill-lav" style="min-width:40px;text-align:center">${esc(r.day)}</span><span class="grow" style="font-size:13px">${esc(r.show||'Stream')}</span><span class="soft" style="font-size:12px">${esc(r.time||'')}</span></div>`).join("")
-      : `<p class="soft" style="font-size:12.5px">No streams planned for ${label.toLowerCase()} yet — tap edit to fill it in. 🗓️</p>`;
+    body=DOW_ORDER.map(day=>{
+      const r=byDay[day];
+      return r
+        ?`<div class="listrow"><span class="pill pill-lav" style="min-width:38px;text-align:center;flex-shrink:0">${day}</span><span class="grow" style="font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.show||'Stream')}</span><span class="soft" style="font-size:12px;flex-shrink:0">${esc(r.time||'')}</span></div>`
+        :`<div class="listrow" style="opacity:.38"><span class="pill pill-gray" style="min-width:38px;text-align:center;flex-shrink:0">${day}</span><span class="soft" style="font-size:12px">—</span></div>`;
+    }).join("");
   }
   return `<section class="panel">
     <div class="card-head"><span class="label">Stream schedule 🗓️</span>${nav}</div>
@@ -6383,7 +6385,7 @@ const H={
     const gw=$("#goalWeek"),gm=$("#goalMonth"); state.goalDraft={week:gw?gw.value:"",month:gm?gm.value:""};
     await setSent(n=>({...n,[key]:(n[key]||[]).filter(g=>g.id!==id)})); render(); },
   async saveJournal(){ const t=$("#journalInput").value; await setToday(n=>({...n,journal:t})); memPush("journal",t,6); toast("saved 🌙"); },
-  schedEdit(){ state.schedEdit=!state.schedEdit; render(); },
+  schedEdit(){ if(state.schedEdit){ const wk=weekStartISO(state.schedWeekOff||0); const rows=[...document.querySelectorAll(".sched-ed-row")].map(row=>{ const day=row.dataset.day; const show=(row.querySelector(".sched-show")?.value||"").trim(); const time=(row.querySelector(".sched-time")?.value||"").trim(); return show?{id:"sc"+day,day,show,time:time||STREAM_TIME_DEFAULT}:null; }).filter(Boolean); setWeekSlots(wk,()=>rows); } state.schedEdit=!state.schedEdit; render(); },
   async addSched(){ const wk=weekStartISO(state.schedWeekOff||0); await setWeekSlots(wk,arr=>[...arr,{id:'sc'+Date.now(),day:'Mon',show:'',time:STREAM_TIME_DEFAULT}]); render(); },
   async delSched(el){ const id=el.dataset.v, wk=weekStartISO(state.schedWeekOff||0); await setWeekSlots(wk,arr=>arr.filter(r=>r.id!==id)); render(); },
   async addSchedSug(el){ const day=el.dataset.day||'Mon', show=el.dataset.show||'', wk=weekStartISO(state.schedWeekOff||0);
