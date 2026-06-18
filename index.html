@@ -527,8 +527,8 @@
   :root{ --gap:22px; }
   @media (max-width:1040px){ :root{ --gap:16px; } }
   @media (max-width:560px){ :root{ --gap:13px; } }
-  .page{ max-width:980px; margin:0 auto; display:flex; flex-direction:column; gap:var(--gap); }
-  .page.narrow{ max-width:880px; } .page.tight{ max-width:780px; }
+  .page{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:var(--gap); }
+  .page.narrow{ max-width:1100px; } .page.tight{ max-width:1100px; }
   .col, .health-col{ gap:var(--gap) !important; }
   .grid-home, .health-cols, .care-cols, .glance-cols, .deck{ gap:var(--gap) !important; }
   .home-fixed{ gap:var(--gap) !important; margin-bottom:var(--gap) !important; }
@@ -974,16 +974,22 @@
   .tab-emoji img.emoji{ height:20px; width:20px; margin:0; vertical-align:middle; }
   .card-head img.emoji, h2 img.emoji, h3 img.emoji{ height:1.2em; width:1.2em; vertical-align:-0.15em; }
   /* ===== GLOBAL HEADER ===== */
-  #global-header{display:flex;align-items:center;gap:10px;padding:8px 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);position:sticky;top:0;z-index:40;min-height:44px;flex-wrap:wrap;}
-  .gh-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;}
-  .gh-clock-wrap{text-align:right;}
-  .gh-clock{font-size:15px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.03em;}
-  .gh-date-str{font-size:10px;color:var(--ink-soft);}
-  .gh-energy{display:flex;gap:3px;}
-  .gh-energy-btn{border:1.5px solid var(--line);background:rgba(255,255,255,.7);border-radius:8px;padding:4px 9px;font-size:15px;cursor:pointer;transition:all .15s;line-height:1;touch-action:manipulation;}
+  #global-header{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:40;flex-wrap:wrap;}
+  .gh-ava{width:52px;height:52px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#fde2f2,#e6ecfb);flex:none;}
+  .gh-title{flex:1;min-width:0;}
+  .gh-title-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted);}
+  .gh-title-name{font-family:var(--display);font-size:18px;font-weight:700;line-height:1.2;color:var(--ink);}
+  .gh-title-sub{font-size:11.5px;color:var(--ink-soft);}
+  .gh-right{display:flex;align-items:center;gap:14px;margin-left:auto;flex-shrink:0;}
+  .gh-clockwrap{text-align:right;}
+  .gh-clock{font-family:var(--display);font-size:32px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1;}
+  .gh-date-str{font-size:11px;color:var(--sakura-deep);font-weight:600;}
+  .gh-energy{display:flex;gap:4px;}
+  .gh-energy-btn{border:1.5px solid var(--line);background:rgba(255,255,255,.7);border-radius:10px;padding:5px 10px;font-size:16px;cursor:pointer;transition:all .15s;line-height:1;touch-action:manipulation;}
   .gh-energy-btn.on.energy-low{background:#dde8fb;border-color:var(--peri-deep);}
   .gh-energy-btn.on.energy-medium{background:#fffaed;border-color:#c9a93a;}
   .gh-energy-btn.on.energy-high{background:#fdf0fb;border-color:var(--sakura-deep);}
+  @media(max-width:640px){.gh-clock{font-size:24px;}.gh-title-name{font-size:15px;}.gh-ava{width:40px;height:40px;}}
   /* ===== PLANNER REDESIGN ===== */
   .pln-grid{display:flex;gap:14px;align-items:flex-start;}
   .pln-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;}
@@ -1078,7 +1084,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.toolboxGrid";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.creatorStudio";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1445,18 +1451,18 @@ function manageCardsModal(tab){
     <button class="btn" data-act="resetLayout" data-tab="${tab}" style="margin-top:12px">↺ reset this page's layout</button>
   </div></div>`;
 }
-const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerEnergy:"all", energyLevel:"medium", plnMoreOpen:false, plnShowAll:false, trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week" };
+const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerEnergy:"all", energyLevel:"medium", plnMoreOpen:false, plnShowAll:false, trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week", creatorSub:"script" };
 try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
 const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
 
-const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["script","📝 Script"],["optimize","🔴 Stream"],["money","💶 Money"],["studio","🏆 Studio"],["art","🎨 Art"],["toolbox","🧰 Toolbox"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
+const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["creator","✍️ Creator"],["money","💶 Money"],["studio","🏆 Studio"],["art","🎨 Art"],["toolbox","🧠 Brain Tools"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
 /* ===== one app, two minds — Creator OS 🎀 / Health OS ❄️ (tap the logo to swap) ===== */
-const CREATOR_TABS=["home","planner","calendar","events","script","optimize","money","studio","art","toolbox","memories","kiko"];
+const CREATOR_TABS=["home","planner","calendar","events","creator","money","studio","art","toolbox","memories","kiko"];
 const SB_GROUPS={
   creator:[
     {label:null,tabs:["home"]},
-    {label:"Create",tabs:["planner","script","art","toolbox"]},
-    {label:"Publish",tabs:["optimize","calendar","events"]},
+    {label:"Create",tabs:["planner","creator","art","toolbox"]},
+    {label:"Publish",tabs:["calendar","events"]},
     {label:"Business",tabs:["money","studio","memories"]},
   ],
   health:[
@@ -1543,7 +1549,7 @@ async function render(){
     // state.range holds only past days (today is always overlaid from state.today below), so
     // there's nothing to re-fetch on navigation. Result: tab switches render instantly.
     if(!state._loaded) await loadData();
-    const fn={home:viewHome,kiko:viewKiko,money:viewMoney,health:viewHealth,pcos:viewHealth,mj:viewHealth,weight:viewTrends,food:viewFood,care:viewCare,bunny:viewBunny,studio:viewStudio,life:viewLife,planner:viewPlanner,calendar:renderCalendar,events:viewEvents,script:viewScript,optimize:viewOptimize,trends:viewTrends,art:viewArt,toolbox:viewToolbox,journal:viewJournal,memories:viewMemories,settings:viewSettings}[state.tab]||viewHome;
+    const fn={home:viewHome,kiko:viewKiko,money:viewMoney,health:viewHealth,pcos:viewHealth,mj:viewHealth,weight:viewTrends,food:viewFood,care:viewCare,bunny:viewBunny,studio:viewStudio,life:viewLife,planner:viewPlanner,calendar:renderCalendar,events:viewEvents,creator:viewCreator,script:viewCreator,optimize:viewCreator,trends:viewTrends,art:viewArt,toolbox:viewToolbox,journal:viewJournal,memories:viewMemories,settings:viewSettings}[state.tab]||viewHome;
     // --- one synchronous block from here (NO awaits) so the browser paints exactly once ---
     // Arm the animation BEFORE building, so the new cards are created already in their hidden
     // start state and animate in cleanly. Because there's no await between this and innerHTML,
@@ -1956,18 +1962,23 @@ function nowHM(){ const d=new Date(); return ("0"+d.getHours()).slice(-2)+":"+("
 function renderGlobalHeader(){
   const h=document.getElementById("global-header"); if(!h) return;
   const time=nowHM();
-  const date=new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  const date=new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
   const el=state.energyLevel||"medium";
   const creator=OS_MODE!=="health";
-  h.innerHTML=`<span class="mode-pill ${creator?"mode-creator":"mode-health"}">${creator?"🎀 Creator OS":"❄️ Health OS"}</span>
-    <span style="font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap">${creator?"Mifu's Creator OS":"Mifu's Health OS"}</span>
+  h.innerHTML=`
+    <img class="gh-ava" src="AYAYA.png" onerror="this.onerror=null;this.src='Logo.png'" alt=""/>
+    <div class="gh-title">
+      <div class="gh-title-label">Welcome to</div>
+      <div class="gh-title-name">Mifu's ${creator?"Creator":"Health"} OS 🌸</div>
+      <div class="gh-title-sub">Kiko is here to ${creator?"help":"support"} you. 💜</div>
+    </div>
     <div class="gh-right">
-      <div class="gh-clock-wrap">
-        <div class="gh-clock" id="ghClock">${time}</div>
-        <div class="gh-date-str">${date}</div>
-      </div>
       <div class="gh-energy">
         ${[["low","🌙"],["medium","🌤️"],["high","☀️"]].map(([v,em])=>`<button class="gh-energy-btn energy-${v}${el===v?" on":""}" data-act="setEnergy" data-v="${v}" title="${v} energy">${em}</button>`).join("")}
+      </div>
+      <div class="gh-clockwrap">
+        <div class="gh-clock" id="ghClock">${time}</div>
+        <div class="gh-date-str">${date}</div>
       </div>
     </div>`;
 }
@@ -1975,18 +1986,12 @@ function cardHero(){
   const creator=OS_MODE!=="health"; const d=new Date();
   const date=d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
   const defs=CI_DEFS[creator?"creator":"health"];
-  return `<section class="panel hero-card">
-    <div class="hero-top">
-      <img class="hero-ava" src="AYAYA.png" onerror="this.onerror=null;this.src='Logo.png'" alt=""/>
-      <div class="hero-title"><div class="label">Welcome to</div><h1>Mifu's ${creator?"Creator":"Health"} OS 🌸</h1><div class="soft" style="font-size:13px;margin-top:2px">Kiko is here to ${creator?"help":"support"} you. 💜</div></div>
-      <div class="hero-clockwrap"><div class="hero-clock" id="heroClock">${nowHM()}</div><div class="hero-date" id="heroDate">${date}</div></div>
-    </div>
-    ${!creator
-      ? `<div class="label" style="margin:16px 0 8px;letter-spacing:.08em">TODAY'S CHECK-INS</div>
-         <div class="ci-grid">${defs.map(([k,em,l])=>`<button class="ci-btn ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span class="ci-ic">${em}</span><span>${l}</span></button>`).join("")}</div>
-         <p class="soft" style="font-size:11.5px;text-align:center;margin:10px 0 0">✨ Click any check-in above when you complete it!</p>`
-      : ""}
+  if(!creator) return `<section class="panel hero-card">
+    <div class="label" style="margin-bottom:8px;letter-spacing:.08em">TODAY'S CHECK-INS</div>
+    <div class="ci-grid">${defs.map(([k,em,l])=>`<button class="ci-btn ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span class="ci-ic">${em}</span><span>${l}</span></button>`).join("")}</div>
+    <p class="soft" style="font-size:11.5px;text-align:center;margin:10px 0 0">✨ Click any check-in above when you complete it!</p>
   </section>`;
+  return "";
 }
 /* deterministic observations — each one traceable to a check-in or stored number; ticking today resets it */
 function rangeRow(date){ const r=(state.range||[]).find(x=>x&&x.date===date); return r?(r.notes||{}):null; }
@@ -2381,7 +2386,6 @@ function viewHome(){
   const m=state.today.mind||{};
   if(PREF.focus){
     return `<div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
-      ${slipBanner()}
       <section class="panel"><div class="card-head"><span class="label">Just today 🌙</span><button class="btn" data-act="pref" data-f="focus">exit focus</button></div>
         <h2 style="font-size:20px">${greeting()}, ${esc(CONFIG.creator.name)} ${CONFIG.creator.emoji}</h2>
         <p class="soft" style="font-size:12.5px;margin:4px 0 12px">One gentle tap at a time. That's a whole check-in. ❄️</p>
@@ -2422,7 +2426,7 @@ function viewHome(){
     {key:"deeppatterns",label:"Kiko noticed",cols:4,html:deepPatternsCard()},
     {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
   ];
-  return `${slipBanner()}<div class="home-fixed">${cardHero()}${glance}</div>${modularGrid(creator?"home":"homehealth",items)}${DISCLAIMER}`;
+  return `<div class="home-fixed">${cardHero()}${glance}</div>${modularGrid(creator?"home":"homehealth",items)}${DISCLAIMER}`;
 }
 /* ===================== 🎉 EVENTS — dedicated page (never mixed with game updates) ===================== */
 function evTier(days,urgent){ if(urgent)return ["Urgent","tier-urgent"]; if(days<=0)return["Today","tier-today"]; if(days===1)return["Tomorrow","tier-tmrw"]; if(days<=7)return["This Week","tier-week"]; if(days<=30)return["This Month","tier-month"]; return["Later","tier-later"]; }
@@ -2435,7 +2439,7 @@ function viewEvents(){
   const row=e=>{ const urgent=(e.sponsor&&e.days<=0)||(!!e.important&&e.days<=0);
     return `<div class="listrow"><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,urgent,fmtDate(e.date))}</div>`; };
   const groups=[["🌸 Today & tomorrow",e=>e.days<=1],["💙 This week",e=>e.days>1&&e.days<=7],["💜 This month",e=>e.days>7&&e.days<=30],["🩶 Later",e=>e.days>30]];
-  return `<div class="page narrow">
+  return `<div class="page">
     <section class="panel"><div class="card-head"><h2 style="font-size:18px">🎉 Events</h2><button class="btn" data-act="tab" data-tab="calendar">open calendar →</button></div>
       <p class="soft" style="font-size:12px;margin:0">Birthdays, conventions, collabs, sponsor deadlines, travel and personal plans — kept separate from game updates, like they should be. Add or edit events on the Calendar. 🌸</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
@@ -2983,7 +2987,7 @@ function viewArt(){
         <button class="btn btn-grad" data-act="artResAdd">＋ save</button>
       </div>
     </section>`;
-  return `<div style="max-width:1100px;margin:0 auto">
+  return `<div class="page" style="max-width:1100px">
     <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
       <h2 style="font-size:22px;font-family:var(--display)">🎨 Art studio</h2>
       <span class="label">just for you · play is allowed 🌸</span>
@@ -3153,7 +3157,7 @@ function viewMemories(){
   const groups={}; tl.forEach(m=>{ const ym=(m.date||"").slice(0,7); (groups[ym]=groups[ym]||[]).push(m); });
   const ymKeys=Object.keys(groups).sort().reverse();
   const row=m=>`<div class="listrow"><span style="font-size:15px;flex:0 0 auto">${MEM_ICON[m.kind]||"✨"}</span><span class="grow" style="min-width:0"><b style="font-size:12.5px">${esc(m.title||"")}</b> <span class="soft" style="font-size:11px">· ${esc(fmtDate(m.date))}</span><div class="soft" style="font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.preview||"")}</div>${m.reason?`<div class="soft" style="font-size:10px">${esc(m.reason)}</div>`:""}</span><button class="x" data-act="memFav" data-id="${esc(m.id)}" aria-label="favourite" title="favourite">${m.fav?"⭐":"☆"}</button>${m.kind==="photo"?`<button class="btn" data-act="mediaView" data-id="${esc(m.mediaId||"")}">view</button>`:(m.source?`<button class="btn" data-act="memOpen" data-page="${esc(m.source.page)}" data-ref="${esc(m.source.refId||"")}">open</button>`:"")}</div>`;
-  return `<section class="panel">
+  return `<div class="page"><section class="panel">
     <div class="card-head"><h2 style="font-size:17px">✨ Memories</h2><span class="soft" style="font-size:11px">${idx.length} remembered</span></div>
     <p class="soft" style="font-size:12px;margin:0 0 10px">Everything worth keeping in one place — search it, pin it, and walk your timeline. Photos &amp; a full media library come in the next update. ❄️</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
@@ -3169,7 +3173,7 @@ function viewMemories(){
   ${favs.length?`<section class="panel"><div class="sec-label">⭐ Favourites</div>${favs.slice(0,30).map(row).join("")}</section>`:""}
   <section class="panel"><div class="sec-label">🕒 ${bunny?"Bunny timeline":"Life timeline"}</div>
     ${ymKeys.length?ymKeys.map(ym=>`<div style="margin-top:10px"><div class="label">${esc(memMonthLabel(ym))}</div>${groups[ym].map(row).join("")}</div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">Your timeline fills in as you journal, log weigh-ins, and mark special days. ❄️</p>`}
-  </section>`;
+  </section></div>`;
 }
 /* ============================================================================
    DIGITAL HOBONICHI JOURNAL (slice 1) — the daily page is the hero: month colour theme,
@@ -3321,9 +3325,9 @@ function viewToolbox(){
   const tb=state.tb||(state.tb={spice:3,steps:null,task:"",fText:"",fTone:"professional",fOut:"",eTask:"",eOut:null,cText:"",groups:null,tText:"",tOut:null,busy:""});
   const chili=n=>`<span class="spice">${[1,2,3,4,5].map(i=>`<button data-act="tbSpice" data-v="${i}" class="${i<=n?'on':''}" title="${i}/5 — higher = tinier steps">🌶️</button>`).join("")}</span>`;
   const totalMin=(tb.steps||[]).reduce((a,s)=>a+(typeof s==="object"?Number(s.min||0):0),0);
-  return `<div class="page narrow">
-  <section class="panel"><div class="card-head"><h2 style="font-size:18px">🧰 Toolbox</h2><span class="pill pill-gray">brain helpers</span></div>
-    <p class="soft" style="font-size:12px;margin:0">Little machines for the hard parts. ${DEMO?"<b>(needs live mode)</b>":""}</p></section>
+  return `<div class="page">
+  <section class="panel"><div class="card-head"><h2 style="font-size:18px">🧠 Brain Tools</h2><span class="pill pill-gray">focus helpers</span></div>
+    <p class="soft" style="font-size:12px;margin:0">ADHD helpers for the hard parts — break it down, estimate honestly, read the room, sort your brain. ${DEMO?"<b>(needs live mode)</b>":""}</p></section>
   <div class="tb-grid">
   <section class="panel">
     <div class="card-head"><span class="label">✨ Magic breakdown</span>${chili(tb.spice)}</div>
@@ -3353,15 +3357,6 @@ function viewToolbox(){
       ${tb.tOut.notSaying?`<div style="margin-top:8px;font-size:12.5px;line-height:1.55"><b class="sak">what it's NOT saying:</b> ${esc(tb.tOut.notSaying)}</div>`:""}
       ${tb.tOut.respond?`<div class="label" style="margin-top:8px">easiest healthy reply</div><div class="soft" style="font-size:12.5px">${esc(tb.tOut.respond)}</div>`:""}
     </div>`:""}
-  </section>
-  <section class="panel">
-    <div class="label" style="margin-bottom:6px">🪄 Formalizer</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Paste what you want to say; pick how it should sound.</p>
-    <textarea class="inp" id="tbFText" rows="2" placeholder="the raw words…">${esc(tb.fText||'')}</textarea>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <select class="inp" id="tbFTone" style="max-width:200px">${["professional","friendly","sociable","more formal","shorter","softer / kinder","more assertive","easier to read"].map(t=>`<option ${tb.fTone===t?'selected':''}>${t}</option>`).join("")}</select>
-      <button class="btn btn-grad" data-act="tbFormal" ${tb.busy==='formal'?'disabled':''}>${tb.busy==='formal'?'…':'rewrite'}</button></div>
-    ${tb.fOut?`<div class="soft-card" style="margin-top:8px;font-size:12.5px;white-space:pre-wrap">${esc(tb.fOut)}</div><button class="btn" data-act="tbCopyF" style="margin-top:6px">📋 copy</button>`:""}
   </section>
   <section class="panel tb-span2">
     <div class="label" style="margin-bottom:6px">🧠 Brain-dump compiler</div>
@@ -3445,7 +3440,7 @@ function viewHealth(){
   const dx=cyc.lastStart?daysBetween(cyc.lastStart,TODAY):null;
   const months=dx!=null?dx/30.44:null;
   const longGap=dx!=null&&dx>=45;
-  return `
+  return `<div class="page">
   ${viewDailyCheckin()}
 
   <details class="acc"><summary>💉 Mounjaro journey</summary><div class="acc-body">
@@ -3514,7 +3509,7 @@ function viewHealth(){
     ${scaleRow("Unwanted hair / hirsutism (check in weekly)","pcosSet","hirsutism",p.hirsutism,"none","heavy")}
   </div></details>
 
-  ${DISCLAIMER}`;
+  ${DISCLAIMER}</div>`;
 }
 function waterCups(){ return (state.today&&state.today.mounjaro&&state.today.mounjaro.water)||0; }
 function water40(){ return waterCups()/CUPS_PER_40OZ; }            // her unit: full 40oz cups
@@ -4265,7 +4260,7 @@ function viewBunny(){
 function stripDisc(html){ return String(html).split(DISCLAIMER).join(""); }
 const STUDIO_SUBS=[["wins","🏆 Wins"],["streamlore","📜 Lore"],["sponsors","🤝 Sponsors"],["ideas","💡 Ideas"]];
 const LIFE_SUBS=[["people","💗 People"],["house","🏡 Home"],["mifulore","📔 About Me"]];
-function subNav(subs,active,act){ return `<div class="chiprow" style="max-width:980px;margin:0 auto 2px" role="tablist">${subs.map(([k,l])=>`<button class="chiptog ${active===k?'on':''}" role="tab" aria-selected="${active===k?'true':'false'}" data-act="${act}" data-sub="${k}">${l}</button>`).join("")}</div>`; }
+function subNav(subs,active,act){ return `<div class="chiprow" style="max-width:1100px;margin:0 auto 2px" role="tablist">${subs.map(([k,l])=>`<button class="chiptog ${active===k?'on':''}" role="tab" aria-selected="${active===k?'true':'false'}" data-act="${act}" data-sub="${k}">${l}</button>`).join("")}</div>`; }
 function viewStudio(){ const map={wins:viewWins,streamlore:viewStreamLore,sponsors:viewSponsors,ideas:viewIdeas};
   const sub=map[state.studioSub]?state.studioSub:"wins";
   return subNav(STUDIO_SUBS,sub,"studioSub")+stripDisc(map[sub]())+DISCLAIMER; }
@@ -4402,7 +4397,7 @@ function viewCare(){
   // bunny photos from the media library (lazy-loaded in the care post-hook)
   let bunPics=""; if(state.media&&state.media.length){ const pics=state.media.filter(memIsBunny).slice().reverse().slice(0,8);
     bunPics=pics.length?`<div class="md-grid">${pics.map(m=>`<div class="md-tile"><img src="${esc(m.url)}" alt="${esc(m.caption||'bunny')}" loading="lazy" data-act="mediaView" data-id="${esc(m.id)}"></div>`).join("")}</div>`:`<p class="soft" style="font-size:12.5px;margin:0">No bunny photos yet — upload some in ✨ Memories and tag them Myla / Kieran. 🐰</p>`; }
-  return `${slipBanner(true)}<div class="page">
+  return `<div class="page">
   <section class="panel"><div class="card-head"><h2 style="font-size:17px">🌿 Today's gentle plan</h2></div>
     <p class="soft" style="font-size:11.5px;margin:0 0 8px">Small, kind, and made for you by Kiko — no pressure, just gentle nudges.</p>
     ${plan.map(p=>`<div class="kn-row"><span class="kn-dot"></span><span style="font-size:13px">${esc(p)}</span></div>`).join("")}
@@ -4480,7 +4475,7 @@ function viewKiko(){
   const chip=(e,l,kind,val)=> kind==="act"
     ? `<button class="kiko-skill" data-act="${val}">${e} ${l}</button>`
     : `<button class="kiko-skill" data-act="kikoSkill" data-${kind}="${esc(val)}">${e} ${l}</button>`;
-  return `<div style="max-width:920px;margin:0 auto">
+  return `<div class="page">
     <div class="card-head"><h2 style="font-size:19px">🦊 Ask Kiko</h2><button class="btn" data-act="kikoMinimize" title="back to what you were doing">－ minimize</button></div>
     <p class="soft" style="font-size:12.5px;margin:0 0 12px">Your snowfox helper's home base. Just chat — attach 📷 anything (designs, DMs, food, screenshots) and he'll see exactly what it is. ❄️</p>
     <section class="panel" style="padding:6px"><div id="kikoTabChat" class="kiko-tabchat"></div></section>
@@ -4570,7 +4565,7 @@ function viewMoney(){
   const tx=moneyEntries(year).slice().sort((a,b)=>a.date<b.date?1:-1);
   const inc=tx.filter(t=>t.dir==="in").reduce((a,t)=>a+(+t.amount||0),0), exp=tx.filter(t=>t.dir==="out").reduce((a,t)=>a+(+t.amount||0),0);
   const tp=(state.sentinel.taxPrep||{})[year];
-  return `<div style="max-width:920px;margin:0 auto">
+  return `<div class="page">
     <div class="card-head"><h2 style="font-size:19px">💶 Money</h2>
       <select class="inp" id="moneyYear" style="max-width:110px">${years.map(y=>`<option ${y===year?'selected':''}>${y}</option>`).join("")}</select></div>
     <p class="soft" style="font-size:12px;margin:0 0 12px">Your business books — for a sole-proprietor (eenmanszaak) creator in the Netherlands. 🇳🇱❄️</p>
@@ -4829,7 +4824,7 @@ function viewTrends(){
   const {byDate}=buildSeries();
   const sel=(state.trendMetrics&&state.trendMetrics.length)?state.trendMetrics:["mood"];
   const days=state.trendDays===30?30:14;
-  return `
+  return `<div class="page">
   <section class="panel">
     <div class="card-head"><h2 style="font-size:18px">📈 Your last ${days} days</h2>
       <span class="tr-range">
@@ -4861,13 +4856,13 @@ function viewTrends(){
   </section>
   <div style="text-align:center;margin:18px 0 4px"><span class="label" style="letter-spacing:.08em">⚖️ &nbsp;weight &amp; body&nbsp;⚖️</span></div>
   ${viewWeight().split(DISCLAIMER)[0]}
-  ${DISCLAIMER}`;
+  ${DISCLAIMER}</div>`;
 }
 
 /* ===================== SETTINGS ===================== */
 function viewSettings(){
   const meds=state.sentinel.medsList||[];
-  return `
+  return `<div class="page">
   <section class="panel">
     <div class="card-head"><div class="label">⚙️ Comfort &amp; display</div><span class="chip" title="if something seems broken, check this matches the newest build first">build ${APP_BUILD}</span></div>
     <p class="soft" style="font-size:12px;margin:0 0 10px">However today needs to feel. Saved on this device.</p>
@@ -5009,7 +5004,7 @@ function viewSettings(){
     </div></details>
     <p class="soft" style="font-size:11px;margin-top:8px">Built bit by bit with love, for the coziest snowfox. — Eggie 🐙💗</p>
   </section>
-  ${DISCLAIMER}`;
+  ${DISCLAIMER}</div>`;
 }
 
 /* ===================== PLANNER ===================== */
@@ -5338,6 +5333,31 @@ function thumbCard(){
 }
 /* ===================== SCRIPT WRITER (voice-to-text → formatted script) ===================== */
 let RECOG=null, scrRecOn=false;
+const CREATOR_SUBS=[["script","📝 Script"],["formalizer","🪄 Formalizer"],["optimize","🔴 Optimize"]];
+function viewCreator(){
+  const sub=["script","formalizer","optimize"].includes(state.creatorSub)?state.creatorSub:"script";
+  const map={script:viewScript,formalizer:viewFormalizer,optimize:viewOptimize};
+  return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(map[sub]())+DISCLAIMER;
+}
+function viewFormalizer(){
+  const tb=state.tb||(state.tb={spice:3,steps:null,task:"",fText:"",fTone:"professional",fOut:"",eTask:"",eOut:null,cText:"",groups:null,tText:"",tOut:null,busy:""});
+  return `<div class="page">
+  <section class="panel">
+    <div class="card-head"><h2 style="font-size:18px">🪄 Formalizer</h2><span class="pill pill-gray">reword anything</span></div>
+    <p class="soft" style="font-size:12px;margin:0">Paste what you want to say, pick a tone — comes back polished. Great for emails, DMs, captions, anything that needs a second pass. ${DEMO?"<b>(needs live mode)</b>":""}</p>
+  </section>
+  <section class="panel">
+    <div class="label" style="margin-bottom:6px">🪄 Formalizer</div>
+    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Paste what you want to say; pick how it should sound.</p>
+    <textarea class="inp" id="tbFText" rows="3" placeholder="the raw words…">${esc(tb.fText||'')}</textarea>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <select class="inp" id="tbFTone" style="max-width:200px">${["professional","friendly","sociable","more formal","shorter","softer / kinder","more assertive","easier to read"].map(t=>`<option ${tb.fTone===t?'selected':''}>${t}</option>`).join("")}</select>
+      <button class="btn btn-grad" data-act="tbFormal" ${tb.busy==='formal'?'disabled':''}>${tb.busy==='formal'?'…':'rewrite'}</button>
+    </div>
+    ${tb.fOut?`<div class="soft-card" style="margin-top:8px;font-size:12.5px;white-space:pre-wrap">${esc(tb.fOut)}</div><button class="btn" data-act="tbCopyF" style="margin-top:6px">📋 copy</button>`:""}
+  </section>
+  </div>`;
+}
 function viewScript(){
   const sent=state.sentinel||{}; const saved=sent.scripts||[];
   if(!state.script) state.script={kind:"short",title:"",references:"",raw:"",out:null};
@@ -5355,7 +5375,7 @@ function viewScript(){
     </div>` : "";
   const kpill=k=>k==='long'?['pill-lav','LF']:k==='twitter'?['pill-ice','X']:['pill-sak','SF'];
   const savedHtml = saved.length?`<section class="panel"><div class="card-head"><span class="label">📁 saved drafts</span></div>${saved.slice().reverse().map(d=>{const kp=kpill(d.kind);return `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)"><span class="pill ${kp[0]}">${kp[1]}</span><span class="grow" style="font-size:12.5px">${esc(d.title||"(untitled)")}</span><button class="btn" data-act="loadScript" data-id="${d.id}">open</button><button class="x" data-act="delScript" data-id="${d.id}" title="remove">✕</button></div>`;}).join("")}</section>`:"";
-  return `<div class="page tight">
+  return `<div class="page">
     <section class="panel">
       <div class="card-head"><h2 style="font-size:18px">📝 Script writer</h2>${seg}</div>
       <p class="soft" style="font-size:12.5px;margin:0 0 12px">${tw?"Talk out your idea (or paste notes) — I'll shape it into an X/Twitter post in your voice, with a few opening-line options. ❄️🦊":`Drop in your research, then just talk it out — I'll shape your own words into your ${kindWord} format, in your voice. ❄️🦊`}${DEMO?` <b>(Deploy the ai function &amp; turn demo off to format.)</b>`:""}</p>
@@ -5491,7 +5511,7 @@ function descTemplateCard(){
 }
 function viewOptimize(){
   const m=OPT.mode;
-  return `
+  return `<div class="page">
   <section class="panel">
     <div class="card-head"><h2 style="font-size:18px">🔴 ${m==='video'?'Video':'Stream'} optimization</h2>
       <div class="seg">
@@ -5514,7 +5534,7 @@ function viewOptimize(){
     <button class="btn btn-grad" data-act="optChannel" ${OPT.busy==='channel'?'disabled':''}>${OPT.busy==='channel'?'…':'Pull '+esc(CONFIG.youtube.handle)}</button>
     ${OPT.channel?channelBlock(OPT.channel):''}
   </div></details>
-  ${DISCLAIMER}`;
+  ${DISCLAIMER}</div>`;
 }
 
 /* ===================== CALENDAR (front-end only; events on sentinel row) ===================== */
@@ -5595,7 +5615,7 @@ function renderCalendar(){
       </div>`;
     }).join("");
 
-    return `<div class="panel" style="max-width:860px;margin:0 auto">
+    return `<div class="page"><div class="panel">
       <div class="card-head" style="flex-wrap:wrap;gap:10px">
         <div><h2 style="font-size:18px">📅 ${rangeStr}</h2>
           <div class="label" style="margin-top:2px">tap a day to add · 🔴 streams · 🎮 games · 📌 events</div>
@@ -5610,7 +5630,7 @@ function renderCalendar(){
       <p class="soft" style="font-size:11.5px;margin-top:12px">Nothing here is set in stone — tap any day to add or edit. 💗 Games refresh automatically every Friday.</p>
     </div>
     ${gamesTrackedCard(sent)}
-    ${calAgenda(sent)}`;
+    ${calAgenda(sent)}</div>`;
   }
 
   // ── Month view ──
@@ -5640,7 +5660,7 @@ function renderCalendar(){
     }).join("");
     cells+=`<div class="cal-cell ${inMonth?"":"other"} ${isToday?"today":""}" data-date="${ds}" data-act="calAdd"><span class="cal-daynum">${d.getDate()}</span>${streamChips}${bdayChips}${evChips}</div>`;
   }
-  return `<div class="panel" style="max-width:920px;margin:0 auto">
+  return `<div class="page"><div class="panel">
     <div class="card-head"><div><h2 style="font-size:18px">📅 ${monthName}</h2><div class="label" style="margin-top:2px">tap a day to add · drag to move · 🔴 streams · 🎮 game updates</div></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         ${viewToggle}
@@ -5663,13 +5683,13 @@ function renderCalendar(){
     <p class="soft" style="font-size:11.5px;margin-top:12px">Konfuyu~ nothing here is set in stone — drag things around whenever your week shifts. 💗 Games refresh automatically every Friday.</p>
   </div>
   ${gamesTrackedCard(sent)}
-  ${calAgenda(sent)}`;
+  ${calAgenda(sent)}</div>`;
 }
 async function gameTopicAdd(name){ await setSent(n=>{ let g=(n.gameTopics&&n.gameTopics.length)?n.gameTopics.slice():DEFAULT_GAMES.slice(); if(!g.some(x=>x.toLowerCase()===String(name).toLowerCase()))g.push(name); return {...n,gameTopics:g}; }); }
 async function gameTopicRemove(name){ await setSent(n=>{ let g=(n.gameTopics&&n.gameTopics.length)?n.gameTopics.slice():DEFAULT_GAMES.slice(); g=g.filter(x=>x.toLowerCase()!==String(name).toLowerCase()); return {...n,gameTopics:g}; }); }
 function gamesTrackedCard(sent){
   const games=(sent.gameTopics&&sent.gameTopics.length)?sent.gameTopics:DEFAULT_GAMES;
-  return `<section class="panel" style="max-width:920px;margin:14px auto 0">
+  return `<section class="panel" style="margin-top:14px">
     <div class="card-head"><div class="label">🎮 Games I track</div><span class="pill pill-gray">${games.length}</span></div>
     <p class="soft" style="font-size:11.5px;margin:0 0 8px">Updates, limited-time events &amp; livestream days for these are pulled in each Friday. Ask Kiko to "track [game]" or "stop tracking [game]" anytime, or use the box below.</p>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${games.map(g=>`<span class="pill pill-lav" style="display:inline-flex;align-items:center;gap:6px">${esc(g)} <button class="x" data-act="delGameTopic" data-v="${esc(g)}" style="font-size:11px;padding:0">✕</button></span>`).join("")}</div>
@@ -5694,7 +5714,7 @@ function calAgenda(sent){
     }).join(""):`<p class="soft" style="font-size:12.5px">No upcoming events — tap any day above to add one. ❄️</p>`;
   const bdayRows=bdays.length?bdays.map(b=>`<div class="agenda-row"><span class="agenda-when">${whenLabel(b.days)}</span><span class="agenda-dot" style="background:var(--lav)"></span><span class="grow">🎂 ${esc(b.name)} <span class="soft" style="font-size:11px">· ${fmtDate(b.date)}</span></span><button class="x" data-act="delBirthday" data-v="${b.id}" title="remove">✕</button></div>`).join(""):`<p class="soft" style="font-size:12.5px">No birthdays yet — add the ones you never want to forget. 🎂</p>`;
   return `
-  <section class="panel" id="agendaPanel" style="max-width:920px;margin:14px auto 0">
+  <section class="panel" id="agendaPanel" style="margin-top:14px">
     <div class="card-head"><h2 style="font-size:17px">🎉 Events &amp; birthdays</h2></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px" class="agenda-cols">
       <div>
@@ -6401,6 +6421,7 @@ const H={
   async houseDel(el){ const id=el.dataset.id; await setSent(n=>({...n,houseLog:(n.houseLog||[]).filter(x=>x.id!==id)})); render(); },
   studioSub(el){ state.studioSub=el.dataset.sub; render(); },
   lifeSub(el){ state.lifeSub=el.dataset.sub; render(); },
+  creatorSub(el){ state.creatorSub=el.dataset.sub; render(); },
   async comfortAdd(){ const c=$("#comfortCat"), t=$("#comfortText"); const cat=(c&&c.value)||"music", text=t?String(t.value||"").trim():""; if(!text)return;
     await setSent(n=>{ const cm={...(n.comfort||{})}; cm[cat]=[...(cm[cat]||[]),text.slice(0,80)].slice(-30); return {...n,comfort:cm}; }); render(); },
   async comfortDel(el){ const cat=el.dataset.cat, i=+el.dataset.i; await setSent(n=>{ const cm={...(n.comfort||{})}; cm[cat]=(cm[cat]||[]).filter((_,j)=>j!==i); return {...n,comfort:cm}; }); render(); },
@@ -7047,8 +7068,6 @@ document.addEventListener("click",async e=>{ const el=e.target.closest("[data-ac
 })();
 /* ===== 🕐 hero clock — keeps the big 24h clock honest without re-rendering the page ===== */
 setInterval(()=>{ try{
-  const c=document.getElementById("heroClock"); if(c) c.textContent=nowHM();
-  const d=document.getElementById("heroDate"); if(d) d.textContent=logicalDisplayDate().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:"Europe/Amsterdam"});
   const gc=document.getElementById("ghClock"); if(gc) gc.textContent=nowHM();
 }catch(e){} },15000);
 // global undo — Ctrl+Z / ⌘Z rolls back the last data change, unless you're typing in a field (native undo wins there)
