@@ -192,10 +192,9 @@
   /* modular layout — drag-reorder · resize · minimize/remove · masonry */
   /* clean column model (Eggie / iPad style): 3 columns wide → 2 medium → 1 narrow.
      Cards snap to whole columns so they always tile together with no orphan widths. */
-  .grid-modular{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:8px;grid-auto-flow:row dense;gap:0 16px;}   /* row-gap 0: the gap lives inside the span math → uniform spacing */
-  @media (max-width:1040px){ .grid-modular{grid-template-columns:repeat(2,minmax(0,1fr));} }
-  @media (max-width:640px){ .grid-modular{grid-template-columns:repeat(2,minmax(0,1fr));} }
-  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);min-width:0;}
+  .grid-modular{columns:2;column-gap:16px;}
+  @media (min-width:1600px){ .grid-modular{columns:3;} }
+  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box;margin-bottom:16px;vertical-align:top;}
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
   .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
@@ -208,7 +207,7 @@
   .home-widget:hover .home-tools button,.home-tools button:hover{opacity:.95;}
   .home-resize{position:absolute;right:4px;bottom:4px;z-index:6;border:none;background:rgba(255,255,255,.72);border-radius:8px;font-size:14px;line-height:1;color:#9b8fae;cursor:nwse-resize;padding:4px 6px;opacity:.45;touch-action:none;user-select:none;-webkit-user-select:none;}
   .home-widget:hover .home-resize,.home-resize:hover{opacity:.95;}
-  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;grid-column:span 4;grid-row:span 6;}
+  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;column-span:all;display:block;width:100%;box-sizing:border-box;}
   body.locked .home-tools,body.locked .home-resize,body.locked .home-add{display:none!important;}
   #lockChip.on{background:#fde2f2;color:var(--sakura-deep);}
   @media (hover:none){ .home-tools button,.home-resize{opacity:.92;} .home-tools button{padding:7px 9px;font-size:14px;} .home-resize{padding:6px 9px;font-size:15px;} .sticky-tools button{width:24px;height:24px;font-size:13px;} .sticky-head{height:32px;} }
@@ -1002,7 +1001,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.noheart";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.columns";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1339,7 +1338,7 @@ function modularGrid(tab, items, addable){
   items.forEach(it=>{ byKey[it.key]=it; MODULAR_LABELS[tab][it.key]=it.label||it.key; });
   let order=L.order.filter(k=>byKey[k]); items.forEach(it=>{ if(!order.includes(it.key)) order.push(it.key); });
   const cells=order.filter(k=>!L.hidden[k]).map(k=>{ const it=byKey[k]; const s=L.size[k]||{}; const cols=Math.max(3,s.c||it.cols||4); const min=!!L.min[k];
-    return `<div class="home-widget ${min?'min':''}" data-w="${k}" data-tab="${tab}" data-h="${s.h||''}" data-c="${cols}" style="grid-column:span ${cols}">
+    return `<div class="home-widget ${min?'min':''}" data-w="${k}" data-tab="${tab}" data-h="${s.h||''}" data-c="${cols}">
       <div class="home-tools"><button class="home-grip" title="drag to move">⠿</button><button data-act="homeMin" data-w="${k}" data-tab="${tab}" title="${min?'expand':'minimize'}">${min?'＋':'–'}</button><button data-act="homeHide" data-w="${k}" data-tab="${tab}" title="remove">✕</button></div>
       <span class="home-resize" title="drag to resize">⤡</span>
       ${it.html}</div>`; }).join("");
@@ -1349,46 +1348,11 @@ function modularGrid(tab, items, addable){
 }
 /* width preference → whole columns. Stored width (data-c) keeps its old 3-16 scale for
    back-compat: small/default → 1 col, mid → 2 cols, large → full. Clamped to what fits now. */
-function spanFromC(c, colCount){ c=c||4; let span = c>=9 ? 3 : c>=6 ? 2 : 1; return Math.max(1, Math.min(span, colCount)); }
+function spanFromC(c, colCount){ c=c||4; let span; if(colCount<=2) span=c>=9?2:1; else span=c>=9?3:c>=6?2:1; return Math.max(1,Math.min(span,colCount)); }
 /* inverse — when a resize picks N columns, store a value that maps back to N via spanFromC */
 function cForSpan(span){ return span>=3 ? 12 : span===2 ? 7 : 4; }
 function layoutHome(){
-  const grid=document.querySelector(".grid-modular"); if(!grid)return; const rowH=8; let gap=16; try{ gap=Math.round(parseFloat(getComputedStyle(grid).columnGap))||16; }catch(e){}   // match the responsive --gap token
-  /* portrait/landscape: clamp each card's saved span (data-c) to the tracks that actually fit right now,
-     WITHOUT persisting — rotate back to landscape and the saved width comes back.
-     The browser tells us the REAL resolved track count (auto-fill expands in the computed value). */
-  // Column count MUST match the CSS breakpoints exactly (viewport-based: 3 / 2 / 1).
-  // Parsing getComputedStyle was fragile on iOS Safari — it split minmax() into stray tokens
-  // and reported far too many columns, which squeezed cards into overlapping slivers. Width-based is bulletproof.
-  const vw=window.innerWidth||grid.clientWidth||1200;
-  const colCount = vw>1040 ? 3 : 2;
-  const widgets=[...grid.querySelectorAll(".home-widget")];
-  if(widgets.some(w=>w.classList.contains("resizing"))) return;   // don't fight a live resize drag; reflow on release
-  // TRUE masonry: place each card into the column slot where it sits highest, so a tall card never
-  // strands a hole (CSS grid-auto-flow:dense can't pull it up). Keeps width (data-c) + height (data-h) resize.
-  const colBottom=new Array(colCount).fill(0);                    // running bottom of each column, in row units
-  const place=(el,span,rowSpan)=>{
-    let bestC=0,bestRow=Infinity;
-    for(let c=0;c<=colCount-span;c++){ let top=0; for(let i=c;i<c+span;i++) top=Math.max(top,colBottom[i]); if(top<bestRow){ bestRow=top; bestC=c; } }
-    if(!isFinite(bestRow)) bestRow=0;
-    el.style.gridColumn=(bestC+1)+" / span "+span; el.style.gridRowStart=(bestRow+1); el.style.gridRowEnd="span "+rowSpan;
-    for(let i=bestC;i<bestC+span;i++) colBottom[i]=bestRow+rowSpan;
-  };
-  // map each card's stored width preference to a whole number of columns (1 / 2 / full),
-  // clamped to however many fit now → always tiles cleanly, never an orphan width.
-  const plan=widgets.map(w=>({ w, span:spanFromC(parseInt(w.dataset.c||"0",10), colCount) }));
-  // PASS 1 — set the final WIDTH (and clear any stale row) so each card reflows to its real
-  // column width BEFORE we measure it. Measuring at the wrong width was making tall cards report
-  // a short height → they overlapped the card below. Let auto-flow lay them out for the measure.
-  plan.forEach(({w,span})=>{ w.style.gridColumn="span "+span; w.style.gridRowStart=""; w.style.gridRowEnd=""; });
-  void grid.offsetHeight;   // force one reflow so the widths above are applied before we read heights
-  // PASS 2 — now measure each card at its real width, then place it into the shortest column.
-  plan.forEach(({w,span})=>{
-    const panel=w.querySelector(".panel,section")||w.lastElementChild; let h=0;
-    if(w.classList.contains("min")){ h=54; } else if(panel){ const sh=parseFloat(w.dataset.h||"0")||0; panel.style.minHeight=sh?sh+"px":""; h=panel.getBoundingClientRect().height; }
-    place(w, span, Math.max(2,Math.ceil(((h||60)+gap)/rowH)));
-  });
-  const add=grid.querySelector(".home-add"); if(add) place(add, Math.min(colCount,colCount), 6);   // "+ cards" tucks under the shortest column, never floats in a gap
+  // column-count layout — no row/column JS assignment needed; CSS handles it
 }
 function manageCardsModal(tab){
   const L=modLayout(tab); const labels=MODULAR_LABELS[tab]||{}; const keys=Object.keys(labels);
@@ -1402,7 +1366,7 @@ const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plann
 try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
 const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
 
-const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["script","✍️ Script"],["optimize","🔴 Stream"],["money","💶 Money"],["studio","🏆 Studio"],["art","🎨 Art"],["toolbox","🧰 Toolbox"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
+const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["script","📝 Script"],["optimize","🔴 Stream"],["money","💶 Money"],["studio","🏆 Studio"],["art","🎨 Art"],["toolbox","🧰 Toolbox"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
 /* ===== one app, two minds — Creator OS 🎀 / Health OS ❄️ (tap the logo to swap) ===== */
 const CREATOR_TABS=["home","planner","calendar","events","script","optimize","money","studio","art","toolbox","memories","kiko"];
 const SB_GROUPS={
@@ -1522,7 +1486,7 @@ async function render(){
       // so skip them then. The single synchronous pass above already measured the post-tap heights.
       if(animate || !state._homeLaidOnce){
         state._homeLaidOnce=true;
-        requestAnimationFrame(()=>{try{layoutHome();}catch(e){}}); setTimeout(()=>{try{layoutHome();}catch(e){}},150); setTimeout(()=>{try{layoutHome();}catch(e){}},520);
+        requestAnimationFrame(()=>{try{layoutHome();}catch(e){}}); setTimeout(()=>{try{layoutHome();}catch(e){}},150); setTimeout(()=>{try{layoutHome();}catch(e){}},520); setTimeout(()=>{try{layoutHome();}catch(e){}},1000);
       }
     }
     if(state.tab==='kiko'){ KIKO.open=false; const cc=$("#kikoChat"); if(cc)cc.classList.add("hidden"); try{ paintKiko(); }catch(e){} }   // fill the Ask-Kiko chat panel
@@ -1878,7 +1842,7 @@ function cardWeightTrend(){ const wl=(state.sentinel.weightLog||[]).slice().sort
    line traceable to a check-in or a stored number. The two OSes never leak into each other. */
 const CI_DEFS={
   creator:[["streamed","📺","Streamed Today"],["ytVideo","▶️","Uploaded YouTube Video"],["ytShort","🎬","Uploaded YouTube Short"]],
-  health:[["medsAM","💊","Took Meds AM"],["medsPM","💊","Took Meds PM"],["weighed","⚖️","Weighed In"],["journaled","📓","Journaled"],["gym","🏋️","Went to Gym"],["walk","🚶","Walked a Bit"],["water","💧","Drank Water"],["sleep","😴","Slept Well"]]
+  health:[["medsAM","💊","Took Meds AM"],["medsPM","💊","Took Meds PM"],["weighed","⚖️","Weighed In"],["journaled","📓","Journaled"],["gym","💪","Went to Gym"],["walk","🚶","Walked a Bit"],["water","💧","Drank Water"],["sleep","😴","Slept Well"]]
 };
 /* meds classified AM vs PM by their time text — drives the AM/PM check-in linking */
 function medPeriod(m){ const t=String((m&&m.time)||"").toLowerCase();
@@ -3170,7 +3134,7 @@ function viewJournal(){
     cells+=`<div class="jr-cell ${ds===TODAY?'today':''} ${ds===(state.jrDay||TODAY)?'jr-sel':''}" style="background:${future?'#fff':jrDayColor(n,sp)};${future?'opacity:.45;':''}cursor:${future?'default':'pointer'}" ${future?'':`data-act="jrPick" data-date="${ds}"`}>
       <div style="display:flex;justify-content:space-between;align-items:center"><span class="cal-daynum">${d}</span>${mo!=null?`<span style="font-size:13px">${JR_MOODS[Math.max(0,Math.min(5,mo))]}</span>`:""}</div>
       ${n||wm[ds]?`<div class="jr-meta">${wm[ds]!=null?`⚖️${wm[ds]}`:""} ${n&&n.mind&&n.mind.energy!=null?`⚡${n.mind.energy}`:""} ${n&&n.sleep!=null?`🌙${n.sleep}h`:""}</div>
-      <div class="jr-meta">${n&&n.stress!=null?`🫨${n.stress}`:""} ${jrSymptomFlag(n)?"🩹":""} ${n&&n.journal?"✍️":""} ${jrStreamDay(ds)?"🔴":""} ${sp?"💜":""}</div>`:""}
+      <div class="jr-meta">${n&&n.stress!=null?`🫨${n.stress}`:""} ${jrSymptomFlag(n)?"🩹":""} ${n&&n.journal?"📝":""} ${jrStreamDay(ds)?"🔴":""} ${sp?"💜":""}</div>`:""}
     </div>`;
   }
   const caps=state.sentinel.memoryCapsules||{};
@@ -3180,14 +3144,14 @@ function viewJournal(){
   ${jrDailyPage(state.jrDay||TODAY)}
   <section class="panel">
     <div class="card-head"><h2 style="font-size:18px">📓 ${monthName} <span class="soft" style="font-size:12px;font-weight:500">· month overview</span></h2>
-      <div style="display:flex;gap:6px"><button class="btn" data-act="jrShift" data-d="-1">‹</button><button class="btn" data-act="jrToday">today</button><button class="btn" data-act="jrShift" data-d="1">›</button><button class="btn btn-grad" data-act="jrPick" data-date="${TODAY}">✍️ today's page</button></div></div>
+      <div style="display:flex;gap:6px"><button class="btn" data-act="jrShift" data-d="-1">‹</button><button class="btn" data-act="jrToday">today</button><button class="btn" data-act="jrShift" data-d="1">›</button><button class="btn btn-grad" data-act="jrPick" data-date="${TODAY}">📝 today's page</button></div></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px">
       ${[["🌤️ avg mood",st.avgMood!=null?st.avgMood+"/5":"—"],["⚡ avg energy",st.avgEnergy!=null?st.avgEnergy+"/5":"—"],["🌙 avg sleep",st.avgSleep!=null?st.avgSleep+"h":"—"],["⚖️ this month",st.wDelta!=null?(st.wDelta>0?"+":"")+st.wDelta+CONFIG.weightUnit:"—"],["✨ best day",st.best?fmtDate(st.best.date):"—"],["🌧️ hardest",st.hard?fmtDate(st.hard.date):"—"]].map(([l,v])=>`<div class="soft-card" style="padding:8px 10px;text-align:center"><div class="label" style="font-size:9px">${l}</div><div style="font-weight:700;font-size:14px">${v}</div></div>`).join("")}
     </div>
     <div class="cal-grid" style="margin-bottom:4px">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div class="cal-dow">${d}</div>`).join("")}</div>
     <div class="cal-grid">${cells}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:8px">
-      <span><span class="jr-dot" style="background:#e0f5ea"></span> lovely</span><span><span class="jr-dot" style="background:#fdf3da"></span> okay</span><span><span class="jr-dot" style="background:#fde6e9"></span> rough</span><span><span class="jr-dot" style="background:#eef3fa"></span> unlogged</span><span><span class="jr-dot" style="background:#ece2fb"></span> special 💜</span><span>· ✍️ has words · 🩹 symptoms · 🔴 stream day</span>
+      <span><span class="jr-dot" style="background:#e0f5ea"></span> lovely</span><span><span class="jr-dot" style="background:#fdf3da"></span> okay</span><span><span class="jr-dot" style="background:#fde6e9"></span> rough</span><span><span class="jr-dot" style="background:#eef3fa"></span> unlogged</span><span><span class="jr-dot" style="background:#ece2fb"></span> special 💜</span><span>· 📝 has words · 🩹 symptoms · 🔴 stream day</span>
     </div>
     <p class="soft" style="font-size:10.5px;margin-top:6px">Your written words never show here — open a day to read them. 🔒💗</p>
   </section>
@@ -3770,7 +3734,7 @@ function viewWeight(){
       </div>
       <div id="withingsDiag"></div>
       ${tiles?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">${tiles}</div>`:'<p class="soft" style="font-size:12.5px">No body-comp data yet — connect your scale or log some below. ❄️</p>'}
-      <details class="acc" style="margin-top:12px"><summary>✍️ Log metrics by hand</summary><div class="acc-body">
+      <details class="acc" style="margin-top:12px"><summary>📝 Log metrics by hand</summary><div class="acc-body">
         <p class="soft" style="font-size:11.5px;margin:0 0 8px">Fill in any you like and save — they update today's entry, no need to fill them all.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           ${BODYCOMP.filter(([k])=>k!=="bmi").map(([k,l,u])=>`<div class="field" style="margin:4px 0"><div class="label">${l}${u?` (${u})`:''}</div><input class="inp" type="number" step="0.1" id="bc_${k}" placeholder="${u||'value'}"></div>`).join("")}
@@ -4048,7 +4012,7 @@ async function finishJournal(J){
   J.active=false;
   let text="";
   if(!DEMO && SB){
-    KIKO.log.push({role:"pet",text:"give me a moment to write today up for you… ✍️❄️"}); KIKO.busy=true; paintKiko();
+    KIKO.log.push({role:"pet",text:"give me a moment to write today up for you… 📝❄️"}); KIKO.busy=true; paintKiko();
     try{ const d=await aiCall("journalWrite",{transcript:J.log, context:journalWriteContext()}); if(d&&!d.error&&d.entry) text=d.entry; }catch(e){}
     KIKO.busy=false;
   }
@@ -4368,7 +4332,7 @@ function viewCare(){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><select class="inp" id="comfortCat" style="max-width:170px">${COMFORT_CATS.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join("")}</select><input class="inp" id="comfortText" placeholder="add a comfort…" style="flex:1;min-width:140px"><button class="btn btn-grad" data-act="comfortAdd">add</button></div>
     ${COMFORT_CATS.map(([k,l])=>{ const arr=comfort[k]||[]; return arr.length?`<div style="margin-top:8px"><div class="label">${l}</div><div class="chiprow" style="margin-top:4px">${arr.map((t,i)=>`<span class="chiptog">${esc(t)}<span class="x" data-act="comfortDel" data-cat="${k}" data-i="${i}" style="margin-left:4px">✕</span></span>`).join("")}</div></div>`:""; }).join("")||`<p class="soft" style="font-size:12.5px;margin:0">Add your comfort music, ASMR, shows, games, foods &amp; reads above. 💗</p>`}
   </section>
-  <section class="panel"><div class="card-head"><div class="label">✍️ Daily journal with Kiko</div>${journaledToday?'<span class="pill pill-mint">done today ✓</span>':''}</div>
+  <section class="panel"><div class="card-head"><div class="label">📝 Daily journal with Kiko</div>${journaledToday?'<span class="pill pill-mint">done today ✓</span>':''}</div>
     <p class="soft" style="font-size:12.5px;margin:0 0 10px">A few playful questions, walked through with Kiko — light and cozy, never heavy. 🦊❄️</p>
     <button class="btn btn-grad" data-act="startKikoJournal">${journaledToday?'Journal again 🌸':'Start today’s journal 🦊'}</button>
   </section>
@@ -4875,7 +4839,7 @@ function viewSettings(){
       <b>🦊 Ask Kiko</b> — Kiko's home base: chat, one-tap skills, his memory &amp; settings, and the full "everything he can do" guide.<br>
       <b>🗒️ Planner</b> — tasks by spoons, weekly &amp; monthly goals, brain-dump.<br>
       <b>📅 Calendar</b> — your events &amp; birthdays, stream days, and auto game updates / event days / livestream days (refreshed every Friday). Toggles for each.<br>
-      <b>✍️ Script</b> — talk your ideas out loud, it types for you, then shapes them into a short or long-form script in your voice.<br>
+      <b>📝 Script</b> — talk your ideas out loud, it types for you, then shapes them into a short or long-form script in your voice.<br>
       <b>🔴 Stream</b> — title/tag/description optimizer tuned to your channel, thumbnail check, sponsors &amp; deals.<br>
       <b>💶 Money</b> — your business books (eenmanszaak-friendly), the NL tax guide, Kiko's tax-prep walkthrough, and accountant exports.<br>
       <b>❄️ Health · 💉 Mounjaro · ⚖️ Weight · 🍱 Food</b> — gentle tracking: cycle &amp; PCOS, shots &amp; side-effects, weight &amp; body-comp (Withings-ready), and food with photo macro-logging (protein &amp; fibre first).<br>
@@ -4923,7 +4887,7 @@ function viewSettings(){
       <p><b>v1.9 — Mifuyu OS</b> ✨ renamed from Health OS · Stream tab (was Optimize) with Sponsors &amp; deals · 💶 Money tab built for a Dutch eenmanszaak: books, NL tax guide, Kiko's tax-prep walkthrough, accountant exports · calendar toggles for events &amp; birthdays · game updates as single days + event start/end days + livestream days in purple · "games I track" list · birthdays remind a month ahead.</p>
       <p><b>v1.8 — Your space, your rules</b> 🧩 every dashboard card draggable, resizable, minimizable, hideable (Home, Care, Food) · tab reordering · 🔒 layout lock · tuned for iPad + Apple Pencil · 🦊 Ask Kiko home-base tab with quick skills · Ctrl+Z undo for everything, surviving reloads.</p>
       <p><b>v1.7 — Body &amp; food</b> ⚖️ full Body Smart metrics (fat, muscle, water, visceral, heart rate) with Withings sync ready · detailed weight charts with metric/type/range options · 🍱 Food tab: photo → macros with Kiko (multi-photo too), protein &amp; fibre bars, editable estimates.</p>
-      <p><b>v1.6 — Words &amp; feelings</b> ✍️ Script writer with voice-to-text · 📓 the daily journal: Kiko walks you through it and writes it up as a real diary entry in your voice · journal archive in Care · Care tab redesigned (breathing · check-in · joy jar side by side).</p>
+      <p><b>v1.6 — Words &amp; feelings</b> 📝 Script writer with voice-to-text · 📓 the daily journal: Kiko walks you through it and writes it up as a real diary entry in your voice · journal archive in Care · Care tab redesigned (breathing · check-in · joy jar side by side).</p>
       <p><b>v1.5 — Little delights</b> 🌸 sakura cursor petals · ☃️ interactive falling snow that piles up + the 💨 wind button · trends you can layer &amp; compare (14/30 days) · events &amp; birthdays agenda with browser + email reminders.</p>
       <p><b>v1.4 — Kiko learns to help</b> 🦊 from pet to agent: add events, log anything, manage your stream schedule by chat · plain-text replies · smarter calendar (drag events, day markers).</p>
       <p><b>v1.3 — Kiko arrives</b> 🦊 a pixel snowfox who walks your screen, gets picked up and thrown (sorry Kiko), and chats.</p>
@@ -5086,7 +5050,7 @@ async function setTaskStatusById(id,st){
 }
 
 /* ===================== OPTIMIZE (calls the "ai" Edge Function brain) ===================== */
-const OPT_FORMATS=[["long","Long form"],["short","Short form"]];   /* X/Twitter posts moved to the ✍️ Script tab */
+const OPT_FORMATS=[["long","Long form"],["short","Short form"]];   /* X/Twitter posts moved to the 📝 Script tab */
 const OPT_PLATFORMS=[["youtube","YouTube"],["tiktok","TikTok"],["instagram","Instagram"],["twitter","X"],["twitch","Twitch"]];
 const oval=id=>{ const e=document.getElementById(id); return e?e.value.trim():""; };
 async function aiCall(mode,input,vidiq){
@@ -5215,7 +5179,7 @@ function viewScript(){
   const savedHtml = saved.length?`<section class="panel"><div class="card-head"><span class="label">📁 saved drafts</span></div>${saved.slice().reverse().map(d=>{const kp=kpill(d.kind);return `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)"><span class="pill ${kp[0]}">${kp[1]}</span><span class="grow" style="font-size:12.5px">${esc(d.title||"(untitled)")}</span><button class="btn" data-act="loadScript" data-id="${d.id}">open</button><button class="x" data-act="delScript" data-id="${d.id}" title="remove">✕</button></div>`;}).join("")}</section>`:"";
   return `<div class="page tight">
     <section class="panel">
-      <div class="card-head"><h2 style="font-size:18px">✍️ Script writer</h2>${seg}</div>
+      <div class="card-head"><h2 style="font-size:18px">📝 Script writer</h2>${seg}</div>
       <p class="soft" style="font-size:12.5px;margin:0 0 12px">${tw?"Talk out your idea (or paste notes) — I'll shape it into an X/Twitter post in your voice, with a few opening-line options. ❄️🦊":`Drop in your research, then just talk it out — I'll shape your own words into your ${kindWord} format, in your voice. ❄️🦊`}${DEMO?` <b>(Deploy the ai function &amp; turn demo off to format.)</b>`:""}</p>
       <div class="label">Working title <span class="soft">· optional</span></div>
       <input class="inp" id="scrTitle" value="${esc(s.title||"")}" placeholder="${tw?'e.g. one year of being a little snowfox 🦊':'e.g. I tried cozy gaming on a $0 setup'}" />
@@ -5903,7 +5867,7 @@ const H={
       if(sym&&!jrSymptomFlag(n))return false;
       return true; })
       .sort((a,b)=>a.date<b.date?1:-1)
-      .map(({date,n})=>({date,meta:`${n.mind&&n.mind.mood!=null?JR_MOODS[Math.max(0,Math.min(5,n.mind.mood))]+" ":""}${n.journal?"✍️ ":""}${(n.tags||[]).slice(0,3).map(t=>"#"+esc(t)).join(" ")}`}));
+      .map(({date,n})=>({date,meta:`${n.mind&&n.mind.mood!=null?JR_MOODS[Math.max(0,Math.min(5,n.mind.mood))]+" ":""}${n.journal?"📝 ":""}${(n.tags||[]).slice(0,3).map(t=>"#"+esc(t)).join(" ")}`}));
     state.jrSearch={q,mood,stream,sym,results}; render(); },
   async jrCapsule(el){ const cym=el.dataset.ym; if(DEMO||!SB){ toast("capsules need live mode ❄️"); return; }
     toast("Kiko is folding that month into a capsule… 💊");
@@ -7574,7 +7538,7 @@ async function execAgentAction(a){
     if(T==="removeGameTopic"){ if(!a.name)return null; await gameTopicRemove(a.name); return "🎮 stopped tracking "+a.name; }
     if(T==="startScript"){ const sk=["long","twitter"].includes(a.kind)?a.kind:"short"; state.script={kind:sk,title:a.title||"",references:a.references||"",raw:a.raw||"",out:null}; state.tab="script";
       if(a.format && (state.script.raw||state.script.references)){ setTimeout(()=>{ try{scrFormat();}catch(e){} },150); }
-      return "✍️ started a "+(sk==="long"?"long-form":sk==="twitter"?"X post":"short")+(sk==="twitter"?"":" script")+(a.title?" — “"+a.title+"”":""); }
+      return "📝 started a "+(sk==="long"?"long-form":sk==="twitter"?"X post":"short")+(sk==="twitter"?"":" script")+(a.title?" — “"+a.title+"”":""); }
     /* stream schedule — the UI shows per-week plans (schedWeeks); the old flat `schedule` only acts as the
        default for an un-edited current week. Write BOTH so what Kiko says matches what she sees:
        the week on screen updates now, and the "usual week" default carries it into future weeks. */
@@ -7763,7 +7727,7 @@ start();
 (function(){
   let d=null, sc=false, rafL=0;
   const gridEl=()=>document.querySelector(".grid-modular");
-  function maxCols(){ const g=gridEl(); if(!g)return 3; let n=0; try{ n=(((getComputedStyle(g).gridTemplateColumns)||"").match(/\S+/g)||[]).length; }catch(e){} return Math.max(1,n||3); }   // real column count (3 / 2 / 1)
+  function maxCols(){ const g=gridEl(); if(!g)return 2; try{ const cc=parseInt(getComputedStyle(g).columnCount||"0",10); if(cc>0)return cc; }catch(e){} return 2; }
   function relayoutSoon(){ if(rafL)return; rafL=requestAnimationFrame(()=>{ rafL=0; try{layoutHome();}catch(_){} }); }
   function commitTabs(order){ try{ localStorage.setItem("tab-order",JSON.stringify(order)); }catch(e){} }
   function moveGhost(x,y,scale){ if(d&&d.ghost)d.ghost.style.transform="translate("+(x-d.gx)+"px,"+(y-d.gy)+"px) scale("+(scale||1.04)+")"; }
