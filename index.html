@@ -200,7 +200,7 @@
   @media(max-width:760px){ .grid-modular{columns:1;} }
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
-  .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
+  .home-widget.dragsrc,#nav .tab.dragsrc{opacity:0;}
   .home-widget.min>.panel,.home-widget.min>section{max-height:54px;overflow:hidden;}
   #nav .tab{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}   /* pan-y: finger/Pencil can still scroll the page from a tab; sideways drag reorders */
   .drag-clone{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:18px;box-shadow:0 16px 38px rgba(120,80,120,.34);opacity:.97;}
@@ -5205,12 +5205,12 @@ function viewPlanner(){
       </div>`:""}
     </div>
   </section>
-  ${birthdayNudge}
   <div class="pln-grid">
     <div class="pln-col">${leftCol||`<div class="pln-sec"><div class="pln-empty-sm">Nothing overdue or due soon. 🌸</div></div>`}</div>
     <div class="pln-col">${rightCol}</div>
   </div>
   ${remindersCard()}
+  ${birthdayNudge}
   ${DISCLAIMER}`;
 }
 /* board drag — native HTML5 for mouse; finger/Pencil use the ◀ ▶ buttons (iOS has no native drag) */
