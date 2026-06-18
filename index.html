@@ -1086,7 +1086,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.creatorSinglePage";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.creatorRestructure";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1455,9 +1455,9 @@ const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plann
 try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
 const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
 
-const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["creator","✍️ Creator"],["money","💶 Money"],["studio","🏆 Studio"],["art","🎨 Art"],["toolbox","🧠 Brain Tools"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
+const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["creator","✍️ Creator"],["money","💶 Money"],["art","🎨 Art"],["toolbox","🧠 Brain Tools"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
 /* ===== one app, two minds — Creator OS 🎀 / Health OS ❄️ (tap the logo to swap) ===== */
-const CREATOR_TABS=["home","planner","calendar","events","creator","money","studio","art","toolbox","memories","kiko"];
+const CREATOR_TABS=["home","planner","calendar","events","creator","money","art","toolbox","memories","kiko"];
 const SB_GROUPS={
   creator:[
     {label:null,tabs:["home"]},
@@ -5348,9 +5348,12 @@ function thumbCard(){
 }
 /* ===================== SCRIPT WRITER (voice-to-text → formatted script) ===================== */
 let RECOG=null, scrRecOn=false;
-const CREATOR_SUBS=[["script","📝 Script"],["formalizer","🪄 Formalizer"],["optimize","🔴 Optimize"]];
+const CREATOR_SUBS=[["tools","✍️ Tools"],["sponsors","🤝 Sponsors"],["ideas","💡 Ideas"]];
 function viewCreator(){
-  return stripDisc(viewOptimize())+stripDisc(viewFormalizer())+stripDisc(viewScript())+DISCLAIMER;
+  const sub=["tools","sponsors","ideas"].includes(state.creatorSub)?state.creatorSub:"tools";
+  if(sub==="sponsors") return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(viewSponsors())+DISCLAIMER;
+  if(sub==="ideas") return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(viewIdeas())+DISCLAIMER;
+  return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(viewOptimize())+stripDisc(viewFormalizer())+stripDisc(viewScript())+DISCLAIMER;
 }
 function viewFormalizer(){
   const tb=state.tb||(state.tb={spice:3,steps:null,task:"",fText:"",fTone:"professional",fOut:"",eTask:"",eOut:null,cText:"",groups:null,tText:"",tOut:null,busy:""});
@@ -5537,12 +5540,10 @@ function viewOptimize(){
       <textarea class="inp" id="optVidiq" placeholder="paste VidIQ keyword/score data… (optional)"></textarea></div></details>
     ${DEMO?`<div class="disc" style="margin-top:10px">${CONFIG.creator.snow}<span>The AI helper runs in <b>live</b> mode once the <b>ai</b> Edge Function is deployed (deploy-ai.ps1). ❄️</span></div>`:''}
   </section>
-  ${OPT.err?`<div class="disc">⚠️<span>${esc(OPT.err)}</span></div>`:''}
+  ${OPT.err&&!DEMO?`<div class="disc">⚠️<span>${esc(OPT.err)}</span></div>`:''}
   ${m==='video'?(OPT.video?optVideoResult(OPT.video):''):(OPT.stream?optStreamResult(OPT.stream):'')}
   ${thumbCard()}
   ${descTemplateCard()}
-  ${creatorTools()}
-  ${sponsorBlock()}
   <details class="acc" style="margin-top:14px"><summary>📺 Channel snapshot</summary><div class="acc-body">
     <button class="btn btn-grad" data-act="optChannel" ${OPT.busy==='channel'?'disabled':''}>${OPT.busy==='channel'?'…':'Pull '+esc(CONFIG.youtube.handle)}</button>
     ${OPT.channel?channelBlock(OPT.channel):''}
