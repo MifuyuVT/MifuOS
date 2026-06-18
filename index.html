@@ -191,11 +191,13 @@
   .joy-pick.pop{animation:joypop .5s ease;} @keyframes joypop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.13)}100%{transform:scale(1);opacity:1}}
   /* sticky notes */
   /* modular layout — drag-reorder · resize · minimize/remove · masonry */
-  /* clean column model (Eggie / iPad style): 3 columns wide → 2 medium → 1 narrow.
-     Cards snap to whole columns so they always tile together with no orphan widths. */
-  .grid-modular{display:flex;gap:0 16px;align-items:flex-start;}
-  .grid-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;}
-  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);min-width:0;}
+  /* masonry via CSS multi-column: each column flows independently so cards stack
+     tightly at their own heights — no row-snapping, no gaps. span2 = full width. */
+  .grid-modular{columns:2;column-gap:16px;}
+  .grid-col{display:contents;}  /* legacy wrapper — inert under multicol */
+  .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 var(--gap,16px);width:100%;}
+  .home-widget.span2{column-span:all;-webkit-column-span:all;margin-top:var(--gap,16px);}
+  @media(max-width:760px){ .grid-modular{columns:1;} }
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
   .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
@@ -208,7 +210,7 @@
   .home-widget:hover .home-tools button,.home-tools button:hover{opacity:.95;}
   .home-resize{position:absolute;right:4px;bottom:4px;z-index:6;border:none;background:rgba(255,255,255,.72);border-radius:8px;font-size:14px;line-height:1;color:#9b8fae;cursor:nwse-resize;padding:4px 6px;opacity:.45;touch-action:none;user-select:none;-webkit-user-select:none;}
   .home-widget:hover .home-resize,.home-resize:hover{opacity:.95;}
-  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;}
+  .home-add{border:2px dashed var(--line);border-radius:16px;background:rgba(255,255,255,.4);color:var(--lav-deep);font-size:13px;cursor:pointer;min-height:80px;column-span:all;-webkit-column-span:all;width:100%;margin-top:4px;}
   body.locked .home-tools,body.locked .home-resize,body.locked .home-add{display:none!important;}
   #lockChip.on{background:#fde2f2;color:var(--sakura-deep);}
   @media (hover:none){ .home-tools button,.home-resize{opacity:.92;} .home-tools button{padding:7px 9px;font-size:14px;} .home-resize{padding:6px 9px;font-size:15px;} .sticky-tools button{width:24px;height:24px;font-size:13px;} .sticky-head{height:32px;} }
@@ -532,7 +534,7 @@
   .col, .health-col{ gap:var(--gap) !important; }
   .grid-home, .health-cols, .care-cols, .glance-cols, .deck{ gap:var(--gap) !important; }
   .home-fixed{ gap:var(--gap) !important; margin-bottom:var(--gap) !important; }
-  .grid-modular{ column-gap:var(--gap) !important; }
+  .grid-modular{ gap:var(--gap) !important; }
   .disc{ margin-top:var(--gap); }
   /* even gap between the direct children of every page — covers pages that render bare panels
      (planner, calendar, health, money…) the same as the .page-wrapped ones. Block margins collapse,
@@ -1084,7 +1086,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.creatorStudio";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.creatorSinglePage";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1421,25 +1423,23 @@ function modularGrid(tab, items, addable){
   items.forEach(it=>{ byKey[it.key]=it; MODULAR_LABELS[tab][it.key]=it.label||it.key; });
   let order=L.order.filter(k=>byKey[k]); items.forEach(it=>{ if(!order.includes(it.key)) order.push(it.key); });
   const visible=order.filter(k=>!L.hidden[k]);
-  const makeW=k=>{ const it=byKey[k]; const s=L.size[k]||{}; const cols=Math.max(3,s.c||it.cols||4); const min=!!L.min[k];
-    return `<div class="home-widget ${min?'min':''}" data-w="${k}" data-tab="${tab}" data-h="${s.h||''}" data-c="${cols}">
+  const makeW=k=>{ const it=byKey[k]; const s=L.size[k]||{}; const span=spanFromC(s.c||it.cols||4,2); const min=!!L.min[k];
+    const spanCls=span>1?" span2":"";
+    return `<div class="home-widget ${min?'min':''}${spanCls}" data-w="${k}" data-tab="${tab}" data-h="" data-c="${s.c||it.cols||4}">
       <div class="home-tools"><button class="home-grip" title="drag to move">⠿</button><button data-act="homeMin" data-w="${k}" data-tab="${tab}" title="${min?'expand':'minimize'}">${min?'＋':'–'}</button><button data-act="homeHide" data-w="${k}" data-tab="${tab}" title="remove">✕</button></div>
       <span class="home-resize" title="drag to resize">⤡</span>
       ${it.html}</div>`; };
-  const left=[], right=[];
-  visible.forEach((k,i)=>{ if(i%2===0) left.push(k); else right.push(k); });
   const hiddenN=Object.keys(L.hidden).filter(k=>L.hidden[k]&&byKey[k]).length;
   const add=addable===false?"":`<button class="home-add" data-act="manageCards" data-tab="${tab}">＋ cards${hiddenN?` · ${hiddenN} hidden`:""}</button>`;
   return `<div class="grid-modular" data-tab="${tab}">
-    <div class="grid-col" data-tab="${tab}">${left.map(makeW).join("")}</div>
-    <div class="grid-col" data-tab="${tab}">${right.map(makeW).join("")}${add}</div>
+    ${visible.map(makeW).join("")}${add}
   </div>`;
 }
 /* width preference → whole columns. Stored width (data-c) keeps its old 3-16 scale for
    back-compat: small/default → 1 col, mid → 2 cols, large → full. Clamped to what fits now. */
 function spanFromC(c, colCount){ c=c||4; let span; if(colCount<=2) span=c>=9?2:1; else span=c>=9?3:c>=6?2:1; return Math.max(1,Math.min(span,colCount)); }
 /* inverse — when a resize picks N columns, store a value that maps back to N via spanFromC */
-function cForSpan(span){ return span>=3 ? 12 : span===2 ? 7 : 4; }
+function cForSpan(span){ return span>=3 ? 12 : span===2 ? 10 : 4; }
 function layoutHome(){
   // column-count layout — no row/column JS assignment needed; CSS handles it
 }
@@ -2433,20 +2433,40 @@ function evTier(days,urgent){ if(urgent)return ["Urgent","tier-urgent"]; if(days
 function evTierChip(days,urgent,dateStr){ const T=evTier(days,urgent); return `<span class="pill ${T[1]}" style="flex:none">${T[0]}${dateStr?" • "+dateStr:""}</span>`; }
 function viewEvents(){
   const evs=(state.sentinel.calendarEvents||[]).filter(e=>!gameSrc(e)).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=180);
-  const bds=(state.sentinel.birthdays||[]).map(b=>{const i=nextBirthdayInfo(b);return {id:"bd"+b.id,title:"🎂 "+b.name+"'s birthday",date:i.date,days:i.days};}).filter(b=>b.days!=null&&b.days<=180);
   const sps=(state.sentinel.sponsors||[]).filter(s=>s.due).map(s=>({id:"sp"+s.id,title:"💼 "+(s.brand||s.name||"Sponsor")+" deliverable",date:s.due,days:daysBetween(TODAY,s.due),sponsor:true})).filter(s=>s.days>=-7&&s.days<=180);
-  const all=[...evs,...bds,...sps].sort((a,b)=>a.days-b.days);
+  const all=[...evs,...sps].sort((a,b)=>a.days-b.days);
   const row=e=>{ const urgent=(e.sponsor&&e.days<=0)||(!!e.important&&e.days<=0);
     return `<div class="listrow"><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,urgent,fmtDate(e.date))}</div>`; };
   const groups=[["🌸 Today & tomorrow",e=>e.days<=1],["💙 This week",e=>e.days>1&&e.days<=7],["💜 This month",e=>e.days>7&&e.days<=30],["🩶 Later",e=>e.days>30]];
+  // ── birthdays, one month at a time — the list stays calm as the circle grows ──
+  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const curM=new Date(TODAY+"T00:00").getMonth()+1;
+  const selM=state.evBdayMonth||curM;
+  const monthBdays=(state.sentinel.birthdays||[]).filter(b=>Number(b.month)===selM)
+    .map(b=>({...b,...nextBirthdayInfo(b)})).sort((a,b)=>Number(a.day)-Number(b.day));
+  const bdayRows=monthBdays.length?monthBdays.map(b=>`<div class="agenda-row"><span class="agenda-when">${MONTHS[selM-1]} ${b.day}</span><span class="agenda-dot" style="background:var(--lav)"></span><span class="grow">🎂 ${esc(b.name)} <span class="soft" style="font-size:11px">· ${whenLabel(b.days)}</span></span><button class="x" data-act="delBirthday" data-v="${b.id}" title="remove">✕</button></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:6px 0 0">No birthdays in ${MONTHS[selM-1]} yet — add one below. 🎂</p>`;
+  const monthChips=MONTHS.map((m,i)=>`<button class="chiptog ${selM===i+1?'on':''}" data-act="evBdayMonth" data-v="${i+1}">${m}${i+1===curM?' ·':''}</button>`).join("");
   return `<div class="page">
-    <section class="panel"><div class="card-head"><h2 style="font-size:18px">🎉 Events</h2><button class="btn" data-act="tab" data-tab="calendar">open calendar →</button></div>
-      <p class="soft" style="font-size:12px;margin:0">Birthdays, conventions, collabs, sponsor deadlines, travel and personal plans — kept separate from game updates, like they should be. Add or edit events on the Calendar. 🌸</p>
+    <section class="panel"><div class="card-head"><h2 style="font-size:18px">🎉 Events &amp; birthdays</h2></div>
+      <p class="soft" style="font-size:12px;margin:0">Your one place for the people and plans that matter. Add events by tapping a day on the 📅 Calendar; birthdays live right here. 🌸</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
         <span class="pill tier-today">Today</span><span class="pill tier-tmrw">Tomorrow</span><span class="pill tier-week">This Week</span><span class="pill tier-month">This Month</span><span class="pill tier-later">Later</span><span class="pill tier-urgent">Urgent — real deadlines only</span>
       </div></section>
-    ${all.length?groups.map(([t,f])=>{const L2=all.filter(f); return L2.length?`<section class="panel"><div class="label" style="margin-bottom:4px">${t}</div>${L2.map(row).join("")}</section>`:"";}).join(""):`<section class="panel"><p class="soft" style="font-size:12.5px;margin:0">Nothing on the horizon — when something lands on the Calendar (a con, a collab, a trip, a birthday), it shows up here. ❄️</p></section>`}
-    <div class="art-cols">${cardEventPrep()}${cardBirthdayPrep()}</div>
+    <section class="panel"><div class="card-head"><h2 style="font-size:17px">📌 Coming up</h2></div>
+      ${all.length?groups.map(([t,f])=>{const L2=all.filter(f); return L2.length?`<div class="label" style="margin:8px 0 4px">${t}</div>${L2.map(row).join("")}`:"";}).join(""):`<p class="soft" style="font-size:12.5px;margin:0">Nothing on the horizon — add a con, a collab, or a trip on the Calendar and it shows up here. ❄️</p>`}
+    </section>
+    <section class="panel">
+      <div class="card-head"><h2 style="font-size:17px">🎂 Birthdays</h2></div>
+      <p class="soft" style="font-size:12px;margin:0 0 8px">Pick a month to see just those people — the list stays calm as your circle grows. 💗</p>
+      <div class="chiprow" style="margin-bottom:10px">${monthChips}</div>
+      ${bdayRows}
+      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+        <input class="inp" id="bdayName" placeholder="name" style="flex:1;min-width:90px">
+        <input class="inp" id="bdayDate" type="date" style="max-width:150px">
+        <button class="btn btn-grad" data-act="addBirthday">+ add</button>
+      </div>
+    </section>
+    ${cardEventPrep()}
   </div>`;
 }
 /* toolbox keeps half-typed inputs across re-renders (same capture pattern as the script tab) */
@@ -2484,7 +2504,7 @@ function cardEventPrep(){
 /* ===== Birthday assistant — remember people without another system ===== */
 function cardBirthdayPrep(){
   const bd=(state.sentinel.birthdays||[]).map(b=>({...b,...nextBirthdayInfo(b)})).sort((a,b)=>a.days-b.days)[0];
-  if(!bd||bd.days>30) return `<section class="panel"><div class="label" style="margin-bottom:6px">🎂 Birthday assistant</div><p class="soft" style="font-size:12px">${bd?`Next up: ${esc(bd.name)} in ${bd.days} days — I'll set this up closer to the date. ❄️`:"Add birthdays on the Calendar and I'll help you remember the people who matter. 💗"}</p></section>`;
+  if(!bd||bd.days>30) return `<section class="panel"><div class="label" style="margin-bottom:6px">🎂 Birthday assistant</div><p class="soft" style="font-size:12px">${bd?`Next up: ${esc(bd.name)} in ${bd.days} days — I'll set this up closer to the date. ❄️`:"Add birthdays on the 🎉 Events tab and I'll help you remember the people who matter. 💗"}</p></section>`;
   const key=bd.id+"-"+bd.date.slice(0,4);
   const prep=((state.sentinel.bdayPrep||{})[key])||{items:[],skipped:false};
   if(prep.skipped) return `<section class="panel"><div class="label" style="margin-bottom:6px">🎂 Birthday assistant</div><p class="soft" style="font-size:12px">${esc(bd.name)}'s birthday — skipped this year, no guilt. 💗</p></section>`;
@@ -3077,6 +3097,7 @@ function buildMemoryIndex(){
   try{ const wl=(s.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate); let min=Infinity; const u=CONFIG.weightUnit||"kg";
     wl.forEach(x=>{ if(x.w<min-0.001){ min=x.w; push({id:"wt:"+x.date, kind:"milestone", date:x.date, title:"New lowest weight", preview:`${x.w} ${u}`, source:{page:"trends",refId:x.date}}); } }); }catch(e){}
   try{ (s.calendarEvents||[]).forEach(e=>{ if(!e||!e.date)return; if(typeof gameSrc==="function"&&gameSrc(e))return;
+    if(/🎂|birthday/i.test(e.title||""))return;   // birthdays live only in the Events & Birthdays hub, never duplicated here
     push({id:"ev:"+(e.id||e.date), kind:"event", date:e.date, title:clip(e.title,80), preview:clip(e.note||e.title,120), source:{page:"events",refId:e.id||e.date}}); }); }catch(e){}
   try{ (s.memoryCapsules||[]).forEach(c=>{ const ym=c.ym||c.month; if(!ym)return; push({id:"cap:"+ym, kind:"memcard", date:ym+"-15", title:"Monthly memory · "+memMonthLabel(ym), preview:clip(c.capsule||c.text), source:{page:"journal",refId:ym+"-01"}}); }); }catch(e){}
   try{ (state.media||[]).forEach(m=>{ if(!m||!m.id)return; push({id:"md:"+m.id, kind:"photo", date:m.date||(String(m.addedAt||"").slice(0,10))||TODAY, title:m.caption||"Photo", preview:m.caption||"", people:m.people||[], tags:m.tags||[], fav:!!m.fav, mediaId:m.id, url:m.url, source:{page:"memories",refId:m.id}}); }); }catch(e){}
@@ -4274,7 +4295,7 @@ function winWeekEvidence(){
   const out=[]; items.forEach(([k,l])=>{ let c=0; try{c=ciWeek(k);}catch(e){} if(c>0) out.push({l,c}); });
   return out;
 }
-function autoWins(){ try{ return buildMemoryIndex().filter(m=>(m.kind==="milestone"||m.kind==="event")&&daysBetween(m.date,TODAY)<=30).slice(0,6); }catch(e){ return []; } }
+function autoWins(){ try{ return buildMemoryIndex().filter(m=>(m.kind==="milestone"||m.kind==="event")&&!/🎂|birthday/i.test(m.title||"")&&daysBetween(m.date,TODAY)<=30).slice(0,6); }catch(e){ return []; } }
 function viewWins(){
   const wins=(state.sentinel.wins||[]).slice().sort(cmpDate).reverse();
   const ev=winWeekEvidence(), evTotal=ev.reduce((a,x)=>a+x.c,0);
@@ -5138,16 +5159,9 @@ function viewPlanner(){
     return `<div class="pln-sec${cls?" "+cls:""}"><div class="pln-sh"><span class="pln-sh-ttl">${emoji} ${title}</span><span class="pln-cnt">${items.length}</span></div>${items.length?items.map(plnTaskRow).join(""):`<div class="pln-empty-sm">${emptyMsg}</div>`}</div>`;
   }
 
-  const remPreview=(()=>{
-    try{
-      const active=activeReminders(); if(!active.length)return "";
-      const sorted=active.map(r=>({r,eff:nextReminderDate(r)})).sort((a,b)=>a.eff<b.eff?-1:1);
-      const todayCnt=sorted.filter(({eff})=>eff===today).length;
-      const next=sorted[0];
-      return `<div class="pln-rem-preview"><div class="pln-sh"><span class="pln-sh-ttl">⏰ Reminders</span><span class="pln-cnt">${active.length}</span></div>${todayCnt?`<div class="pln-rem-row">📅 <b>${todayCnt}</b> today</div>`:""}${next?`<div class="pln-rem-row">Next: ${esc(next.r.text)}${next.r.time?" · "+fmt12(next.r.time):""}</div>`:""}
-        <button class="btn" data-act="tab" data-tab="life" style="font-size:11px;margin-top:6px;padding:3px 9px">Open reminders →</button></div>`;
-    }catch(e){return "";}
-  })();
+  // nearest birthday surfaces here as a "plan ahead" nudge (only when it's close)
+  const bdNext=(state.sentinel.birthdays||[]).map(b=>({...b,...nextBirthdayInfo(b)})).sort((a,b)=>a.days-b.days)[0];
+  const birthdayNudge=(bdNext&&bdNext.days<=30)?cardBirthdayPrep():"";
 
   const draft=state.plnDraft||{};
   const moreOpen=!!state.plnMoreOpen;
@@ -5163,8 +5177,7 @@ function viewPlanner(){
   const rightCol=[
     urgentRest.length?mkSec("🔥","Urgent",urgentRest,"s-urgent",""):"",
     `<div class="pln-sec s-energy"><div class="pln-sh"><span class="pln-sh-ttl">⚡ Energy Match</span><span class="pln-cnt">${energyMatched.length}</span></div><div style="font-size:10.5px;color:var(--ink-soft);margin-bottom:6px">${energyNote}</div>${energyMatched.length?energyMatched.map(plnTaskRow).join(""):`<div class="pln-empty-sm">No tasks matching your current energy.</div>`}${!showAll&&later.length?`<button class="btn" data-act="plnToggleAll" style="font-size:11px;margin-top:8px;width:100%">Show all tasks (${later.length} more)</button>`:""}</div>`,
-    showAll&&later.length?mkSec("🗂️","Backlog",later,"",""):"",
-    remPreview
+    showAll&&later.length?mkSec("🗂️","Backlog",later,"",""):""
   ].filter(Boolean).join("");
 
   return `
@@ -5192,10 +5205,12 @@ function viewPlanner(){
       </div>`:""}
     </div>
   </section>
+  ${birthdayNudge}
   <div class="pln-grid">
     <div class="pln-col">${leftCol||`<div class="pln-sec"><div class="pln-empty-sm">Nothing overdue or due soon. 🌸</div></div>`}</div>
     <div class="pln-col">${rightCol}</div>
   </div>
+  ${remindersCard()}
   ${DISCLAIMER}`;
 }
 /* board drag — native HTML5 for mouse; finger/Pencil use the ◀ ▶ buttons (iOS has no native drag) */
@@ -5335,9 +5350,7 @@ function thumbCard(){
 let RECOG=null, scrRecOn=false;
 const CREATOR_SUBS=[["script","📝 Script"],["formalizer","🪄 Formalizer"],["optimize","🔴 Optimize"]];
 function viewCreator(){
-  const sub=["script","formalizer","optimize"].includes(state.creatorSub)?state.creatorSub:"script";
-  const map={script:viewScript,formalizer:viewFormalizer,optimize:viewOptimize};
-  return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(map[sub]())+DISCLAIMER;
+  return stripDisc(viewOptimize())+stripDisc(viewFormalizer())+stripDisc(viewScript())+DISCLAIMER;
 }
 function viewFormalizer(){
   const tb=state.tb||(state.tb={spice:3,steps:null,task:"",fText:"",fTone:"professional",fOut:"",eTask:"",eOut:null,cText:"",groups:null,tText:"",tOut:null,busy:""});
@@ -5629,8 +5642,7 @@ function renderCalendar(){
       <div class="cal-wk-list">${rows}</div>
       <p class="soft" style="font-size:11.5px;margin-top:12px">Nothing here is set in stone — tap any day to add or edit. 💗 Games refresh automatically every Friday.</p>
     </div>
-    ${gamesTrackedCard(sent)}
-    ${calAgenda(sent)}</div>`;
+    ${gamesTrackedCard(sent)}</div>`;
   }
 
   // ── Month view ──
@@ -5682,8 +5694,7 @@ function renderCalendar(){
     <div class="cal-grid">${cells}</div>
     <p class="soft" style="font-size:11.5px;margin-top:12px">Konfuyu~ nothing here is set in stone — drag things around whenever your week shifts. 💗 Games refresh automatically every Friday.</p>
   </div>
-  ${gamesTrackedCard(sent)}
-  ${calAgenda(sent)}</div>`;
+  ${gamesTrackedCard(sent)}</div>`;
 }
 async function gameTopicAdd(name){ await setSent(n=>{ let g=(n.gameTopics&&n.gameTopics.length)?n.gameTopics.slice():DEFAULT_GAMES.slice(); if(!g.some(x=>x.toLowerCase()===String(name).toLowerCase()))g.push(name); return {...n,gameTopics:g}; }); }
 async function gameTopicRemove(name){ await setSent(n=>{ let g=(n.gameTopics&&n.gameTopics.length)?n.gameTopics.slice():DEFAULT_GAMES.slice(); g=g.filter(x=>x.toLowerCase()!==String(name).toLowerCase()); return {...n,gameTopics:g}; }); }
@@ -5706,41 +5717,14 @@ function nextBirthdayInfo(b){
   return { date:d.toLocaleDateString("en-CA"), days:Math.round((d-today)/86400000) };
 }
 function whenLabel(days){ return days===0?"<b>today</b>":days===1?"<b>tomorrow</b>":("in "+days+" days"); }
-function calAgenda(sent){
-  const events=(sent.calendarEvents||[]).filter(e=>(e.endDate||e.date)>=TODAY).sort((a,b)=>(a.date+(a.time||"")<b.date+(b.time||"")?-1:1)).slice(0,12);
-  const bdays=(sent.birthdays||[]).map(b=>({...b,...nextBirthdayInfo(b)})).sort((a,b)=>a.days-b.days);
-  const evRows=events.length?events.map(ev=>{ const days=Math.round((new Date(ev.date+"T00:00")-new Date(TODAY+"T00:00"))/86400000);
-      return `<div class="agenda-row"><span class="agenda-when">${days<0?"now":whenLabel(days)}</span><span class="agenda-dot" style="background:${ev.src==="game"?(sent.gameColor||GAME_COLOR_DEFAULT):(ev.color||CAL_COLORS[0])}"></span><span class="grow" data-act="calEvent" data-eid="${ev.id}" style="cursor:pointer">${esc(ev.title)} <span class="soft" style="font-size:11px">· ${fmtDate(ev.date)}${ev.time?" · "+fmt12(ev.time):""}</span></span></div>`;
-    }).join(""):`<p class="soft" style="font-size:12.5px">No upcoming events — tap any day above to add one. ❄️</p>`;
-  const bdayRows=bdays.length?bdays.map(b=>`<div class="agenda-row"><span class="agenda-when">${whenLabel(b.days)}</span><span class="agenda-dot" style="background:var(--lav)"></span><span class="grow">🎂 ${esc(b.name)} <span class="soft" style="font-size:11px">· ${fmtDate(b.date)}</span></span><button class="x" data-act="delBirthday" data-v="${b.id}" title="remove">✕</button></div>`).join(""):`<p class="soft" style="font-size:12.5px">No birthdays yet — add the ones you never want to forget. 🎂</p>`;
-  return `
-  <section class="panel" id="agendaPanel" style="margin-top:14px">
-    <div class="card-head"><h2 style="font-size:17px">🎉 Events &amp; birthdays</h2></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px" class="agenda-cols">
-      <div>
-        <div class="label" style="margin-bottom:4px">Coming up</div>
-        ${evRows}
-      </div>
-      <div>
-        <div class="label" style="margin-bottom:4px">Birthdays 🎂</div>
-        ${bdayRows}
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-          <input class="inp" id="bdayName" placeholder="name" style="flex:1;min-width:90px">
-          <input class="inp" id="bdayDate" type="date" style="max-width:150px">
-          <button class="btn btn-grad" data-act="addBirthday">+ add</button>
-        </div>
-      </div>
-    </div>
-  </section>
-  ${remindersCard()}`;
-}
+/* (calAgenda removed 2026-06-18 — Events & birthdays now live on the Events tab; reminders moved to the Planner) */
 /* the 🔔 Reminders card — shared by the Calendar and the Planner (same data, same buttons) */
 function remindersCard(){
   const rem=state.sentinel.reminders||{};
   const OFFSETS=[[0,"Same day"],[1,"1 day before"],[3,"3 days before"],[7,"1 week before"]];
   const offs=rem.offsets||[0,1];
   const notif=(typeof Notification!=="undefined")?Notification.permission:"unsupported";
-  return `<section class="panel" style="max-width:920px;margin:14px auto 0">
+  return `<section class="panel" style="margin-top:14px">
     <div class="card-head"><h2 style="font-size:17px">🔔 Reminders</h2></div>
     <p class="soft" style="font-size:12px;margin:0 0 10px">Get a gentle nudge before events &amp; birthdays. Pick how far ahead you'd like to be reminded.</p>
     <div class="chiprow" style="margin-bottom:12px">
@@ -6631,7 +6615,8 @@ const H={
   scrCopyHook(el){ const t=el.dataset.t||""; if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t); toast("copied 💗"); },
   scrCopyScript(){ const el2=document.getElementById("scrScript"); if(el2&&navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(el2.innerText); toast("copied 💗"); },
   // --- birthdays + reminders ---
-  scrollAgenda(){ const p=$("#agendaPanel"); if(p) p.scrollIntoView({behavior:"smooth",block:"center"}); },
+  scrollAgenda(){ setTab("events"); },
+  evBdayMonth(el){ state.evBdayMonth=Number(el.dataset.v); render(); },
   async addBirthday(){ const name=($("#bdayName").value||"").trim(); const dv=$("#bdayDate").value;
     if(!name||!dv){ toast("name + date please 🎂"); return; } const [,M,D]=dv.split("-").map(Number);
     await setSent(n=>({...n,birthdays:[...(n.birthdays||[]),{id:"bd"+Date.now(),name,month:M,day:D}]})); toast("added 🎂"); render(); },
@@ -8020,10 +8005,10 @@ start();
   document.addEventListener("pointerdown",e=>{
     if(document.body.classList.contains("locked"))return;
     const rez=e.target.closest(".home-resize");
-    if(rez){ const item=rez.closest(".home-widget"); if(item){ const r=item.getBoundingClientRect(), cur=parseInt(((item.style.gridColumn||"").match(/span (\d+)/)||[])[1]||"1"), panel=item.querySelector(".panel,section"), startH=panel?panel.getBoundingClientRect().height:160;
+    if(rez){ const item=rez.closest(".home-widget"); if(item){ const r=item.getBoundingClientRect(), cur=item.classList.contains("span2")?2:1, panel=item.querySelector(".panel,section"), startH=panel?panel.getBoundingClientRect().height:160;
       d={mode:"resize",item,panel,key:item.getAttribute("data-w"),tab:item.getAttribute("data-tab"),startW:r.width,startCols:cur,cols:cur,startH,h:startH,sx:e.clientX,sy:e.clientY,moved:false,cap:rez,pid:e.pointerId}; try{rez.setPointerCapture(e.pointerId);}catch(_){} e.preventDefault(); } return; }
     const grip=e.target.closest(".home-grip");
-    if(grip){ const item=grip.closest(".home-widget"), c=item&&item.parentElement; if(item&&c){ d={mode:"order",item,c,itemSel:".home-widget",key:"data-w",horiz:false,sx:e.clientX,sy:e.clientY,moved:false,cap:grip,pid:e.pointerId}; try{grip.setPointerCapture(e.pointerId);}catch(_){} e.preventDefault(); } return; }
+    if(grip){ const item=grip.closest(".home-widget"), c=item&&(item.closest(".grid-modular")||item.parentElement); if(item&&c){ d={mode:"order",item,c,itemSel:".home-widget",key:"data-w",horiz:false,sx:e.clientX,sy:e.clientY,moved:false,cap:grip,pid:e.pointerId}; try{grip.setPointerCapture(e.pointerId);}catch(_){} e.preventDefault(); } return; }
     const tab=e.target.closest("#nav .tab");
     if(tab){ const c=tab.parentElement; d={mode:"order",item:tab,c,itemSel:".tab",key:"data-tab",isTab:true,horiz:true,sx:e.clientX,sy:e.clientY,moved:false,cap:tab,pid:e.pointerId}; try{tab.setPointerCapture(e.pointerId);}catch(_){} }
   },true);
@@ -8034,10 +8019,10 @@ start();
       else { const r=d.item.getBoundingClientRect(); d.gx=d.sx-r.left; d.gy=d.sy-r.top; const g=d.item.cloneNode(true); g.classList.add("drag-clone"); g.classList.remove("reordering","dragsrc"); g.style.width=r.width+"px"; g.style.height=r.height+"px"; g.querySelectorAll(".home-tools,.home-resize").forEach(x=>x.remove()); document.body.appendChild(g); d.ghost=g; d.item.classList.add("dragsrc"); moveGhost(d.sx,d.sy); }
     }
     e.preventDefault();
-    if(d.mode==="resize"){ const unit=d.startW/d.startCols||d.startW; let nc=Math.round((d.startW+(e.clientX-d.sx))/unit); nc=Math.max(1,Math.min(maxCols(),nc)); if(nc!==d.cols){ d.cols=nc; d.item.style.gridColumn="span "+nc; d.item.dataset.c=cForSpan(nc); } const nh=Math.max(120,Math.round(d.startH+(e.clientY-d.sy))); d.h=nh; if(d.panel)d.panel.style.minHeight=nh+"px"; d.item.dataset.h=nh; relayoutSoon(); return; }
+    if(d.mode==="resize"){ const unit=d.startW/d.startCols||d.startW; let nc=Math.round((d.startW+(e.clientX-d.sx))/unit); nc=Math.max(1,Math.min(2,nc)); if(nc!==d.cols){ d.cols=nc; d.item.classList.toggle("span2", nc>=2); d.item.dataset.c=cForSpan(nc); } const nh=Math.max(120,Math.round(d.startH+(e.clientY-d.sy))); d.h=nh; if(d.panel)d.panel.style.minHeight=nh+"px"; d.item.dataset.h=nh; relayoutSoon(); return; }
     moveGhost(e.clientX,e.clientY);
     const el=document.elementFromPoint(e.clientX,e.clientY), over=el&&el.closest(d.itemSel);
-    if(over&&over!==d.item&&over.parentElement===d.c){ const r=over.getBoundingClientRect(), before=d.horiz?(e.clientX<r.left+r.width/2):(e.clientY<r.top+r.height/2); const ref=before?over:over.nextSibling; if(ref!==d.item){ flipReorder(d.c, ()=>d.c.insertBefore(d.item, ref)); } }
+    if(over&&over!==d.item&&(over.parentElement===d.c||over.closest(".grid-modular")===d.c)){ const r=over.getBoundingClientRect(), before=d.horiz?(e.clientX<r.left+r.width/2):(e.clientY<r.top+r.height/2); const ref=before?over:over.nextSibling; if(ref!==d.item){ flipReorder(d.c, ()=>d.c.insertBefore(d.item, ref)); } }
   },true);
   document.addEventListener("pointerup",()=>{
     if(!d)return; const x=d; d=null; try{x.cap.releasePointerCapture(x.pid);}catch(_){}
