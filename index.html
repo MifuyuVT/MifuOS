@@ -200,11 +200,12 @@
   @media(max-width:760px){.grid-modular{flex-direction:column;} .grid-col{flex:none;width:100%;}}
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
-  .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
+  .home-widget.dragsrc{display:none!important;}
+  #nav .tab.dragsrc{visibility:hidden;}
   .home-widget.min>.panel,.home-widget.min>section{max-height:54px;overflow:hidden;}
   #nav .tab{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}   /* pan-y: finger/Pencil can still scroll the page from a tab; sideways drag reorders */
-  .drag-clone{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:18px;box-shadow:0 16px 38px rgba(120,80,120,.34);opacity:.97;will-change:transform;}
-  .home-widget.dragsrc{opacity:.18;}  /* faint placeholder in place — no visibility:hidden (breaks Safari repaint) */
+  .drag-placeholder{border:2.5px dashed rgba(155,110,190,.7);border-radius:18px;background:rgba(155,110,190,.13);pointer-events:none;transition:min-height .1s;box-shadow:inset 0 0 0 1px rgba(200,164,240,.18);}
+  .drag-thumb{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;background:linear-gradient(135deg,#c8a4f0,#e8b4d0);color:#fff;border-radius:12px;padding:7px 16px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(120,80,120,.38);white-space:nowrap;will-change:transform;}
   .home-tools{position:absolute;top:8px;left:8px;right:8px;z-index:6;display:flex;justify-content:space-between;gap:3px;}
   .home-tools button{border:none;background:rgba(255,255,255,.72);border-radius:8px;font-size:13px;line-height:1;color:#9b8fae;cursor:pointer;padding:5px 7px;opacity:.45;touch-action:none;user-select:none;-webkit-user-select:none;}
   .home-tools .home-grip{cursor:grab;}
@@ -1087,7 +1088,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.toolbarCleanup";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-19.swapFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -8001,7 +8002,7 @@ start();
   function maxCols(){ const g=gridEl(); if(!g)return 2; const cc=g.querySelectorAll(".grid-col").length; return cc>0?cc:2; }
   function relayoutSoon(){ if(rafL)return; rafL=requestAnimationFrame(()=>{ rafL=0; try{layoutHome();}catch(_){} }); }
   function commitTabs(order){ try{ localStorage.setItem("tab-order",JSON.stringify(order)); }catch(e){} }
-  function moveGhost(x,y,scale){ if(d&&d.ghost)d.ghost.style.transform="translate("+(x-d.gx)+"px,"+(y-d.gy)+"px) scale("+(scale||1.04)+")"; }
+  function findDropSlot(cx,cy,grid){ const cols=[...grid.querySelectorAll(".grid-col")]; let col=cols[0],best=Infinity; cols.forEach(c=>{ const r=c.getBoundingClientRect(),mid=(r.left+r.right)/2,dist=Math.abs(cx-mid); if(dist<best){best=dist;col=c;} }); const widgets=[...col.querySelectorAll(".home-widget:not(.dragsrc):not(.drag-placeholder)")]; let ref=null,swapTarget=null; for(const w of widgets){ const r=w.getBoundingClientRect(),pct=(cy-r.top)/r.height; if(pct>=0&&pct<=1){ if(pct<0.28){ref=w;}else if(pct>0.72){ref=w.nextSibling;}else{swapTarget=w;} break; }else if(cy<r.top){ref=w;break;} } return{col,ref,swapTarget}; }
   function flipReorder(c, mutate){
     const kids=[...c.children], firsts=kids.map(k=>k.getBoundingClientRect());
     mutate(); try{layoutHome();}catch(_){}
@@ -8021,24 +8022,37 @@ start();
     if(!d)return;
     if(!d.moved){ if(Math.abs(e.clientX-d.sx)+Math.abs(e.clientY-d.sy)<6)return; d.moved=true;
       if(d.mode==="resize"){ d.item.classList.add("resizing"); }
-      else { const r=d.item.getBoundingClientRect(); d.gx=d.sx-r.left; d.gy=d.sy-r.top; const g=d.item.cloneNode(true); g.classList.add("drag-clone"); g.classList.remove("reordering","dragsrc"); g.style.width=r.width+"px"; g.style.height=r.height+"px"; g.querySelectorAll(".home-tools,.home-resize").forEach(x=>x.remove()); document.body.appendChild(g); d.ghost=g; d.item.classList.add("dragsrc"); moveGhost(d.sx,d.sy); }
+      else { const r=d.item.getBoundingClientRect(); d.phH=r.height;
+        const tab=d.item.getAttribute("data-tab"), key=d.item.getAttribute("data-w");
+        const label=(MODULAR_LABELS[tab]&&MODULAR_LABELS[tab][key])||key||"card";
+        const thumb=document.createElement("div"); thumb.className="drag-thumb"; thumb.textContent=label;
+        document.body.appendChild(thumb); d.thumb=thumb;
+        const ph=document.createElement("div"); ph.className="drag-placeholder"; ph.style.minHeight=d.phH+"px";
+        d.item.parentElement.insertBefore(ph,d.item); d.ph=ph;
+        d.item.classList.add("dragsrc"); }
     }
     e.preventDefault();
     if(d.mode==="resize"){ const unit=d.startW/d.startCols||d.startW; let nc=Math.round((d.startW+(e.clientX-d.sx))/unit); nc=Math.max(1,Math.min(2,nc)); if(nc!==d.cols){ d.cols=nc; d.item.classList.toggle("span2", nc>=2); d.item.dataset.c=cForSpan(nc); } const nh=Math.max(120,Math.round(d.startH+(e.clientY-d.sy))); d.h=nh; if(d.panel)d.panel.style.minHeight=nh+"px"; d.item.dataset.h=nh; relayoutSoon(); return; }
-    moveGhost(e.clientX,e.clientY);
-    const el=document.elementFromPoint(e.clientX,e.clientY), over=el&&el.closest(d.itemSel);
-    if(over&&over!==d.item&&(over.parentElement===d.c||over.closest(".grid-modular")===d.c)){ const r=over.getBoundingClientRect(), before=d.horiz?(e.clientX<r.left+r.width/2):(e.clientY<r.top+r.height/2); const ref=before?over:over.nextSibling; if(ref!==d.item){ if(d.isTab){ flipReorder(d.c,()=>d.c.insertBefore(d.item,ref)); } else { d.dropRef=ref; d.dropCol=over.parentElement; } } }
+    if(d.thumb) d.thumb.style.transform="translate("+(e.clientX-60)+"px,"+(e.clientY-60)+"px)";
+    if(d.isTab){ const el=document.elementFromPoint(e.clientX,e.clientY), over=el&&el.closest(d.itemSel); if(over&&over!==d.item&&over.parentElement===d.c){ const r=over.getBoundingClientRect(), before=e.clientX<r.left+r.width/2, ref=before?over:over.nextSibling; if(ref!==d.item) flipReorder(d.c,()=>d.c.insertBefore(d.item,ref)); } }
+    else if(d.ph){ const grid=d.c.closest(".grid-modular")||d.c; const{col,ref,swapTarget}=findDropSlot(e.clientX,e.clientY,grid);
+      if(swapTarget){
+        // true swap: save both positions BEFORE touching the DOM, handle adjacent case
+        const aP=d.ph.parentElement,aN=d.ph.nextSibling,bP=swapTarget.parentElement,bN=swapTarget.nextSibling;
+        if(bN===d.ph){ bP.insertBefore(d.ph,swapTarget); } // swapTarget immediately before ph
+        else if(aN===swapTarget){ aP.insertBefore(swapTarget,d.ph); } // ph immediately before swapTarget
+        else{ aP.insertBefore(swapTarget,aN); bP.insertBefore(d.ph,bN); }
+      } else if(d.ph.parentElement!==col||d.ph.nextSibling!==ref){ col.insertBefore(d.ph,ref); }
+    }
   },true);
   document.addEventListener("pointerup",()=>{
     if(!d)return; const x=d; d=null; try{x.cap.releasePointerCapture(x.pid);}catch(_){}
     if(x.mode==="resize"){ x.item.classList.remove("resizing"); if(x.moved){ sc=true; setTimeout(()=>sc=false,350); setLayout(x.tab,L=>{ L.size={...L.size,[x.key]:{c:cForSpan(x.cols),h:Math.round(x.h)}}; }); try{layoutHome();}catch(_){} } return; }
     if(!x.moved)return;
     sc=true; setTimeout(()=>sc=false,350);
-    const fr=x.item.getBoundingClientRect();
-    if(x.ghost){ x.ghost.style.transition="transform .2s cubic-bezier(.2,.8,.25,1),opacity .2s"; x.ghost.style.transform="translate("+fr.left+"px,"+fr.top+"px) scale(1)"; x.ghost.style.opacity="0"; const gh=x.ghost; setTimeout(()=>{ gh&&gh.remove(); },220); }
-    if(!x.isTab && x.dropRef!==undefined){ const col=x.dropCol||x.dropRef&&x.dropRef.parentElement||x.c; col.insertBefore(x.item, x.dropRef||null); }
+    if(x.thumb) x.thumb.remove();
+    if(!x.isTab && x.ph){ const col=x.ph.parentElement; col.insertBefore(x.item,x.ph); x.ph.remove(); }
     x.item.classList.remove("dragsrc");
-    void x.item.offsetHeight; // force WebKit repaint
     if(x.isTab){ const order=[...x.c.querySelectorAll(x.itemSel)].map(it=>it.getAttribute(x.key)); commitTabs(order); }
     else {
       const grid=x.c.closest(".grid-modular")||x.c;
@@ -8051,7 +8065,7 @@ start();
       setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){}
     }
   },true);
-  document.addEventListener("pointercancel",()=>{ if(!d)return; if(d.ghost)d.ghost.remove(); if(d.item){d.item.classList.remove("dragsrc","resizing","reordering"); void d.item.offsetHeight;} d=null; },true);
+  document.addEventListener("pointercancel",()=>{ if(!d)return; if(d.thumb)d.thumb.remove(); if(d.ph){ d.ph.parentElement&&d.ph.parentElement.insertBefore(d.item,d.ph); d.ph.remove(); } if(d.item)d.item.classList.remove("dragsrc","resizing","reordering"); d=null; },true);
   document.addEventListener("click",e=>{ if(sc){ e.stopPropagation(); e.preventDefault(); sc=false; } },true);
   document.addEventListener("toggle",(e)=>{ if(e.target&&e.target.id==="foodMedsDetails"){ state.foodMedsOpen=e.target.open; }   // keep the meds list open while she ticks
     if(MODULAR_TABS.includes(state.tab)){ try{layoutHome();}catch(_){} } },true);
