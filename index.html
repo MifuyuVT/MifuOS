@@ -1089,7 +1089,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-19.span2Resize";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-19.homeSpan2";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1449,7 +1449,7 @@ function cForSpan(span){ return span>=3 ? 12 : span===2 ? 10 : 4; }
 function layoutHome(){
   const tab=state.tab; if(!MODULAR_TABS.includes(tab))return;
   const viewFn={home:viewHome,food:viewFood,care:viewCare}[tab]; if(!viewFn)return;
-  const grid=document.querySelector('.grid-modular[data-tab="'+tab+'"]'); if(!grid)return;
+  const grid=document.querySelector('.grid-modular'); if(!grid)return;
   const tmp=document.createElement('div'); tmp.innerHTML=viewFn();
   const ng=tmp.querySelector('.grid-modular'); if(ng)grid.replaceWith(ng);
 }
@@ -8077,6 +8077,10 @@ start();
         if(c.classList.contains("home-widget")){ const k=c.getAttribute("data-w"); if(k)order.push(k); ci++; }
         else if(c.classList.contains("grid-col")){ const l=[...c.querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")); const nc=ch[ci+1]; const r=nc&&nc.classList.contains("grid-col")?[...nc.querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")):[]; const ml=Math.max(l.length,r.length); for(let j=0;j<ml;j++){if(l[j])order.push(l[j]);if(r[j])order.push(r[j]);} ci+=nc&&nc.classList.contains("grid-col")?2:1; }
         else ci++; }
+      // optimistic update so layoutHome() sees the new order immediately
+      if(!state.sentinel.layout)state.sentinel.layout={};
+      if(!state.sentinel.layout[tab])state.sentinel.layout[tab]={order:[],size:{},min:{},hidden:{}};
+      state.sentinel.layout[tab].order=order;
       setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){}
     }
   },true);
