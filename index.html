@@ -203,8 +203,9 @@
   .home-widget.dragsrc,#nav .tab.dragsrc{visibility:hidden;}
   .home-widget.min>.panel,.home-widget.min>section{max-height:54px;overflow:hidden;}
   #nav .tab{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}   /* pan-y: finger/Pencil can still scroll the page from a tab; sideways drag reorders */
-  .drag-clone{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:18px;box-shadow:0 16px 38px rgba(120,80,120,.34);opacity:.97;}
-  .home-tools{position:absolute;top:8px;right:8px;z-index:6;display:flex;gap:3px;}
+  .drag-clone{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:18px;box-shadow:0 16px 38px rgba(120,80,120,.34);opacity:.97;will-change:transform;}
+  .home-widget.dragsrc{opacity:.18;}  /* faint placeholder in place — no visibility:hidden (breaks Safari repaint) */
+  .home-tools{position:absolute;top:8px;left:8px;right:8px;z-index:6;display:flex;justify-content:space-between;gap:3px;}
   .home-tools button{border:none;background:rgba(255,255,255,.72);border-radius:8px;font-size:13px;line-height:1;color:#9b8fae;cursor:pointer;padding:5px 7px;opacity:.45;touch-action:none;user-select:none;-webkit-user-select:none;}
   .home-tools .home-grip{cursor:grab;}
   .home-widget:hover .home-tools button,.home-tools button:hover{opacity:.95;}
@@ -1086,7 +1087,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-18.twoColFlex";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-18.toolbarCleanup";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1425,7 +1426,7 @@ function modularGrid(tab, items, addable){
   const visible=order.filter(k=>!L.hidden[k]);
   const makeW=k=>{ const it=byKey[k]; const s=L.size[k]||{}; const min=!!L.min[k];
     return `<div class="home-widget ${min?'min':''}" data-w="${k}" data-tab="${tab}" data-h="" data-c="${s.c||it.cols||4}">
-      <div class="home-tools"><button class="home-grip" title="drag to move">⠿</button><button data-act="homeMin" data-w="${k}" data-tab="${tab}" title="${min?'expand':'minimize'}">${min?'＋':'–'}</button><button data-act="homeHide" data-w="${k}" data-tab="${tab}" title="remove">✕</button></div>
+      <div class="home-tools"><button class="home-grip" title="drag to move">⠿</button><button data-act="homeHide" data-w="${k}" data-tab="${tab}" title="remove card">✕</button></div>
       <span class="home-resize" title="drag to resize">⤡</span>
       ${it.html}</div>`; };
   const hiddenN=Object.keys(L.hidden).filter(k=>L.hidden[k]&&byKey[k]).length;
