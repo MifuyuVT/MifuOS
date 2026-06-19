@@ -197,6 +197,7 @@
   .grid-modular{display:flex;flex-wrap:wrap;gap:var(--gap,16px);align-items:flex-start;}
   .grid-col{display:flex;flex-direction:column;gap:var(--gap,16px);flex:1;min-width:0;}
   .home-widget{position:relative;transition:transform .24s cubic-bezier(.2,.8,.25,1);width:100%;}
+  .home-widget.span2{flex-basis:100%;}
   @media(max-width:760px){.grid-modular{flex-direction:column;} .grid-col{flex:none;width:100%;}}
   .home-widget.resizing{transition:none;outline:2px dashed var(--sakura);outline-offset:3px;border-radius:18px;}
   .home-widget.reordering{outline:2px dashed var(--lav);outline-offset:3px;border-radius:18px;}
@@ -1088,7 +1089,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-19.swapFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-19.span2Resize";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1425,20 +1426,20 @@ function modularGrid(tab, items, addable){
   items.forEach(it=>{ byKey[it.key]=it; MODULAR_LABELS[tab][it.key]=it.label||it.key; });
   let order=L.order.filter(k=>byKey[k]); items.forEach(it=>{ if(!order.includes(it.key)) order.push(it.key); });
   const visible=order.filter(k=>!L.hidden[k]);
-  const makeW=k=>{ const it=byKey[k]; const s=L.size[k]||{}; const min=!!L.min[k];
-    return `<div class="home-widget ${min?'min':''}" data-w="${k}" data-tab="${tab}" data-h="" data-c="${s.c||it.cols||4}">
+  const isFW=k=>((L.size[k]||{}).c||byKey[k].cols||4)>=10;
+  const makeW=k=>{ const it=byKey[k]; const s=L.size[k]||{}; const min=!!L.min[k]; const fw=isFW(k);
+    return `<div class="home-widget ${fw?'span2':''} ${min?'min':''}" data-w="${k}" data-tab="${tab}" data-h="" data-c="${s.c||it.cols||4}">
       <div class="home-tools"><button class="home-grip" title="drag to move">⠿</button><button data-act="homeHide" data-w="${k}" data-tab="${tab}" title="remove card">✕</button></div>
       <span class="home-resize" title="drag to resize">⤡</span>
       ${it.html}</div>`; };
   const hiddenN=Object.keys(L.hidden).filter(k=>L.hidden[k]&&byKey[k]).length;
   const add=addable===false?"":`<button class="home-add" data-act="manageCards" data-tab="${tab}">＋ cards${hiddenN?` · ${hiddenN} hidden`:""}</button>`;
-  // split visible items into two columns: even-index → left, odd-index → right
-  const left=visible.filter((_,i)=>i%2===0); const right=visible.filter((_,i)=>i%2!==0);
-  return `<div class="grid-modular" data-tab="${tab}">
-    <div class="grid-col" data-col="0">${left.map(makeW).join("")}</div>
-    <div class="grid-col" data-col="1">${right.map(makeW).join("")}</div>
-    ${add}
-  </div>`;
+  // span2 items go directly in .grid-modular (flex-basis:100%); span1 items pair into .grid-col divs
+  let html='', buf=[];
+  const flushBuf=()=>{ if(!buf.length)return; const l=buf.filter((_,i)=>i%2===0),r=buf.filter((_,i)=>i%2!==0); html+=`<div class="grid-col" data-col="0">${l.map(makeW).join("")}</div><div class="grid-col" data-col="1">${r.map(makeW).join("")}</div>`; buf=[]; };
+  visible.forEach(k=>{ if(isFW(k)){flushBuf();html+=makeW(k);}else buf.push(k); });
+  flushBuf();
+  return `<div class="grid-modular" data-tab="${tab}">${html}${add}</div>`;
 }
 /* width preference → whole columns. Stored width (data-c) keeps its old 3-16 scale for
    back-compat: small/default → 1 col, mid → 2 cols, large → full. Clamped to what fits now. */
@@ -1446,7 +1447,11 @@ function spanFromC(c, colCount){ c=c||4; let span; if(colCount<=2) span=c>=9?2:1
 /* inverse — when a resize picks N columns, store a value that maps back to N via spanFromC */
 function cForSpan(span){ return span>=3 ? 12 : span===2 ? 10 : 4; }
 function layoutHome(){
-  // column-count layout — no row/column JS assignment needed; CSS handles it
+  const tab=state.tab; if(!MODULAR_TABS.includes(tab))return;
+  const viewFn={home:viewHome,food:viewFood,care:viewCare}[tab]; if(!viewFn)return;
+  const grid=document.querySelector('.grid-modular[data-tab="'+tab+'"]'); if(!grid)return;
+  const tmp=document.createElement('div'); tmp.innerHTML=viewFn();
+  const ng=tmp.querySelector('.grid-modular'); if(ng)grid.replaceWith(ng);
 }
 function manageCardsModal(tab){
   const L=modLayout(tab); const labels=MODULAR_LABELS[tab]||{}; const keys=Object.keys(labels);
@@ -4058,19 +4063,20 @@ function viewFood(){
     </section>`},
     {key:"checkoffs",label:"Daily check-offs",cols:5,html:cardFoodCheckoffs()},
     {key:"foodweek",label:"This week",cols:10,html:cardFoodWeek()},
+    {key:"kikofood",label:"Kiko & your food",cols:5,html:kikoFoodCard()},
+    {key:"mealmem",label:"Meal memory",cols:5,html:mealMemoryCard()},
+    {key:"lazyday",label:"Lazy-day meals",cols:5,html:lazyMealsCard()},
+    {key:"targets",label:"Daily targets",cols:5,html:`<section class="panel"><div class="card-head"><span class="label">🎯 Daily targets</span></div>
+      <p class="soft" style="font-size:11.5px;margin:0 0 8px">Tune these to whatever your care team suggests.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div class="field"><div class="label">Calories</div><input class="inp" type="number" id="ft_kcal" value="${T.kcal}"></div>
+        <div class="field"><div class="label">Protein (g)</div><input class="inp" type="number" id="ft_protein" value="${T.protein}"></div>
+        <div class="field"><div class="label">Fiber (g)</div><input class="inp" type="number" id="ft_fiber" value="${T.fiber}"></div>
+      </div>
+      <button class="btn btn-grad" data-act="saveFoodTargets" style="margin-top:8px">Save targets</button>
+    </section>`},
   ];
-  return `${modularGrid("food",items)}
-  <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">${kikoFoodCard()}${mealMemoryCard()}${lazyMealsCard()}</div>
-  <details class="acc" style="margin-top:14px"><summary>🎯 Daily targets</summary><div class="acc-body">
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Tune these to whatever your care team suggests.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-      <div class="field"><div class="label">Calories</div><input class="inp" type="number" id="ft_kcal" value="${T.kcal}"></div>
-      <div class="field"><div class="label">Protein (g)</div><input class="inp" type="number" id="ft_protein" value="${T.protein}"></div>
-      <div class="field"><div class="label">Fiber (g)</div><input class="inp" type="number" id="ft_fiber" value="${T.fiber}"></div>
-    </div>
-    <button class="btn btn-grad" data-act="saveFoodTargets" style="margin-top:8px">Save targets</button>
-  </div></details>
-  ${DISCLAIMER}`;
+  return `${modularGrid("food",items)}${DISCLAIMER}`;
 }
 
 /* ===================== CARE ===================== */
@@ -8047,7 +8053,15 @@ start();
   },true);
   document.addEventListener("pointerup",()=>{
     if(!d)return; const x=d; d=null; try{x.cap.releasePointerCapture(x.pid);}catch(_){}
-    if(x.mode==="resize"){ x.item.classList.remove("resizing"); if(x.moved){ sc=true; setTimeout(()=>sc=false,350); setLayout(x.tab,L=>{ L.size={...L.size,[x.key]:{c:cForSpan(x.cols),h:Math.round(x.h)}}; }); try{layoutHome();}catch(_){} } return; }
+    if(x.mode==="resize"){ x.item.classList.remove("resizing"); if(x.moved){ sc=true; setTimeout(()=>sc=false,350);
+      // optimistic state update so layoutHome() reads correct size immediately
+      const newSize={c:cForSpan(x.cols),h:Math.round(x.h)};
+      if(!state.sentinel.layout)state.sentinel.layout={};
+      if(!state.sentinel.layout[x.tab])state.sentinel.layout[x.tab]={order:[],size:{},min:{},hidden:{}};
+      state.sentinel.layout[x.tab].size={...state.sentinel.layout[x.tab].size,[x.key]:newSize};
+      try{layoutHome();}catch(_){}
+      setLayout(x.tab,L=>{ L.size={...L.size,[x.key]:newSize}; });
+    } return; }
     if(!x.moved)return;
     sc=true; setTimeout(()=>sc=false,350);
     if(x.thumb) x.thumb.remove();
@@ -8057,11 +8071,12 @@ start();
     else {
       const grid=x.c.closest(".grid-modular")||x.c;
       const tab=grid.getAttribute("data-tab")||x.c.getAttribute("data-tab");
-      // interleave two columns back into a flat order: left[0],right[0],left[1],right[1],...
-      const cols=[...grid.querySelectorAll(".grid-col")];
-      let order;
-      if(cols.length>1){ const co=cols.map(c=>[...c.querySelectorAll(".home-widget")].map(it=>it.getAttribute("data-w"))); order=[]; const ml=Math.max(co[0].length,co[1]?.length||0); for(let i=0;i<ml;i++) co.forEach(c=>{ if(c[i]) order.push(c[i]); }); }
-      else order=[...grid.querySelectorAll(".home-widget")].map(it=>it.getAttribute("data-w"));
+      // walk grid children: span2 items are direct children, span1 items are in .grid-col pairs
+      const order=[]; const ch=[...grid.children]; let ci=0;
+      while(ci<ch.length){ const c=ch[ci];
+        if(c.classList.contains("home-widget")){ const k=c.getAttribute("data-w"); if(k)order.push(k); ci++; }
+        else if(c.classList.contains("grid-col")){ const l=[...c.querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")); const nc=ch[ci+1]; const r=nc&&nc.classList.contains("grid-col")?[...nc.querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")):[]; const ml=Math.max(l.length,r.length); for(let j=0;j<ml;j++){if(l[j])order.push(l[j]);if(r[j])order.push(r[j]);} ci+=nc&&nc.classList.contains("grid-col")?2:1; }
+        else ci++; }
       setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){}
     }
   },true);
