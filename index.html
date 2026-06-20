@@ -1142,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.migrationFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.backupRestore";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1457,20 +1457,28 @@ const DB = {
     return (data&&data.notes)||{};
   },
   async saveDaily(date,merge){
-    // PERF: the two hot rows (sentinel + today) are always kept current in memory, and any
-    // external write (Kiko agent, scale sync) triggers a full loadData(). So for those we merge
-    // against the cached copy instead of doing a network SELECT before every save — that removes
-    // one round-trip from every toggle/log. We clone first so a mutating merge can't corrupt
-    // state, and snapshot `prev` BEFORE merging so undo always captures the pre-change value.
-    const cached = (!DEMO && SB) ? (date===SENTINEL ? state.sentinel : (date===TODAY ? state.today : null)) : null;
-    const cur = cached ? JSON.parse(JSON.stringify(cached||{})) : await DB.daily(date);
-    const prev = JSON.parse(JSON.stringify(cur||{}));
+    let cur;
+    if(DEMO){ cur=JSON.parse(JSON.stringify(demo[date]||{})); }
+    else if(!SB){ cur=JSON.parse(JSON.stringify((date===SENTINEL?state.sentinel:date===TODAY?state.today:{})||{})); }
+    else if(date===SENTINEL){
+      // sentinel: ALWAYS fetch fresh from DB — never use stale cache as merge base.
+      // using a cached copy risks overwriting real data with a sparse in-memory snapshot.
+      const {data}=await SB.from("daily_logs").select("notes").eq("user_id",UID).eq("date",SENTINEL).maybeSingle();
+      cur=JSON.parse(JSON.stringify((data&&data.notes)||{}));
+      // keep in-memory cache in sync with what we just read
+      state.sentinel=cur;
+    } else {
+      // daily rows: cache is safe — only one writer (this session) ever touches today's row
+      const cached=date===TODAY?state.today:null;
+      cur=JSON.parse(JSON.stringify(cached||{}));
+      if(!Object.keys(cur).length) { const {data}=await SB.from("daily_logs").select("notes").eq("user_id",UID).eq("date",date).maybeSingle(); cur=(data&&data.notes)||{}; }
+    }
+    const prev=JSON.parse(JSON.stringify(cur));
     const next=merge({...cur});
-    if(!UNDO_RESTORING){ try{ UNDO.push({date, prev}); if(UNDO.length>UNDO_MAX) UNDO.shift(); saveUndo(); }catch(e){} }
-    // Keep the in-memory copy of the two hot rows current so back-to-back saves (e.g. an agent
-    // running several actions) always merge against the latest value — not just the callers that
-    // remember to assign the return. This is what makes the cache-as-base path above safe.
+    if(!UNDO_RESTORING){ try{ UNDO.push({date,prev}); if(UNDO.length>UNDO_MAX) UNDO.shift(); saveUndo(); }catch(e){} }
     if(date===SENTINEL) state.sentinel=next; else if(date===TODAY) state.today=next;
+    // localStorage backup of sentinel before every write — last-resort recovery if DB write fails
+    if(date===SENTINEL){ try{ localStorage.setItem("sentinel-backup",JSON.stringify({ts:Date.now(),data:next})); }catch(_){} }
     if(DEMO){ demo[date]=next; return next; }
     if(!SB) return next;
     await SB.from("daily_logs").upsert({user_id:UID,date,notes:next},{onConflict:"user_id,date"});
@@ -5445,6 +5453,16 @@ function viewSettings(){
   const meds=state.sentinel.medsList||[];
   return `<div class="page">
   <section class="panel">
+    <div class="card-head"><div class="label">🗄️ Backup &amp; restore</div></div>
+    <p class="soft" style="font-size:12.5px;margin:0 0 12px">Export downloads a full copy of all your data as a JSON file. Restore imports it back — useful if data is ever lost or you switch devices. <b>Export regularly and keep it somewhere safe.</b></p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button id="exportBtn" class="btn btn-grad" onclick="exportBackup()">⬇️ Export all data</button>
+      <label class="btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px">📂 Restore from file<input type="file" accept=".json" style="display:none" onchange="restoreFromBackup(this)"></label>
+    </div>
+    <p id="backupMsg" style="font-size:12px;margin:8px 0 0;min-height:16px;color:var(--lav-deep)"></p>
+    <p id="restoreMsg" style="font-size:12px;margin:4px 0 0;min-height:16px;color:var(--lav-deep)"></p>
+  </section>
+  <section class="panel">
     <div class="card-head"><div class="label">⚙️ Comfort &amp; display</div><span class="chip" title="if something seems broken, check this matches the newest build first">build ${APP_BUILD}</span></div>
     <p class="soft" style="font-size:12px;margin:0 0 10px">However today needs to feel. Saved on this device.</p>
     <div class="chiprow">
@@ -8670,6 +8688,50 @@ async function sendMagicLink(){
   const {error}=await SB.auth.signInWithOtp({email,options:{emailRedirectTo:location.href}});
   if(msg)msg.textContent=error?"Couldn't send — "+error.message+" 🌧️":"Check your email for the magic link! ✨ (check spam too)";
   if(btn)btn.disabled=false;
+}
+
+async function exportBackup(){
+  const btn=document.getElementById("exportBtn"), msg=document.getElementById("backupMsg");
+  if(btn)btn.disabled=true; if(msg)msg.textContent="Exporting…";
+  try{
+    const {data}=await SB.from("daily_logs").select("*").eq("user_id",UID);
+    const json=JSON.stringify(data||[], null, 2);
+    const blob=new Blob([json],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download=`mifuyu-health-backup-${TODAY}.json`; a.click();
+    URL.revokeObjectURL(a.href);
+    if(msg)msg.textContent="Downloaded ✓ — keep it somewhere safe! 💗";
+  }catch(e){ if(msg)msg.textContent="Export failed: "+e.message+" 🌧️"; }
+  if(btn)btn.disabled=false;
+}
+
+async function restoreFromBackup(input){
+  const msg=document.getElementById("restoreMsg"); if(!input.files||!input.files[0])return;
+  if(msg)msg.textContent="Reading file…";
+  try{
+    const text=await input.files[0].text();
+    const rows=JSON.parse(text);
+    if(!Array.isArray(rows)) throw new Error("Invalid backup format — expected an array of rows");
+    const sentinel=rows.find(r=>r.date===SENTINEL);
+    if(!sentinel||!sentinel.notes) throw new Error("No sentinel row (2000-01-01) found in this file");
+    if(msg)msg.textContent="Restoring sentinel data…";
+    // fetch current sentinel fresh from DB and deep-merge: backup fills gaps, existing data wins on conflict
+    const {data:cur}=await SB.from("daily_logs").select("notes").eq("user_id",UID).eq("date",SENTINEL).maybeSingle();
+    const curNotes=cur&&cur.notes||{};
+    const merged={...sentinel.notes,...curNotes}; // current DB wins on conflict — don't overwrite newer writes
+    await SB.from("daily_logs").upsert({user_id:UID,date:SENTINEL,notes:merged},{onConflict:"user_id,date"});
+    // also restore daily rows that are missing from the DB
+    const dailyRows=rows.filter(r=>r.date!==SENTINEL);
+    if(dailyRows.length){
+      const {data:existing}=await SB.from("daily_logs").select("date").eq("user_id",UID).neq("date",SENTINEL);
+      const existingDates=new Set((existing||[]).map(r=>r.date));
+      const missing=dailyRows.filter(r=>!existingDates.has(r.date));
+      if(missing.length) await SB.from("daily_logs").upsert(missing.map(r=>({user_id:UID,date:r.date,notes:r.notes})),{onConflict:"user_id,date"});
+    }
+    state.sentinel=merged;
+    if(msg)msg.textContent=`✅ Restored! Sentinel data + ${dailyRows.length} daily rows processed. Reloading…`;
+    setTimeout(()=>location.reload(),1500);
+  }catch(e){ if(msg)msg.textContent="Restore failed: "+e.message+" 🌧️"; }
 }
 start();
 
