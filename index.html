@@ -51,7 +51,7 @@
   .num{font-variant-numeric:tabular-nums;} a{color:var(--lav-deep);}
   button{font-family:inherit;cursor:pointer;font-weight:600;} input,textarea,select{font-family:inherit;font-weight:500;}
   .label{font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);font-weight:700;}
-  .card-head>.label{font-size:13px;letter-spacing:.06em;background:linear-gradient(135deg,var(--peri-deep),var(--sakura-deep));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .card-head>.label{font-size:13px;letter-spacing:.06em;color:var(--lav-deep);}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:20px;}
   .inp{background:#fff;border:1.5px solid var(--line-2);border-radius:12px;padding:9px 12px;color:var(--ink);font-size:13px;width:100%;outline:none;}
   .inp:focus{border-color:var(--peri);box-shadow:0 0 0 3px rgba(117,138,198,.14);}
@@ -757,6 +757,23 @@
   .gt-cell.no{ background:#fde4e4; color:#d6798a; }                 /* genuinely missed past day */
   .gt-cell.pend{ background:#f0f1f6; color:#c2c5d6; }               /* not happened yet / today not ticked — neutral gray box + ○ */
 
+  /* ===== GACHAS PAGE ===== */
+  .gg-strip{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .gg-stat{background:#fff;border-radius:14px;border:1.5px solid var(--line);padding:10px 14px;flex:1;min-width:70px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .gg-stat-n{font-size:20px;font-weight:800;color:var(--lav-deep);line-height:1;}
+  .gg-stat-n.ok{color:var(--mint);}
+  .gg-stat-n.warn{color:#e07030;}
+  .gg-stat-l{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
+  .gg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:16px;}
+  .gg-card{background:#fff;border-radius:18px;padding:16px;border:1.5px solid var(--line);display:flex;flex-direction:column;}
+  .gg-card.gg-done{border-color:rgba(111,195,171,.5);background:rgba(111,195,171,.04);}
+  .gg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .gg-name{font-size:14px;font-weight:700;color:var(--text);}
+  .gg-streak{font-size:11px;font-weight:700;color:#e07030;background:rgba(224,112,48,.1);border-radius:999px;padding:2px 8px;}
+  .gg-spark{background:rgba(180,150,220,.09);border-radius:10px;padding:8px 10px;margin-top:10px;}
+  .gg-spark-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+  @media(max-width:600px){.gg-grid{grid-template-columns:1fr;}.gg-strip{gap:7px;}}
+
   /* ===== SIDEBAR LAYOUT (replaces top-tab navigation) ===== */
   #app-shell{ display:flex; min-height:100vh; min-height:100dvh; align-items:stretch; }
   #sidebar{
@@ -1089,7 +1106,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-19.homeSpan2";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.comingUp";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1417,7 +1434,7 @@ function applyPrefs(){
   document.body.classList.toggle("locked",locked);
   const lc=document.getElementById("lockChip"); if(lc){ lc.textContent=locked?"🔒":"🔓"; lc.className="chip"+(locked?" on":""); }
 }
-const MODULAR_TABS=["home","care","food"];
+const MODULAR_TABS=["home","care","food","gachas"];
 const MODULAR_LABELS={};
 function modLayout(tab){ const L=(state.sentinel.layout||{})[tab]||{}; return {order:L.order||[],size:L.size||{},min:L.min||{},hidden:L.hidden||{}}; }
 async function setLayout(tab, mut){ await setSent(n=>{ const layout={...(n.layout||{})}; const L={order:[],size:{},min:{},hidden:{},...(layout[tab]||{})}; mut(L); layout[tab]=L; return {...n,layout}; }); }
@@ -1448,7 +1465,7 @@ function spanFromC(c, colCount){ c=c||4; let span; if(colCount<=2) span=c>=9?2:1
 function cForSpan(span){ return span>=3 ? 12 : span===2 ? 10 : 4; }
 function layoutHome(){
   const tab=state.tab; if(!MODULAR_TABS.includes(tab))return;
-  const viewFn={home:viewHome,food:viewFood,care:viewCare}[tab]; if(!viewFn)return;
+  const viewFn={home:viewHome,food:viewFood,care:viewCare,gachas:viewGachas}[tab]; if(!viewFn)return;
   const grid=document.querySelector('.grid-modular'); if(!grid)return;
   const tmp=document.createElement('div'); tmp.innerHTML=viewFn();
   const ng=tmp.querySelector('.grid-modular'); if(ng)grid.replaceWith(ng);
@@ -1465,12 +1482,12 @@ const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plann
 try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
 const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
 
-const TABS=[["home","🏠 Home"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["creator","✍️ Creator"],["money","💶 Money"],["art","🎨 Art"],["toolbox","🧠 Brain Tools"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
+const TABS=[["home","🏠 Home"],["gachas","🎮 Gachas"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["creator","✍️ Creator"],["money","💶 Money"],["art","🎨 Art"],["toolbox","🧠 Brain Tools"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
 /* ===== one app, two minds — Creator OS 🎀 / Health OS ❄️ (tap the logo to swap) ===== */
-const CREATOR_TABS=["home","planner","calendar","events","creator","money","art","toolbox","memories","kiko"];
+const CREATOR_TABS=["home","gachas","planner","calendar","events","creator","money","art","toolbox","memories","kiko"];
 const SB_GROUPS={
   creator:[
-    {label:null,tabs:["home"]},
+    {label:null,tabs:["home","gachas"]},
     {label:"Create",tabs:["planner","creator","art","toolbox"]},
     {label:"Publish",tabs:["calendar","events"]},
     {label:"Business",tabs:["money","studio","memories"]},
@@ -1559,7 +1576,7 @@ async function render(){
     // state.range holds only past days (today is always overlaid from state.today below), so
     // there's nothing to re-fetch on navigation. Result: tab switches render instantly.
     if(!state._loaded) await loadData();
-    const fn={home:viewHome,kiko:viewKiko,money:viewMoney,health:viewHealth,pcos:viewHealth,mj:viewHealth,weight:viewTrends,food:viewFood,care:viewCare,bunny:viewBunny,studio:viewStudio,life:viewLife,planner:viewPlanner,calendar:renderCalendar,events:viewEvents,creator:viewCreator,script:viewCreator,optimize:viewCreator,trends:viewTrends,art:viewArt,toolbox:viewToolbox,journal:viewJournal,memories:viewMemories,settings:viewSettings}[state.tab]||viewHome;
+    const fn={home:viewHome,gachas:viewGachas,kiko:viewKiko,money:viewMoney,health:viewHealth,pcos:viewHealth,mj:viewHealth,weight:viewTrends,food:viewFood,care:viewCare,bunny:viewBunny,studio:viewStudio,life:viewLife,planner:viewPlanner,calendar:renderCalendar,events:viewEvents,creator:viewCreator,script:viewCreator,optimize:viewCreator,trends:viewTrends,art:viewArt,toolbox:viewToolbox,journal:viewJournal,memories:viewMemories,settings:viewSettings}[state.tab]||viewHome;
     // --- one synchronous block from here (NO awaits) so the browser paints exactly once ---
     // Arm the animation BEFORE building, so the new cards are created already in their hidden
     // start state and animate in cleanly. Because there's no await between this and innerHTML,
@@ -1657,7 +1674,7 @@ function cardSchedule(){
     }).join("");
   }
   return `<section class="panel">
-    <div class="card-head"><span class="label">Stream schedule 🗓️</span>${nav}</div>
+    <div class="card-head"><span class="label">🗓️ Stream schedule</span>${nav}</div>
     ${body}
   </section>`;
 }
@@ -1665,7 +1682,7 @@ function cardGoals(){
   const wk=state.sentinel.goalsWeek||[], mo=state.sentinel.goalsMonth||[];
   const list=(arr,period)=>arr.map(g=>`<div class="listrow"><button class="x" data-act="toggleGoal" data-p="${period}" data-v="${g.id}" style="color:${g.done?'var(--mint)':'var(--muted)'};font-size:16px">${g.done?'●':'○'}</button><span class="grow ${g.done?'soft':''}" style="font-size:13px;${g.done?'text-decoration:line-through':''}">${esc(g.text)}</span><button class="x" data-act="delGoal" data-p="${period}" data-v="${g.id}">✕</button></div>`).join("");
   return `<section class="panel">
-    <div class="card-head"><span class="label">Goals 🌷</span></div>
+    <div class="card-head"><span class="label">🌷 Goals</span></div>
     <div class="label" style="color:var(--peri-deep);margin-bottom:2px">This week</div>
     ${list(wk,"week")}
     <div style="display:flex;gap:6px;margin:4px 0 12px"><input class="inp" id="goalWeek" placeholder="+ add a goal" value="${esc((state.goalDraft||{}).week||'')}"><button class="btn" data-act="addGoal" data-p="week">add</button></div>
@@ -1751,7 +1768,7 @@ const CGOALS_DEFAULT=[
 ];
 function cgoalsList(){ const l=state.sentinel.cgoalsList; return (Array.isArray(l)&&l.length)?l:CGOALS_DEFAULT; }
 function cardCreatorGoals(){
-  return checklistCard({ label:"Daily goals 🎯",
+  return checklistCard({ label:"🎯 Daily goals",
     list:cgoalsList(), checks:state.today.cgoals||{}, ed:!!state.cgoalEdit,
     toggleAct:"cgoalToggle", delAct:"delCgoal", editAct:"cgoalEdit", addAct:"addCgoalUI",
     inputId:"cgoalInput", energyId:"cgoalEnergy", draft:state.cgoalDraft,
@@ -1851,10 +1868,6 @@ function cardGacha(){
     <div class="gt-div"></div>
     <div class="gt-sec">🔥 Streaks</div>
     <div>${streakRows}</div>
-    <div class="gt-div"></div>
-    <div class="gt-sec">📅 Weeklies</div>
-    ${wkRows}
-    ${ed?`<div class="gt-add"><input class="inp" id="gachaWkInput" placeholder="add a weekly…" value="${esc(state.gachaWkDraft||'')}"><button class="btn btn-grad" data-act="addGachaWk">add</button></div>`:''}
     <div class="gt-div"></div>
     <div class="gt-grid-top"><span class="gt-sec" style="margin:0">Last 7 days</span><span class="gt-nav"><button class="btn" data-act="gachaWeek" data-d="-1" title="previous week">‹</button><span class="gt-wklabel">${wkLabel}</span><button class="btn" data-act="gachaWeek" data-d="1" title="next week"${off>=0?' disabled':''}>›</button></span></div>
     <div class="gt-grid">${gridHead}${gridBody}</div>
@@ -2233,12 +2246,8 @@ function suggestedFocus(mode){
     // 🎬 a stream is scheduled today but prep isn't finished → top priority
     try{ const slot=todayStreamSlot(); if(slot){ const c=state.today.streamPrep||{}; const left=streamPrepList().filter(p=>!c[p.id]).length;
       if(left>0) push({t:`${slot.show||slot.text||"Your stream"} is today${slot.time?" at "+slot.time:""} — ${left} stream-prep item${left>1?"s":""} left. Finish before going live. 🎬`,tab:"home",cat:"stream",urgent:true}); } }catch(e){}
-    // 🎮 gacha dailies still open today (data-driven, names the games to start with)
-    try{ const gl=gachaList(), gc=state.today.gacha||{}, gleft=gl.filter(g=>!gc[g.id]);
-      if(gl.length&&gleft.length){ const names=gleft.slice(0,2).map(g=>g.name).join(" & ")+(gleft.length>2?" +":"");
-        push({t:`${gl.length-gleft.length}/${gl.length} gacha dailies done — ${names} still to go. 🎮`,tab:"home",cat:"gacha"}); } }catch(e){}
-    // ⏳ game events ending / debuting soon — actionable, straight from the game calendar
-    try{ gameDeadlineObs().slice(0,2).forEach(o=>{ if(o&&o.focus) push({...o.focus,cat:"game"}); }); }catch(e){}
+    // ⏳ only surface a game event if it ends TODAY — one compact nudge max, rest lives on Gachas page
+    try{ const todayEvs=gameDeadlineObs().filter(o=>o&&o.focus&&/today is the last day/i.test(o.focus.t)); if(todayEvs.length) push({...todayEvs[0].focus,cat:"game",t:`${todayEvs[0].focus.t} → Open Gachas for more.`}); }catch(e){}
     // game pre-farm beats live only in the Game Updates box — content work goes here
     const dArt=ciDays("madeArt"); if(dArt!=null&&dArt>=7) push({t:"You haven't drawn in a while — maybe it's time to make some art together! 🎨",tab:"art",cat:"art"});
     const dYt=ciDays("ytVideo"); if(dYt!=null&&dYt>=7) push({t:"It's been a while since a YouTube upload — want to check in with your editors? 🎥",seed:"help me draft a check-in message to my YouTube editors",cat:"youtube"});
@@ -2303,7 +2312,7 @@ function quickNotices(mode){
   const O=[]; const wkISO=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA");
   if(mode==="creator"){
     try{ const slot=todayStreamSlot(); if(slot){ const c=state.today.streamPrep||{}, list=streamPrepList(), dn=list.filter(p=>c[p.id]).length; if(dn<list.length) O.push({t:`Stream today — ${dn}/${list.length} prep done.`,sub:"Finish before going live.",tab:"home"}); } }catch(e){}
-    try{ const gl=gachaList(), gc=state.today.gacha||{}, dn=gl.filter(g=>gc[g.id]).length; if(gl.length&&dn<gl.length) O.push({t:`Gacha dailies: ${dn}/${gl.length} done.`,sub:"A few left to clear.",tab:"home"}); }catch(e){}
+    try{ const gl=gachaList(), gc=state.today.gacha||{}, dn=gl.filter(g=>gc[g.id]).length; if(gl.length&&dn<gl.length) O.push({t:`Gacha dailies: ${dn}/${gl.length} done.`,sub:"A few left to clear.",tab:"gachas"}); }catch(e){}
     try{ const gr=cgrowthList(), gc=state.today.cgrowth||{}, dn=gr.filter(h=>gc[h.id]).length; if(dn===0) O.push({t:`No creator-growth action yet today.`,sub:"Pick one low-energy one.",tab:"home"}); }catch(e){}
     try{ const ends=(state.sentinel.calendarEvents||[]).filter(gameSrc).filter(e=>e&&e.endDate&&e.endDate>=TODAY&&e.date<=TODAY&&daysBetween(TODAY,e.endDate)<=2); if(ends.length) O.push({t:`${ends.length} game event${ends.length>1?"s":""} ending soon.`,sub:"Do them before they disappear.",tab:"calendar"}); }catch(e){}
     try{ const vault=(state.sentinel.sparkVault||[]); if(!vault.some(x=>x&&x.date&&x.date>=wkISO)) O.push({t:`No new stream idea saved this week.`,sub:"Tap Creator Spark for one.",tab:"home"}); }catch(e){}
@@ -2315,8 +2324,8 @@ function quickNotices(mode){
   return O.slice(0,4);
 }
 function quickNoticesCard(){ const Q=quickNotices(OS_MODE==="health"?"health":"creator");
-  return `<div class="gcard"><div class="sec-label">⚡ Quick notices</div>
-    ${Q.length?Q.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""}><span class="kn-dot"></span><span class="grow" style="text-align:left">${esc(o.t)}${o.sub?` <span class="soft" style="font-size:11px">${esc(o.sub)}</span>`:""}</span><span class="fr-chev">›</span></button>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">All caught up — nothing needs you right now. ✨</p>`}</div>`;
+  return `<div class="gcard" style="padding:12px 14px"><div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">⚡ Notices</div>
+    ${Q.length?Q.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""}><span class="kn-dot" style="background:var(--lav-deep)"></span><span class="grow" style="text-align:left;font-size:12.5px">${esc(o.t)}${o.sub?`<br><span class="soft" style="font-size:11px">${esc(o.sub)}</span>`:""}</span>${o.tab?'<span class="fr-chev">›</span>':''}</button>`).join(""):`<p class="soft" style="font-size:12px;margin:0">All caught up — nothing needs you right now. ✨</p>`}</div>`;
 }
 /* ===== Kiko noticed — reflective observations (lives lower on the page) ===== */
 function deepPatternsCard(){ const N=kikoNoticed(OS_MODE==="health"?"health":"creator");
@@ -2325,9 +2334,10 @@ function deepPatternsCard(){ const N=kikoNoticed(OS_MODE==="health"?"health":"cr
     ${N.length?N.map(o=>`<div class="kn-row"><span class="kn-dot"></span><span>${esc(o.t)}</span></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">All caught up — Kiko's watching and will flag things as they come. ❄️</p>`}</section>`;
 }
 function focusCard(F){ F=(F||[]).slice(0,3);
-  if(!F.length) return `<div class="gcard"><div class="sec-label">🌸 Suggested focus</div><p class="soft" style="font-size:12.5px;margin:0">No nudges today — follow your joy. ✨</p></div>`;
-  return `<div class="gcard"><div class="sec-label">🌸 Suggested focus</div>
-    ${F.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""} ${o.seed?`data-seed="${esc(o.seed)}"`:""} ${o.link?`data-link="${esc(o.link)}"`:""} ${o.cat?`data-cat="${esc(o.cat)}"`:""}><span class="kn-dot"></span><span class="grow" style="text-align:left">${esc(o.t)}</span><span class="fr-chev">›</span></button>`).join("")}</div>`; }
+  return `<div class="gcard" style="padding:12px 14px">
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">✦ Focus</div>
+    ${F.length?F.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""} ${o.seed?`data-seed="${esc(o.seed)}"`:""} ${o.link?`data-link="${esc(o.link)}"`:""} ${o.cat?`data-cat="${esc(o.cat)}"`:""}><span class="kn-dot" style="background:var(--sakura-deep)"></span><span class="grow" style="text-align:left;font-size:12.5px">${esc(o.t)}</span>${(o.tab||o.seed||o.link)?'<span class="fr-chev">›</span>':''}</button>`).join(""):`<p class="soft" style="font-size:12px;margin:0">No nudges today — follow your joy. ✨</p>`}
+  </div>`; }
 function gameUpdatesCard(){
   const evs=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=14).sort((a,b)=>a.days-b.days).slice(0,6);
   return `<div class="gcard"><div class="sec-label">🎮 Game updates</div>
@@ -2392,11 +2402,147 @@ function cardOnThisDay(){
     ${picks.length>1?`<p class="soft" style="font-size:10.5px;margin:8px 0 0;text-align:right">${i+1} of ${picks.length}</p>`:""}
   </section>`;
 }
+/* ===================== 🎮 GACHAS PAGE ===================== */
+function gachaKeywords(g){
+  const n=(g.name||'').toLowerCase().replace(/\W+/g,'');
+  const MAP={nikki:['nikki','infinity','infinitynikki'],r1999:['r1999','reverse1999','reverse','1999'],arknights:['arknights','endfield'],zzz:['zzz','zenless'],nte:['nte','neverness'],wuwa:['wuwa','wuthering'],genshin:['genshin'],hsr:['hsr','starrail','honkai']};
+  for(const [k,kws] of Object.entries(MAP)) if(n.includes(k)||kws.some(w=>n.includes(w))) return kws;
+  return [n.slice(0,6)||g.id];
+}
+function gachaEventsForGame(g,allEvs){
+  const kws=gachaKeywords(g);
+  return allEvs.filter(e=>{ const t=(e.title||'').toLowerCase().replace(/\W+/g,''); return kws.some(kw=>t.includes(kw)); }).sort((a,b)=>a.days-b.days);
+}
+function gachaEventType(e){
+  if(e.src==='gamestream'||/livestream|showcase|preview|reveal/i.test(e.title||'')) return 'Livestream';
+  if(/banner|rerun/i.test(e.title||'')) return 'New Banner';
+  if(/\bupdate\b|\bversion\b|\bpatch\b/i.test(e.title||'')) return 'New Update';
+  return 'Event';
+}
+function gachaGameSpark(g,evs){
+  const n=g.name;
+  // only upcoming STARTS — skip anything with "end/ends/close/last day" in the title
+  const starts=evs.filter(x=>x.days>=0&&!/\bend\b|\bends\b|\bclos/i.test(x.title||''));
+  if(!starts.length) return null;
+  const e=starts[0];
+  const type=gachaEventType(e);
+  const when=e.days===0?'today':e.days===1?'tomorrow':`in ${e.days} days`;
+  return {text:`${type} — "${e.title}" starts ${when}. Stream idea?`, type};
+}
+function gachaGameCard(g,checks,weeklies,allEvs){
+  const done=!!checks[g.id], streak=gachaStreak(g.id);
+  const evs=gachaEventsForGame(g,allEvs);
+  const isEnding=e=>/\bend\b|\bends\b|\bclos/i.test(e.title||'');
+  const ending=evs.filter(e=>e.days>=0&&e.days<=14&&isEnding(e)).slice(0,3);
+  const coming=evs.filter(e=>e.days>=0&&!isEnding(e)).slice(0,3);
+  const spark=gachaGameSpark(g,evs);
+  const wkDone=gachaWkDoneThisWeek(g.id);
+  return `<div class="gg-card ${done?'gg-done':''}">
+    <div class="gg-head">
+      <span class="gg-name">${esc(g.name)}</span>
+      <div style="display:flex;gap:5px;align-items:center">
+        ${streak>0?`<span class="gg-streak">🔥${streak}</span>`:''}
+        ${done?`<span class="pill pill-mint" style="font-size:10px;padding:2px 7px">done</span>`:''}
+      </div>
+    </div>
+    <button class="chiptog ${wkDone?'on':''}" data-act="gachaWkToggle" data-v="${g.id}" style="width:100%;justify-content:center;margin-bottom:8px"><span>${wkDone?'✓':'◦'}</span>${wkDone?'Weekly done':'Mark weekly done'}</button>
+    ${coming.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px">🌟 Coming up</div><div class="kn-row" style="font-size:11.5px"><span class="kn-dot"></span><span class="grow">${esc(coming[0].title)}</span>${evTierChip(coming[0].days,coming[0].days===0,fmtDate(coming[0].date))}</div>${coming.length>1?`<button class="soft" data-act="gachaCardMore" data-gid="${g.id}" style="font-size:11px;background:none;border:none;cursor:pointer;padding:3px 0;display:block;color:var(--muted)">${(state.gachaExpanded||{})[g.id]?'▾':'▸'} ${coming.length-1} more future update${coming.length-1===1?'':'s'}</button>${(state.gachaExpanded||{})[g.id]?coming.slice(1).map(e=>`<div class="kn-row" style="font-size:11.5px"><span class="kn-dot"></span><span class="grow">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join(''):''}`:''}`:''}
+    ${ending.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px;color:#e07030">⏳ Ending soon</div>${ending.map(e=>`<div class="kn-row" style="font-size:11.5px"><span class="kn-dot" style="background:#e07030"></span><span class="grow">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
+    ${spark?`<div class="gg-spark"><span class="gg-spark-label">✨ ${esc(spark.type)}</span><p style="font-size:12px;margin:4px 0 7px;line-height:1.45">${esc(spark.text)}</p><button class="chiptog" data-act="sparkSave" data-spark="${esc(spark.text)}" style="font-size:11px"><span>📌</span>Save idea</button></div>`:''}
+  </div>`;
+}
+function gachaUpdatesSection(allEvs){
+  const fut=allEvs.filter(e=>e.days>=0&&e.days<=21).sort((a,b)=>a.days-b.days);
+  const ending=fut.filter(e=>/end|close|last\s*day/i.test(e.title||''));
+  const streams=fut.filter(e=>e.src==='gamestream');
+  const rest=fut.filter(e=>!ending.includes(e)&&!streams.includes(e));
+  const mkSec=(em,label,items)=>items.length?`<div style="margin-bottom:10px"><div class="sec-label">${em} ${label}</div>${items.map(e=>`<div class="kn-row"><span class="kn-dot"></span><span class="grow" style="font-size:12.5px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}</div>`:'';
+  const body=mkSec('⏳','Ending soon',ending)+mkSec('🌟','Updates & banners',rest)+mkSec('📺','Livestreams',streams);
+  return `<section class="panel" style="margin-bottom:16px"><div class="card-head"><span class="label">🗓️ Game events</span><button class="btn" data-act="tab" data-tab="calendar">calendar →</button></div>${body||`<p class="soft" style="font-size:12.5px;margin:0">No game events on the radar. Add them to the Calendar to see them here. 🎮</p>`}</section>`;
+}
+function compactGachaAlert(){
+  const list=gachaList(), checks=state.today.gacha||{};
+  const done=list.filter(g=>checks[g.id]).length, total=list.length;
+  const urgent=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=1).sort((a,b)=>a.days-b.days);
+  if(!total) return '';
+  return `<div class="gcard"><div class="sec-label" style="margin-bottom:8px">🎮 Gachas</div>
+    <p style="font-size:13px;margin:0 0 4px;font-weight:600">${done}/${total} dailies done${done===total?' ✦':''}</p>
+    ${urgent.slice(0,2).map(e=>`<p style="font-size:11.5px;margin:2px 0;color:var(--ink-soft)">⏳ ${esc(e.title)}</p>`).join('')}
+    <button class="btn" data-act="tab" data-tab="gachas" style="margin-top:10px;width:100%">Open Gachas →</button>
+  </div>`;
+}
+function cardGachaCommunityPulse(){
+  const list=gachaList();
+  const vault=(state.sentinel.sparkVault||[]).slice().reverse();
+  const gameIdeas=list.map(g=>{
+    const kws=gachaKeywords(g);
+    const match=vault.find(v=>kws.some(kw=>(v.text||'').toLowerCase().replace(/\W/g,'').includes(kw.replace(/\W/g,''))));
+    return{g,idea:match};
+  });
+  const allNames=list.map(g=>g.name).join(', ');
+  const bulkSeed=`I'm a VTuber and gacha content creator. Please search the internet (Reddit, YouTube, Twitter/X) and find what each of these game communities is currently buzzing about right now. For each game, tell me: 1) what topics/moments are trending this week, and 2) one specific, actionable stream or video idea I could make this week that would resonate with fans. Games: ${allNames}. Keep each idea short and punchy — one sentence.`;
+  return `<section class="panel" style="margin-top:16px">
+    <div class="card-head"><span class="label">🦊 Community Pulse</span><button class="btn btn-grad" data-act="kikoSeedAsk" data-seed="${esc(bulkSeed)}">Ask Kiko to research all →</button></div>
+    <div style="background:rgba(180,150,220,.09);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:18px;flex:none">🦊</span>
+      <p style="font-size:12px;line-height:1.5;margin:0">Kiko reads Reddit, YouTube &amp; Twitter in real time to find what each community is buzzing about — then sparks a content idea per game. Tap a game's button for a deep-dive, or ask Kiko all at once above.</p>
+    </div>
+    ${gameIdeas.map(({g,idea})=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--line)">
+      <div style="width:34px;height:34px;border-radius:50%;background:#EEEDFE;color:#534AB7;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;line-height:1.2">${esc(g.name.slice(0,5))}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">${esc(g.name)}</div>
+        ${idea?`<p style="font-size:12.5px;line-height:1.45;margin:0 0 4px">${esc(idea.text)}</p><span style="font-size:10px;color:var(--muted)">Saved ${fmtDate(idea.date)}</span>`:`<p style="font-size:12px;color:var(--muted);margin:0">No ideas saved yet — ask Kiko!</p>`}
+      </div>
+      <button class="btn" style="font-size:11px;flex-shrink:0" data-act="kikoSeedAsk" data-seed="${esc(`Search online (Reddit, YouTube, Twitter/X) for what the ${g.name} community is talking about RIGHT NOW this week. Give me one punchy, specific stream or video idea I can act on as a VTuber — something that would resonate with the current mood of the community.`)}">research</button>
+    </div>`).join('')}
+    <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.4">Kiko connects to the internet to find live community buzz — ideas here are always fresh, not pre-programmed. 🌐</p>
+  </section>`;
+}
+function viewGachas(){
+  const list=gachaList(), checks=state.today.gacha||{};
+  const done=list.filter(g=>checks[g.id]).length, total=list.length;
+  // weeklies = ALL tracked games (not just the old sub-list)
+  const wkDone=list.filter(g=>gachaWkDoneThisWeek(g.id)).length;
+  const wkPending=list.filter(g=>!gachaWkDoneThisWeek(g.id));
+  const allEvs=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)}));
+  const endingSoon=allEvs.filter(e=>e.days>=0&&e.days<=3&&/\bend\b|\bends\b|\bclos/i.test(e.title||''));
+  const todayUpd=allEvs.filter(e=>e.days>=0&&e.days<=30&&!/\bend\b|\bends\b|\bclos/i.test(e.title||''));
+  // weekly gacha focus — only this-week events (≤7 days), no dailies/weeklies clutter
+  const isEndingEv=e=>/\bend\b|\bends\b|\bclos/i.test(e.title||'');
+  const thisWeekEnding=allEvs.filter(e=>e.days>=0&&e.days<=7&&isEndingEv(e)&&!/banner|rerun/i.test(e.title||'')).sort((a,b)=>a.days-b.days);
+  const thisWeekStart=allEvs.filter(e=>e.days>=0&&e.days<=7&&!isEndingEv(e)).sort((a,b)=>a.days-b.days);
+  const byGame=g=>gachaKeywords(g).some(kw=>(g.name||'').toLowerCase().replace(/\W/g,'').includes(kw.replace(/\W/g,'')));
+  const kikoSeed=`Research which gacha game events are ending this week (within 7 days) across: ${list.map(g=>g.name).join(', ')}. List each game, the event name, and the end date. Focus on things I might miss if I don't play before the deadline.`;
+  const weeklies=gachaWeeklies();
+  // game cards as modular widgets — drag/resize/minimize come for free
+  const gameItems=list.map(g=>({key:g.id,label:g.name,cols:4,html:gachaGameCard(g,checks,weeklies,allEvs)}));
+  const leftPanel=`<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;gap:10px">
+      <div class="gg-stat" style="flex:1"><span class="gg-stat-n ${done===total&&total?'ok':''}">${done}/${total}</span><span class="gg-stat-l">Dailies</span></div>
+      <div class="gg-stat" style="flex:1"><span class="gg-stat-n ${wkDone===total&&total?'ok':''}">${wkDone}/${total}</span><span class="gg-stat-l">Weeklies</span></div>
+    </div>
+    <section class="panel" style="margin:0;flex:1;display:flex;flex-direction:column">
+      <div class="card-head"><span class="label">✨ Weekly Gacha Focus</span><button class="btn" data-act="kikoSeedAsk" data-seed="${esc(kikoSeed)}" title="Ask Kiko to research">🦊 Research</button></div>
+      ${thisWeekEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:4px 0 2px;letter-spacing:-.01em">⏳ Ending this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Do these before they're gone!</p>${thisWeekEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:'<p class="soft" style="font-size:12px;margin:0 0 6px">Nothing ending this week ✨</p>'}
+      ${thisWeekStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:12px 0 2px;letter-spacing:-.01em">🌟 Starting this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${thisWeekStart.slice(0,4).map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
+    </section>
+  </div>`;
+  return `<div class="page" style="padding-top:12px">
+    <div style="display:flex;gap:14px;align-items:stretch;margin-bottom:16px;flex-wrap:wrap">
+      ${leftPanel}
+      <div style="flex:1;min-width:260px">${cardGacha()}</div>
+    </div>
+    ${gameItems.length?modularGrid('gachas',gameItems,false):`<p class="soft" style="font-size:12.5px">No games yet — add them in the tracker above. 🎮</p>`}
+    ${cardGachaCommunityPulse()}
+    ${DISCLAIMER}
+  </div>`;
+}
+
 function viewHome(){
   const m=state.today.mind||{};
   if(PREF.focus){
     return `<div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
-      <section class="panel"><div class="card-head"><span class="label">Just today 🌙</span><button class="btn" data-act="pref" data-f="focus">exit focus</button></div>
+      <section class="panel"><div class="card-head"><span class="label">🌙 Just today</span><button class="btn" data-act="pref" data-f="focus">exit focus</button></div>
         <h2 style="font-size:20px">${greeting()}, ${esc(CONFIG.creator.name)} ${CONFIG.creator.emoji}</h2>
         <p class="soft" style="font-size:12.5px;margin:4px 0 12px">One gentle tap at a time. That's a whole check-in. ❄️</p>
         ${scaleRow("Mood","mindSet","mood",m.mood,"low","bright")}
@@ -2411,21 +2557,18 @@ function viewHome(){
   const F=suggestedFocus(_md);
   const glance=`<section class="panel">
     ${glanceHeader()}
-    <div style="margin:0 0 12px">${focusCard(F)}</div>
-    <div class="glance-cols">${creator?gameUpdatesCard():healthSnapshotCard()}${quickNoticesCard()}</div>
+    <div class="glance-cols" style="margin-bottom:12px">${focusCard(F)}${quickNoticesCard()}</div>
+    ${creator?'':healthSnapshotCard()}
     <p class="got-this">You've got this, ${esc(CONFIG.creator.name)}! ✨</p>
   </section>`;
   const items=creator?[
     {key:"cgoals",label:"Daily goals",cols:4,html:cardCreatorGoals()},
-    {key:"gacha",label:"Gacha dailies",cols:4,html:cardGacha()},
     {key:"schedule",label:"Stream schedule",cols:4,html:cardSchedule()},
     {key:"contentops",label:"Stream prep",cols:4,html:cardContentOps()},
-    {key:"spark",label:"Creator spark",cols:4,html:cardCreatorSpark()},
     {key:"cgrowth",label:"Creator growth",cols:4,html:cardCreatorGrowth()},
-    {key:"braindump",label:"Voice dump",cols:4,html:cardBrainDump()},
     {key:"goals",label:"Goals",cols:4,html:cardGoals()},
     {key:"deeppatterns",label:"Kiko noticed",cols:4,html:deepPatternsCard()},
-    {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
+    {key:"thisweek",label:"Coming up",cols:4,html:cardThisWeek()},
   ]:[
     {key:"habits",label:"Daily habits",cols:4,html:cardHabits()},
     {key:"journal",label:"Journal",cols:4,html:cardJournal()},
@@ -2437,6 +2580,21 @@ function viewHome(){
     {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
   ];
   return `<div class="home-fixed">${cardHero()}${glance}</div>${modularGrid(creator?"home":"homehealth",items)}${DISCLAIMER}`;
+}
+function cardThisWeek(){
+  const rows=[];
+  const isEnding=t=>/\bend\b|\bends\b|\bclos|\blast\s*day/i.test(t||'');
+  const isBanner=t=>/banner|rerun/i.test(t||'');
+  const isStream=src=>src==='stream'||src==='streamday';
+  // birthdays in the next 14 days
+  try{(state.sentinel.birthdays||[]).map(b=>({...b,...nextBirthdayInfo(b)})).filter(x=>x.days>=0&&x.days<=14).sort((a,b)=>a.days-b.days).forEach(b=>rows.push({days:b.days,date:b.date,icon:'🎂',text:`${esc(b.name)}'s birthday`,src:'bday'}));}catch(_){}
+  // calendar events starting in next 14 days — no streams, no endings, no banners, deduplicated by title
+  try{const seen=new Set();(state.sentinel.calendarEvents||[]).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=14&&!isStream(e.src)&&!isEnding(e.title)&&!isBanner(e.title)).sort((a,b)=>a.days-b.days).forEach(e=>{const key=(e.title||'').toLowerCase().replace(/speculated|estimated|rumored|confirmed/g,'').replace(/[^a-z0-9]/g,'');if(seen.has(key))return;seen.add(key);rows.push({days:e.days,date:e.date,icon:gameSrc(e)?'🎮':'🌸',text:esc(e.title),src:e.src});});}catch(_){}
+  rows.sort((a,b)=>a.days-b.days);
+  return `<section class="panel">
+    <div class="card-head"><span class="label">📅 Coming up</span><button class="btn" data-act="tab" data-tab="calendar">calendar →</button></div>
+    ${rows.length?rows.slice(0,6).map(r=>`<div class="kn-row"><span style="font-size:15px;flex:none;line-height:1">${r.icon}</span><span class="grow" style="font-size:13px">${r.text}</span>${evTierChip(r.days,r.days===0,fmtDate(r.date))}</div>`).join(''):`<p class="soft" style="font-size:12.5px;margin:0">Nothing new in the next two weeks — enjoy the calm! ✨</p>`}
+  </section>`;
 }
 /* ===================== 🎉 EVENTS — dedicated page (never mixed with game updates) ===================== */
 function evTier(days,urgent){ if(urgent)return ["Urgent","tier-urgent"]; if(days<=0)return["Today","tier-today"]; if(days===1)return["Tomorrow","tier-tmrw"]; if(days<=7)return["This Week","tier-week"]; if(days<=30)return["This Month","tier-month"]; return["Later","tier-later"]; }
@@ -2836,7 +2994,7 @@ function viewArt(){
   /* art focus mode — enter play, see ONLY play (timer + prompt + log). Everything else waits. */
   if(A.focus){
     return `<div style="max-width:560px;margin:4vh auto;display:flex;flex-direction:column;gap:14px;text-align:center">
-      <div class="label">art focus 🎨 just you and the page</div>
+      <div class="label">🎨 art focus · just you and the page</div>
       <div class="panel" style="background:linear-gradient(135deg,#fdf0fb,#eef2fb)"><div class="art-prompt" style="background:none;border:none;padding:0;font-size:15px">${esc(reframe)}</div></div>
       <div class="panel"><div class="art-prompt">Draw <b>${esc(P.subject)}</b><br><span style="font-size:14px;color:var(--lav-deep)">${esc(P.mood)} · ${esc(P.constraint)}</span></div>
         <button class="btn" data-act="artPromptRoll" style="margin-top:10px">🎲 different prompt</button></div>
@@ -2879,7 +3037,7 @@ function viewArt(){
     </section>`;
   const minutesCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">⏱️ Art minutes</h2><span class="label">every minute counts — even 5</span></div>
       <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
-        <div><div class="num" style="font-size:30px;font-family:var(--display);color:var(--sakura-deep)">${weekMin}<span style="font-size:14px"> min</span></div><div class="label">this week · ${weekDays} day${weekDays===1?'':'s'} of play 💗</div></div>
+        <div><div class="num" style="font-size:30px;font-family:var(--display);color:var(--sakura-deep)">${weekMin}<span style="font-size:14px"> min</span></div><div class="label">💗 this week · ${weekDays} day${weekDays===1?'':'s'} of play</div></div>
         <div class="grow" style="min-width:180px">${spark}<div class="label" style="margin-top:2px">last 14 days</div></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
@@ -3020,7 +3178,7 @@ function viewArt(){
   return `<div class="page" style="max-width:1100px">
     <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
       <h2 style="font-size:22px;font-family:var(--display)">🎨 Art studio</h2>
-      <span class="label">just for you · play is allowed 🌸</span>
+      <span class="label">🌸 just for you · play is allowed</span>
     </div>
     <div class="art-cols">${heroCard}${challengesCard}${promptCard}${minutesCard}${timerCard}${headsCard}${ideasCard}${inspoCard}${emoteCard}${valueCard}${paletteCard}${specsCard}${live2dCard}${guidesCard}${boardCard}${libraryCard}</div>
   </div>`;
@@ -6249,6 +6407,7 @@ const H={
     await setSent(n=>{ let l=(Array.isArray(n.gachaList)&&n.gachaList.length)?n.gachaList.slice():GACHA_DEFAULT.slice();
       l=l.filter(g=>g.id!==id); return {...n,gachaList:l}; }); render(); },
   // --- gacha weeklies (toggle done-this-week) + past-week grid nav ---
+  gachaCardMore(el){ const id=el.dataset.gid; if(!state.gachaExpanded)state.gachaExpanded={}; state.gachaExpanded[id]=!state.gachaExpanded[id]; try{layoutHome();}catch(_){} },
   async gachaWkToggle(el){ const id=el.dataset.v;
     const wi=$("#gachaWkInput"); if(wi) state.gachaWkDraft=wi.value;
     const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA");
