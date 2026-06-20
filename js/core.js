@@ -1,6 +1,5 @@
 "use strict";
-/* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.betterDrama";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -29,25 +28,39 @@ const CONFIG = {
             ["Kick","https://kick.com/mifuyuvt"],["Discord","https://discord.gg/mifuyu"] ],
 };
 
+
 /* ===================== SUPABASE / DEMO ===================== */
 const DEMO = !(CONFIG.url && CONFIG.anonKey);
-let SB = null; // set in start() once the Supabase library has loaded (live mode only)
-let UID = CONFIG.userId;  // set to your real account id after login (see start())
+
+let SB = null;
+ // set in start() once the Supabase library has loaded (live mode only)
+let UID = CONFIG.userId;
+  // set to your real account id after login (see start())
 const SENTINEL = "2000-01-01";
+
 /* The "day" rolls over at 4:00 AM Europe/Amsterdam, not midnight — Mifu's a night owl,
    so anything she checks off at 12–1 AM still counts for the day she's mentally in.
    Trick: shift the real instant back 4h, then ask what Amsterdam calendar date that lands on. */
 const DAY_ROLLOVER_HOURS = 4;
+
 function logicalDateKey(d){ return new Date((d||new Date()).getTime() - DAY_ROLLOVER_HOURS*3600*1000).toLocaleDateString("en-CA",{timeZone:"Europe/Amsterdam"}); }
-function logicalDisplayDate(){ return new Date(Date.now() - DAY_ROLLOVER_HOURS*3600*1000); }   // a Date whose Amsterdam date == the logical day, for headers
+   // a Date whose Amsterdam date == the logical day, for headers
 const TODAY = logicalDateKey();
+
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id"+Math.random().toString(36).slice(2));
+
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
 const $ = s => document.querySelector(s);
+
 function dayAgo(n){const d=new Date(TODAY+"T00:00");d.setDate(d.getDate()+n);return d.toLocaleDateString("en-CA");}
+
 function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
-const cmpDate=(a,b)=>a.date<b.date?-1:a.date>b.date?1:0;   // ascending, total-order (stable for equal dates) — single source for the date sort duplicated app-wide
+
+const cmpDate=(a,b)=>a.date<b.date?-1:a.date>b.date?1:0;
+   // ascending, total-order (stable for equal dates) — single source for the date sort duplicated app-wide
 function fmtDate(iso){ try{ return new Date(iso+"T00:00").toLocaleDateString(undefined,{month:'short',day:'numeric'}); }catch(e){ return iso; } }
+
 /* strip Markdown so Kiko's chat shows clean plain text (keeps words + emojis) */
 async function autoResearchGames(){
   if(DEMO||!SB) return;
@@ -73,21 +86,7 @@ async function autoResearchGames(){
   }
   if(needsResearch.length) try{ render(); }catch(_){}
 }
-function parsePulse(text){
-  const t=stripMd(text||"");
-  const clean=(s)=>s.replace(/\(https?:\/\/[^)]+\)/g,'').replace(/https?:\/\/\S+/g,'').replace(/\([^)]{2,60}\.[a-z]{2,6}[^)]*\)/gi,'').replace(/\s{2,}/g,' ').trim();
-  const line=(key)=>{ const m=t.match(new RegExp('^'+key+':\\s*(.+)','im')); return m?clean(m[1]).slice(0,400):null; };
-  return { hype:line('HYPE'), drama:line('DRAMA'), idea:line('IDEA'), detail:(t.match(/^DETAIL:\s*([\s\S]+)/im)||[])[1]||null };
-}
-function renderMd(t){
-  return String(t==null?"":t)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener" style="color:var(--lav-deep);word-break:break-all">$1</a>')
-    .replace(/\*\*\*(.+?)\*\*\*/g,"<b><em>$1</em></b>")
-    .replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
-    .replace(/\*(.+?)\*/g,"<em>$1</em>")
-    .replace(/\n/g,"<br>");
-}
+
 function stripMd(t){ return String(t==null?"":t)
   .replace(/```+/g,"")                       // code fences
   .replace(/(\*\*\*|___)(.*?)\1/g,"$2")      // bold+italic
@@ -100,8 +99,11 @@ function stripMd(t){ return String(t==null?"":t)
   .replace(/^\s{0,3}[-*+]\s+/gm,"• ")        // bullet markers → clean bullet
   .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1")    // [text](link) → text
   .trim(); }
+
 function greeting(){ const h=new Date().getHours(); return h<5?"Late night":h<12?"Good morning":h<18?"Good afternoon":"Good evening"; }
+
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1700); }
+
 /* ============================================================================
    UI — reusable, accessible component helpers (vanilla; each returns an HTML string).
    "Props" are a single options object. The CSS Foundation lifts existing markup
@@ -109,8 +111,10 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("sh
    Docs: UI-COMPONENTS.md at the project root.
    ============================================================================ */
 const _dataAttrs = d => d ? Object.entries(d).map(([k,v])=>` data-${esc(k)}="${esc(String(v))}"`).join("") : "";
+
 /* tidy numeric formatting for meters/stats: 80.9 → "80.9", 110 → "110", 0.50 → "0.5" */
 const _num = n => { const x = Number(n); if (!isFinite(x)) return "0"; return (Math.round(x*100)/100).toString(); };
+
 const UI = {
   /* spinner({size:'sm'|'lg', label?}) — inline, announced to screen readers */
   spinner({ size, label } = {}) {
@@ -203,6 +207,7 @@ const UI = {
   },
 };
 
+
 /* ===================== DEMO STORE ===================== */
 function seedDemo(){
   const daily={}; const rnd=(a,b)=>Math.round(a+Math.random()*(b-a));
@@ -274,22 +279,34 @@ function seedDemo(){
   };
   return daily;
 }
+
 let demo = DEMO ? seedDemo() : null;
 
+
 /* ===================== UNDO (Ctrl/⌘+Z rolls back the last data change — persists across reloads) ===================== */
-let UNDO=[]; const UNDO_MAX=50; let UNDO_RESTORING=false; const UNDO_KEY="mifu-undo";
+let UNDO=[];
+ const UNDO_MAX=50;
+ let UNDO_RESTORING=false;
+ const UNDO_KEY="mifu-undo";
+
 function _saveUndoNow(){ try{ let arr=UNDO.slice(-25);   // keep recent history small enough for localStorage
   while(arr.length){ try{ localStorage.setItem(UNDO_KEY,JSON.stringify(arr)); return; }catch(e){ arr=arr.slice(1); } }
   localStorage.removeItem(UNDO_KEY);
 }catch(e){} }
+
 // PERF: each action used to JSON.stringify the whole 25-snapshot undo stack synchronously — heavy and
 // growing with her data. Coalesce those writes onto a short debounce (undo still works instantly in
 // memory), and flush on pagehide so nothing is lost when the tab/app closes.
 let _undoSaveT=null;
+
 function saveUndo(){ if(_undoSaveT) return; _undoSaveT=setTimeout(()=>{ _undoSaveT=null; _saveUndoNow(); },400); }
+
 addEventListener("pagehide",()=>{ if(_undoSaveT){ clearTimeout(_undoSaveT); _undoSaveT=null; } _saveUndoNow(); });
+
 function loadUndo(){ try{ const s=localStorage.getItem(UNDO_KEY); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) UNDO=a; } }catch(e){} }
+
 loadUndo();
+
 async function undoLast(){
   if(!UNDO.length){ toast("nothing to undo ❄️"); return; }
   const {date,prev}=UNDO.pop(); saveUndo(); const snap=JSON.parse(JSON.stringify(prev||{}));
@@ -305,6 +322,7 @@ async function undoLast(){
   try{ await render(); }catch(_){ try{ renderStickies(); }catch(__){} }
   toast("undone ↩️");
 }
+
 
 /* ===================== DATA LAYER ===================== */
 const DB = {
@@ -355,13 +373,17 @@ const DB = {
   }
 };
 
+
 /* ===================== STATE + A11Y ===================== */
 const TEXT_MIN=13, TEXT_MAX=22, TEXT_DEFAULT=14;
+
 const PREF={ calm:false, textSize:TEXT_DEFAULT, focus:false };
+
 function applyTextZoom(size){
   const z=(size/TEXT_DEFAULT).toFixed(4);
   const col=document.getElementById("main-col"); if(col) col.style.zoom=z;
 }
+
 function wireNavDrag(nav, tabOrder, groups, mode){
   let _dragTab=null, _overEl=null;
   nav.addEventListener("dragstart",e=>{
@@ -409,6 +431,7 @@ function wireNavDrag(nav, tabOrder, groups, mode){
     _dragTab=null; render();
   });
 }
+
 function applyPrefs(){
   try{
     PREF.calm=localStorage.getItem("mifu-calm")==="1";
@@ -422,11 +445,17 @@ function applyPrefs(){
   document.body.classList.toggle("locked",locked);
   const lc=document.getElementById("lockChip"); if(lc){ lc.textContent=locked?"🔒":"🔓"; lc.className="chip"+(locked?" on":""); }
 }
+
 const MODULAR_TABS=["home","homehealth","care","food","gachas"];
+
 const MODULAR_GRID_TABS=["home","homehealth","care","food","gachas"];
+
 const MODULAR_LABELS={};
+
 function modLayout(tab){ const L=(state.sentinel.layout||{})[tab]||{}; return {order:L.order||[],size:L.size||{},min:L.min||{},hidden:L.hidden||{},left:L.left||null,right:L.right||null}; }
+
 async function setLayout(tab, mut){ await setSent(n=>{ const layout={...(n.layout||{})}; const L={order:[],size:{},min:{},hidden:{},...(layout[tab]||{})}; mut(L); layout[tab]=L; return {...n,layout}; }); }
+
 function modularGrid(tab, items, addable){
   const L=modLayout(tab); MODULAR_LABELS[tab]={}; const byKey={};
   items.forEach(it=>{ byKey[it.key]=it; MODULAR_LABELS[tab][it.key]=it.label||it.key; });
@@ -459,11 +488,14 @@ function modularGrid(tab, items, addable){
   flushBuf();
   return `<div class="grid-modular" data-tab="${tab}">${html}${add}</div>`;
 }
+
 /* width preference → whole columns. Stored width (data-c) keeps its old 3-16 scale for
    back-compat: small/default → 1 col, mid → 2 cols, large → full. Clamped to what fits now. */
 function spanFromC(c, colCount){ c=c||4; let span; if(colCount<=2) span=c>=9?2:1; else span=c>=9?3:c>=6?2:1; return Math.max(1,Math.min(span,colCount)); }
+
 /* inverse — when a resize picks N columns, store a value that maps back to N via spanFromC */
 function cForSpan(span){ return span>=3 ? 12 : span===2 ? 10 : 4; }
+
 function layoutHome(){
   const tab=state.tab; if(!MODULAR_TABS.includes(tab))return;
   const viewFn={home:viewHome,homehealth:viewHome,food:viewFood,care:viewCare,gachas:viewGachas}[tab]||viewHome; if(!viewFn)return;
@@ -471,6 +503,7 @@ function layoutHome(){
   const tmp=document.createElement('div'); tmp.innerHTML=viewFn();
   const ng=tmp.querySelector('.grid-modular'); if(ng)grid.replaceWith(ng);
 }
+
 function manageCardsModal(tab){
   const L=modLayout(tab); const labels=MODULAR_LABELS[tab]||{}; const keys=Object.keys(labels);
   $("#modal").innerHTML=`<div class="modal-bg" data-act="closeModal"><div class="modal" data-act="noop" style="max-width:380px;width:100%;max-height:90vh;overflow:auto"><div class="card-head"><h3 style="font-size:16px">🧩 Cards</h3><button class="btn" data-act="closeModal">✕</button></div>
@@ -479,13 +512,19 @@ function manageCardsModal(tab){
     <button class="btn" data-act="resetLayout" data-tab="${tab}" style="margin-top:12px">↺ reset this page's layout</button>
   </div></div>`;
 }
+
 const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerEnergy:"all", energyLevel:"medium", plnMoreOpen:false, plnShowAll:false, trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week", creatorSub:"script", gachaWeekOffset:0 };
-try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
-const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
+
+try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}
+   // remember her chart choices
+const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null };
+ // Optimize tab
 
 const TABS=[["home","🏠 Home"],["gachas","🎮 Gachas"],["kiko","🦊 Ask Kiko"],["planner","🗒️ Planner"],["calendar","📅 Calendar"],["events","🎉 Events"],["creator","✍️ Creator"],["money","💶 Money"],["art","🎨 Art"],["toolbox","🧠 Brain Tools"],["life","💗 Life"],["health","❄️ Health"],["food","🍱 Food"],["journal","📓 Journal"],["care","🫂 Care"],["bunny","🐰 Bunny"],["trends","📈 Trends"],["memories","✨ Memories"],["settings","⚙️ Settings"]];
+
 /* ===== one app, two minds — Creator OS 🎀 / Health OS ❄️ (tap the logo to swap) ===== */
 const CREATOR_TABS=["home","gachas","planner","calendar","events","creator","money","art","toolbox","memories","kiko"];
+
 const SB_GROUPS={
   creator:[
     {label:null,tabs:["home","gachas"]},
@@ -500,15 +539,21 @@ const SB_GROUPS={
     {label:"Memories",tabs:["memories"]},
   ]
 };
-const HEALTH_TABS=["home","journal","food","care","bunny","life","trends","health","memories","kiko"];   /* Settings removed from the nav bar — reach it via the ⚙️ chip by the avatar */
-let OS_MODE=(function(){ try{ return localStorage.getItem("mifu-mode")==="health"?"health":"creator"; }catch(e){ return "creator"; } })();   // default: Creator OS
+
+const HEALTH_TABS=["home","journal","food","care","bunny","life","trends","health","memories","kiko"];
+   /* Settings removed from the nav bar — reach it via the ⚙️ chip by the avatar */
+let OS_MODE=(function(){ try{ return localStorage.getItem("mifu-mode")==="health"?"health":"creator"; }catch(e){ return "creator"; } })();
+   // default: Creator OS
 function modeTabs(){ return OS_MODE==="health"?HEALTH_TABS:CREATOR_TABS; }
+
 function modeSwapAnim(){ const v=$("#view"); if(!v)return; v.classList.remove("mode-anim"); void v.offsetWidth; v.classList.add("mode-anim");
   clearTimeout(window._modeT); window._modeT=setTimeout(()=>{ const vv=$("#view"); if(vv)vv.classList.remove("mode-anim"); },600); }
+
 function setTab(t){
   if(!modeTabs().includes(t)){ const other=OS_MODE==="creator"?HEALTH_TABS:CREATOR_TABS;
     if(other.includes(t)){ OS_MODE=(OS_MODE==="creator"?"health":"creator"); try{localStorage.setItem("mifu-mode",OS_MODE);}catch(e){} modeSwapAnim(); } }   // follow her across minds
   state.tab=t; render(); }
+
 
 /* permission slips */
 const SLIPS=["Rest is productive. ❄️","A slow day is still a valid day.","You don't have to earn rest.",
@@ -516,24 +561,23 @@ const SLIPS=["Rest is productive. ❄️","A slow day is still a valid day.","Yo
   "Tap what fits. You don't have to fill everything.","Bodies fluctuate. The trend is the story, not today.",
   "A gap in tracking is just a rest day. That's okay.","Feelings are visitors, not residents.",
   "You're doing better than the anxious voice says."];
+
 const slip=()=>SLIPS[new Date().getDate()%SLIPS.length];
+
 const slipBanner=(mb)=>`<div class="slip"${mb?' style="margin-bottom:16px"':''}><img class="deco" src="snowflake.png" alt=""/><span class="slip-txt">${esc(slip())}</span><img class="deco" src="sakura.png" alt=""/></div>`;
+
 
 /* ===================== shared builders ===================== */
 const DISCLAIMER=`<div class="disc">${CONFIG.creator.snow}<span><b>Gentle reminder:</b> this is your own self-tracking — noticing patterns, not a diagnosis. Your care team's plan always comes first. ${CONFIG.creator.emoji}</span></div>`;
+
 
 function scaleRow(label,act,field,val,lo="none",hi="a lot",max=5){
   let b=""; for(let i=0;i<=max;i++) b+=`<button data-act="${act}" data-f="${field}" data-v="${i}" class="${val===i?'on':''}">${i}</button>`;
   return `<div class="field"><div class="label">${label}</div><div class="scale">${b}</div><div class="scale-ends"><span>${lo}</span><span>${hi}</span></div></div>`;
 }
+
 function chiptog(label,act,field,on){ return `<button class="chiptog ${on?'on':''}" data-act="${act}" data-f="${field}"><span>${on?'✓':'＋'}</span>${label}</button>`; }
 
-/* sparkline from array with possible nulls; max scales the bars */
-function spark(vals,max){
-  const mx=max||Math.max(1,...vals.filter(v=>v!=null));
-  return `<div class="spark">${vals.map(v=> v==null?`<span class="gap" style="height:8%"></span>`
-    :`<span style="height:${Math.max(6,Math.round(v/mx*100))}%"></span>`).join("")}</div>`;
-}
 
 /* ===================== RENDER ROOT ===================== */
 async function render(){
@@ -624,102 +668,32 @@ async function render(){
   }catch(e){ console.error(e); v.innerHTML=`<div class="panel"><h3>aw, a little hiccup ❄️</h3><p class="soft">${esc(e&&e.message||e)}</p><p class="soft" style="font-size:11px">(If you see this, screenshot it for me and I'll fix it fast.)</p></div>`; }
 }
 
+
 /* ===================== HOME cards ===================== */
 /* ===== per-week stream schedule — every week is its own independent plan (blank until you fill it) ===== */
 const DOW_ORDER=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
 const STREAM_TIME_DEFAULT="3PM";
-const CUPS_PER_40OZ=5;   // water stored internally in 8oz cups; shown to Mifu as 40oz cups (≈5 cups each)
+
+const CUPS_PER_40OZ=5;
+   // water stored internally in 8oz cups; shown to Mifu as 40oz cups (≈5 cups each)
 function mondayOf(d){ const x=new Date(d); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); x.setHours(0,0,0,0); return x; }
+
 function weekStartISO(off){ const d=mondayOf(new Date(TODAY+"T00:00")); d.setDate(d.getDate()+(off||0)*7); return d.toLocaleDateString("en-CA"); }
+
 /* each week's slots are stored under its Monday in schedWeeks. No repeating template — a week with no
    entry is blank. The current week falls back to her legacy `schedule` once, so she keeps existing streams. */
 function weekSlots(wkISO){ const sw=(state.sentinel.schedWeeks||{}); if(sw[wkISO]) return sw[wkISO];
   if(wkISO===weekStartISO(0)) return (state.sentinel.schedule||[]); return []; }
+
 function slotsForDate(d){ return weekSlots(mondayOf(d).toLocaleDateString("en-CA")); }
+
 async function setWeekSlots(wkISO,fn){
   await setSent(n=>{ const sw={...(n.schedWeeks||{})};
     const base = sw[wkISO] ? sw[wkISO].slice() : (wkISO===weekStartISO(0) ? (n.schedule||[]).slice() : []);
     sw[wkISO]=fn(base); return {...n,schedWeeks:sw}; });
 }
-/* per-day stream ideas, recomputed per week. REAL dated items (updates/events/streams) come ONLY from her
-   game calendar so they land on the correct day; filler days get date-agnostic activity ideas. */
-function streamSuggestions(wkISO){
-  const sent=state.sentinel||{}; const games=(sent.gameTopics&&sent.gameTopics.length)?sent.gameTopics:DEFAULT_GAMES;
-  const start=new Date(wkISO+"T00:00"); const byDay={};
-  (sent.calendarEvents||[]).filter(gameSrc).forEach(ev=>{ const d=new Date(ev.date+"T00:00"); const diff=Math.round((d-start)/86400000);
-    if(diff>=0&&diff<7){ const wd=DOW_ORDER[(d.getDay()+6)%7]; if(!byDay[wd]) byDay[wd]=ev.title; } });
-  const ideas=(g,i)=>[`Cozy ${g} stream`,`${g} grind session`,`Just chatting + ${g}`,`Variety stream`][i%4];
-  return DOW_ORDER.map((wd,i)=>({day:wd, text:byDay[wd]||ideas(games[i%games.length],i), real:!!byDay[wd]}));
-}
-function cardSchedule(){
-  if(state.schedWeekOff===undefined)state.schedWeekOff=0;
-  const off=state.schedWeekOff, wkISO=weekStartISO(off), ed=state.schedEdit;
-  const slots=weekSlots(wkISO);
-  const label=off===0?"This week":off===1?"Next week":off===-1?"Last week":(off>0?`In ${off} wks`:`${-off} wks ago`);
-  const byDay={}; slots.forEach(r=>{byDay[r.day]=r;});
-  const nav=`<div style="display:flex;align-items:center;gap:4px">
-    <button class="btn" data-act="schedWeek" data-d="-1">‹</button>
-    <button class="btn" data-act="schedWeekToday">${label}</button>
-    <button class="btn" data-act="schedWeek" data-d="1">›</button>
-    <button class="btn" data-act="schedEdit">${ed?'done':'edit'}</button></div>`;
-  let body;
-  if(ed){
-    const rows=DOW_ORDER.map(day=>{
-      const r=byDay[day];
-      return `<div class="listrow sched-ed-row" data-day="${day}" style="gap:8px;align-items:center">
-        <span class="pill pill-lav" style="min-width:38px;text-align:center;flex-shrink:0">${day}</span>
-        <input class="inp sched-show" placeholder="what you're streaming" value="${esc(r?.show||'')}" style="flex:1;min-width:0">
-        <input class="inp sched-time" value="${esc(r?.time||'')}" style="max-width:64px" placeholder="${STREAM_TIME_DEFAULT}">
-      </div>`;
-    }).join("");
-    const sug=streamSuggestions(wkISO);
-    body=`${rows}
-    <div class="label" style="margin:14px 0 6px">💡 Ideas — tap to add</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">${sug.map(s=>`<button class="chiptog ${s.real?'on':''}" data-act="addSchedSug" data-day="${s.day}" data-show="${esc(s.text)}" style="white-space:normal;text-align:left;height:auto"><span>＋</span>${s.day} · ${s.real?'🎮 ':''}${esc(s.text)}</button>`).join("")}</div>`;
-  } else {
-    body=DOW_ORDER.map(day=>{
-      const r=byDay[day];
-      return r
-        ?`<div class="listrow"><span class="pill pill-lav" style="min-width:38px;text-align:center;flex-shrink:0">${day}</span><span class="grow" style="font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.show||'Stream')}</span><span class="soft" style="font-size:12px;flex-shrink:0">${esc(r.time||'')}</span></div>`
-        :`<div class="listrow" style="opacity:.38"><span class="pill pill-gray" style="min-width:38px;text-align:center;flex-shrink:0">${day}</span><span class="soft" style="font-size:12px">—</span></div>`;
-    }).join("");
-  }
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🗓️ Stream schedule</span>${nav}</div>
-    ${body}
-  </section>`;
-}
-function cardGoals(){
-  const wk=state.sentinel.goalsWeek||[], mo=state.sentinel.goalsMonth||[];
-  const list=(arr,period)=>arr.map(g=>`<div class="listrow"><button class="x" data-act="toggleGoal" data-p="${period}" data-v="${g.id}" style="color:${g.done?'var(--mint)':'var(--muted)'};font-size:16px">${g.done?'●':'○'}</button><span class="grow ${g.done?'soft':''}" style="font-size:13px;${g.done?'text-decoration:line-through':''}">${esc(g.text)}</span><button class="x" data-act="delGoal" data-p="${period}" data-v="${g.id}">✕</button></div>`).join("");
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🌷 Goals</span></div>
-    <div class="label" style="color:var(--peri-deep);margin-bottom:2px">This week</div>
-    ${list(wk,"week")}
-    <div style="display:flex;gap:6px;margin:4px 0 12px"><input class="inp" id="goalWeek" placeholder="+ add a goal" value="${esc((state.goalDraft||{}).week||'')}"><button class="btn" data-act="addGoal" data-p="week">add</button></div>
-    <div class="label" style="color:var(--peri-deep);margin-bottom:2px">This month</div>
-    ${list(mo,"month")}
-    <div style="display:flex;gap:6px;margin-top:4px"><input class="inp" id="goalMonth" placeholder="+ add a goal" value="${esc((state.goalDraft||{}).month||'')}"><button class="btn" data-act="addGoal" data-p="month">add</button></div>
-  </section>`;
-}
-function cardJournal(){
-  const entry=(state.today.journal||"").trim();
-  const preview=entry?entry.slice(0,160)+(entry.length>160?"…":""):"";
-  const det=(state.kikoDetected||{})[TODAY];
-  const moodEmoji=det&&det.mood!=null?['😶','😢','😔','😐','🙂','😊'][Math.max(0,Math.min(5,det.mood))]:'';
-  return `<section class="panel">
-    <div class="card-head"><span class="label">📓 Journal</span><button class="btn btn-grad" data-act="tab" data-tab="journal">📝 open today's page</button></div>
-    ${preview
-      ? `<p style="font-size:13px;line-height:1.6;margin:0 0 8px;color:var(--ink-soft);font-style:italic">"${esc(preview)}"</p>
-         ${det?`<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-top:4px">
-           ${det.mood!=null?`<span>${moodEmoji} mood ${det.mood}/5</span>`:''}
-           ${det.energy!=null?`<span>⚡ energy ${det.energy}/5</span>`:''}
-           ${det.sleep!=null?`<span>🌙 ${det.sleep}h sleep</span>`:''}
-           ${det.dayColor?`<span>🌈 ${esc(det.dayColor)}</span>`:''}
-         </div>`:'<p class="soft" style="font-size:11px;margin:4px 0 0">Tap <b>🦊 Kiko, read this</b> to detect mood & energy from your words.</p>'}`
-      : `<p class="soft" style="font-size:12.5px;margin:0">Nothing written yet today — tap to open your journal and add a few words. 🌸</p>`}
-  </section>`;
-}
+
 
 /* ===== Daily habits + gacha dailies (Mifu's request 💜) ===== */
 const HABITS_DEFAULT=[
@@ -731,9 +705,13 @@ const HABITS_DEFAULT=[
   {id:"h_steps",  text:"5k+ steps",                energy:"high"},
   {id:"h_laundry",text:"1 wash of clothes",        energy:"high"},
 ];
+
 const GACHA_DEFAULT=["Nikki","R1999","Arknights","ZZZ","NTE","WUWA","GENSHIN","HSR"].map(n=>({id:"g_"+n.toLowerCase().replace(/\W+/g,""),name:n}));
+
 function habitsList(){ const l=state.sentinel.habitsList; return (Array.isArray(l)&&l.length)?l:HABITS_DEFAULT; }
+
 function gachaList(){ const l=state.sentinel.gachaList; return (Array.isArray(l)&&l.length)?l:GACHA_DEFAULT; }
+
 function weekStrip(field,total){
   const byDate={}; (state.range||[]).forEach(r=>byDate[r.date]=r.notes); byDate[TODAY]=state.today;
   let bars=""; for(let i=6;i>=0;i--){ const d=dayAgo(-i); const checks=(byDate[d]&&byDate[d][field])||{}; const n=Object.values(checks).filter(Boolean).length;
@@ -742,41 +720,11 @@ function weekStrip(field,total){
   return `<div style="display:flex;gap:4px;align-items:flex-end;height:30px;margin-top:10px">${bars}</div>
     <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin-top:2px"><span>${fmtDate(dayAgo(-6))}</span><span>this week 🌱</span><span>today</span></div>`;
 }
-/* weekly habit/goal helpers (done-this-week toggles, like gacha weeklies) */
-function wkDoneThisWeek(map,gid){ const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA"); return (map||{})[gid]===mon; }
+
 function habitsWeekly(){ const l=state.sentinel.habitsWeekly; return Array.isArray(l)?l:[]; }
+
 function cgoalsWeekly(){ const l=state.sentinel.cgoalsWeekly; return Array.isArray(l)?l:[]; }
-/* shared renderer for a clean checklist card (daily rows by energy + progress + weekly section) */
-function checklistCard(opt){
-  const {label,list,checks,ed,toggleAct,delAct,editAct,addAct,inputId,energyId,draft,
-         weekly,wkDoneMap,wkToggleAct,wkAddAct,wkDelAct,wkInputId,wkDraft,wkLabel,wkPlaceholder}=opt;
-  const done=list.filter(h=>checks[h.id]).length, total=list.length;
-  const pct=total?Math.round(done/total*100):0;
-  const groups=[["low","🌙 Low energy"],["med","🌤 Medium energy"],["high","🌞 High energy"]];
-  const row=h=>`<button class="ck-row" data-act="${toggleAct}" data-v="${h.id}">
-      <span class="ck-box ${checks[h.id]?'on':''}">${checks[h.id]?'✓':''}</span>
-      <span class="ck-name ${checks[h.id]?'ck-donetxt':''}">${esc(h.text)}</span>
-      ${ed?`<span class="ck-del" data-act="${delAct}" data-v="${h.id}" title="remove">✕</span>`:''}</button>`;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">${label}</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done&&done===total?'pill-mint':'pill-gray'}">${done}/${total}${done&&done===total?' ♡':''}</span><button class="btn" data-act="${editAct}">${ed?'done':'edit'}</button></span></div>
-    <div class="ck-prog"><span style="width:${pct}%"></span></div>
-    ${groups.map(([g,gl])=>{ const its=list.filter(h=>(h.energy||"med")===g); return its.length?`<div class="gt-sec" style="margin-top:10px">${gl}</div><div class="gt-list">${its.map(row).join("")}</div>`:""; }).join("")}
-    ${ed?`<div class="gt-add"><input class="inp" id="${inputId}" placeholder="new item…" style="flex:1;min-width:110px" value="${esc((draft||{}).text||'')}"><select class="inp" id="${energyId}" style="max-width:90px;flex:0 0 auto">${[["low","🌙 low"],["med","🌤 med"],["high","🌞 high"]].map(([v,l])=>`<option value="${v}" ${(((draft||{}).energy)||"med")===v?'selected':''}>${l}</option>`).join("")}</select><button class="btn btn-grad" data-act="${addAct}">add</button></div>`:''}
-    <div class="gt-div"></div>
-    <div class="gt-sec">${wkLabel}</div>
-    ${weekly.length?`<div class="chiprow gt-wk">${weekly.map(h=>`<button class="chiptog ${wkDoneThisWeek(wkDoneMap,h.id)?'on':''}" data-act="${wkToggleAct}" data-v="${h.id}"><span>${wkDoneThisWeek(wkDoneMap,h.id)?'✓':'•'}</span>${esc(h.text)}${ed?`<span class="x" data-act="${wkDelAct}" data-v="${h.id}" style="margin-left:2px">✕</span>`:''}</button>`).join("")}</div>`:`<p class="soft" style="font-size:11.5px;margin:2px 0">No weekly tasks yet${ed?` — add one below (${esc(wkPlaceholder)})`:''}.</p>`}
-    ${ed?`<div class="gt-add"><input class="inp" id="${wkInputId}" placeholder="new weekly task…" value="${esc(wkDraft||'')}"><button class="btn btn-grad" data-act="${wkAddAct}">add</button></div>`:''}
-  </section>`;
-}
-function cardHabits(){
-  return checklistCard({ label:"Daily habits ✅",
-    list:habitsList(), checks:state.today.habits||{}, ed:!!state.habitEdit,
-    toggleAct:"habitToggle", delAct:"delHabit", editAct:"habitEdit", addAct:"addHabitUI",
-    inputId:"habitInput", energyId:"habitEnergy", draft:state.habitDraft,
-    weekly:habitsWeekly(), wkDoneMap:state.sentinel.habitsWkDone, wkToggleAct:"habitWkToggle",
-    wkAddAct:"addHabitWk", wkDelAct:"delHabitWk", wkInputId:"habitWkInput", wkDraft:state.habitWkDraft,
-    wkLabel:"🧹 Weekly", wkPlaceholder:"vacuum, tidy room, clean the toilet…" });
-}
+
 /* creator-focused daily goals — mirrors Daily Habits but a SEPARATE list, for content work (own energy tags) */
 const CGOALS_DEFAULT=[
   {id:"cg_comments",text:"Reply to comments",       energy:"low"},
@@ -787,16 +735,9 @@ const CGOALS_DEFAULT=[
   {id:"cg_stream",  text:"Stream",                  energy:"high"},
   {id:"cg_video",   text:"Work on a YouTube video", energy:"high"},
 ];
+
 function cgoalsList(){ const l=state.sentinel.cgoalsList; return (Array.isArray(l)&&l.length)?l:CGOALS_DEFAULT; }
-function cardCreatorGoals(){
-  return checklistCard({ label:"🎯 Daily goals",
-    list:cgoalsList(), checks:state.today.cgoals||{}, ed:!!state.cgoalEdit,
-    toggleAct:"cgoalToggle", delAct:"delCgoal", editAct:"cgoalEdit", addAct:"addCgoalUI",
-    inputId:"cgoalInput", energyId:"cgoalEnergy", draft:state.cgoalDraft,
-    weekly:cgoalsWeekly(), wkDoneMap:state.sentinel.cgoalsWkDone, wkToggleAct:"cgoalWkToggle",
-    wkAddAct:"addCgoalWk", wkDelAct:"delCgoalWk", wkInputId:"cgoalWkInput", wkDraft:state.cgoalWkDraft,
-    wkLabel:"🗂 Weekly", wkPlaceholder:"do taxes, clean streaming room, clear inbox…" });
-}
+
 /* ===== Creator Growth — low-friction "put yourself out there" checklist (energy-tagged) ===== */
 const CGROWTH_DEFAULT=[
   {id:"cgr_comments",text:"Reply to 2–3 comments",                 energy:"low"},
@@ -808,20 +749,9 @@ const CGROWTH_DEFAULT=[
   {id:"cgr_dm",      text:"Reach out / DM 1 creator",             energy:"high"},
   {id:"cgr_collab",  text:"Brainstorm or save 1 collab idea",     energy:"high"},
 ];
+
 function cgrowthList(){ const l=state.sentinel.cgrowthList; return (Array.isArray(l)&&l.length)?l:CGROWTH_DEFAULT; }
-function cardCreatorGrowth(){
-  const list=cgrowthList(), checks=state.today.cgrowth||{}, ed=!!state.cgrowthEdit;
-  const done=list.filter(h=>checks[h.id]).length, total=list.length, pct=total?Math.round(done/total*100):0;
-  const groups=[["low","🌙 Low energy"],["med","🌤 Medium energy"],["high","🌞 High energy"]];
-  const row=h=>`<button class="ck-row" data-act="cgrowthToggle" data-v="${h.id}"><span class="ck-box ${checks[h.id]?'on':''}">${checks[h.id]?'✓':''}</span><span class="ck-name ${checks[h.id]?'ck-donetxt':''}">${esc(h.text)}</span>${ed?`<span class="ck-del" data-act="delCgrowth" data-v="${h.id}" title="remove">✕</span>`:''}</button>`;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🌱 Creator growth</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done&&done===total?'pill-mint':'pill-gray'}">${done}/${total}${done&&done===total?' ♡':''}</span><button class="btn" data-act="cgrowthEdit">${ed?'done':'edit'}</button></span></div>
-    <p class="soft" style="font-size:11px;margin:0 0 8px">Tiny ways to put yourself out there — pick what matches your energy. 💜</p>
-    <div class="ck-prog"><span style="width:${pct}%"></span></div>
-    ${groups.map(([g,gl])=>{ const its=list.filter(h=>(h.energy||"med")===g); return its.length?`<div class="gt-sec" style="margin-top:10px">${gl}</div><div class="gt-list">${its.map(row).join("")}</div>`:""; }).join("")}
-    ${ed?`<div class="gt-add"><input class="inp" id="cgrowthInput" placeholder="new growth action…" style="flex:1;min-width:110px" value="${esc((state.cgrowthDraft||{}).text||'')}"><select class="inp" id="cgrowthEnergy" style="max-width:90px;flex:0 0 auto">${[["low","🌙 low"],["med","🌤 med"],["high","🌞 high"]].map(([v,l])=>`<option value="${v}" ${(((state.cgrowthDraft||{}).energy)||"med")===v?'selected':''}>${l}</option>`).join("")}</select><button class="btn btn-grad" data-act="addCgrowthUI">add</button></div>`:''}
-  </section>`;
-}
+
 /* ===== Creator Spark — one personalized idea starter from her own app data (no generic AI prompts) ===== */
 function sparkIdeas(){
   const out=[], seen=new Set(); const add=(ctx,idea)=>{ if(idea&&!seen.has(idea)){ seen.add(idea); out.push({ctx,idea}); } };
@@ -837,6 +767,7 @@ function sparkIdeas(){
   ].forEach(idea=>add("Idea starter",idea));
   return out;
 }
+
 function cardCreatorSpark(){
   const ideas=sparkIdeas();
   if(!ideas.length) return `<section class="panel"><div class="label" style="margin-bottom:6px">✨ Creator spark</div><p class="soft" style="font-size:12px">Add a brain-dump or a game to your calendar and Kiko will spark ideas from them. 💡</p></section>`;
@@ -851,57 +782,9 @@ function cardCreatorSpark(){
     </div>
   </section>`;
 }
-/* gacha history helpers */
-function gachaByDate(){ const m={}; (state.range||[]).forEach(r=>{ if(r&&r.date) m[r.date]=r.notes||{}; }); m[TODAY]=state.today||{}; return m; }
-function gachaCheckedOn(map,gid,d){ const n=map[d]; return !!(n&&n.gacha&&n.gacha[gid]); }
-function gachaStreak(gid){ const map=gachaByDate(); let s=0; const start=gachaCheckedOn(map,gid,TODAY)?0:1;
-  for(let i=start;i<200;i++){ if(gachaCheckedOn(map,gid,dayAgo(-i))) s++; else break; } return s; }
-function gachaWeekMonday(off){ const m=mondayOf(new Date(TODAY+"T00:00")); m.setDate(m.getDate()+(off||0)*7); return m; }
+
 function gachaWeeklies(){ const l=state.sentinel.gachaWeeklies; return Array.isArray(l)?l:[]; }
-function gachaWkDoneThisWeek(gid){ const wk=state.sentinel.gachaWkDone||{}; const mon=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA"); return wk[gid]===mon; }
-function cardGacha(){
-  const list=gachaList(), checks=state.today.gacha||{}, ed=!!state.gachaEdit;
-  const weeklies=gachaWeeklies();
-  const done=list.filter(g=>checks[g.id]).length, goal=list.length;
-  // TODAY — compact chips
-  const todayRows=list.length?`<div class="chiprow gt-today">${list.map(g=>`<button class="chiptog ${checks[g.id]?'on':''}" data-act="gachaToggle" data-v="${g.id}"><span>${checks[g.id]?'✓':'•'}</span>${esc(g.name)}${ed?`<span class="x" data-act="delGacha" data-v="${g.id}" style="margin-left:2px">✕</span>`:''}</button>`).join("")}</div>`:'<p class="soft" style="font-size:11.5px;margin:2px 0">No games yet — tap edit to add one.</p>';
-  // STREAKS — compact inline chips (name + 🔥count), not full-width rows
-  const streaks=list.map(g=>({name:g.name,s:gachaStreak(g.id)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
-  const streakRows=streaks.length?`<div class="gt-streaks">${streaks.map(x=>`<span class="gt-schip">${esc(x.name)} <b>🔥${x.s}</b></span>`).join("")}</div>`:'<p class="soft" style="font-size:11.5px;margin:2px 0">Check a game two days in a row to start a streak 🔥</p>';
-  // WEEKLIES (simple toggles, not part of the streak)
-  const wkRows=weeklies.length?`<div class="chiprow gt-wk">${weeklies.map(g=>`<button class="chiptog ${gachaWkDoneThisWeek(g.id)?'on':''}" data-act="gachaWkToggle" data-v="${g.id}"><span>${gachaWkDoneThisWeek(g.id)?'✓':'•'}</span>${esc(g.name)}${ed?`<span class="x" data-act="delGachaWk" data-v="${g.id}" style="margin-left:2px">✕</span>`:''}</button>`).join("")}</div>`:`<p class="soft" style="font-size:11.5px;margin:2px 0">No weeklies yet${ed?' — add one below':''}.</p>`;
-  // LAST 7 DAYS grid (dailies only)
-  const off=state.gachaWeek||0, mon=gachaWeekMonday(off); const map=gachaByDate();
-  const days=[]; for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(d.getDate()+i); days.push(d.toLocaleDateString("en-CA")); }
-  const dowH=["M","T","W","T","F","S","S"];
-  const gridHead=`<div class="gt-grow gt-ghead"><span class="gt-glabel"></span>${dowH.map((x,i)=>{ const isToday=days[i]===TODAY; return `<span class="gt-cell${isToday?' gt-today-col':''}">${isToday?`<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--sakura);color:#fff;font-size:10px;font-weight:700;line-height:1">${x}</span>`:x}</span>`; }).join("")}</div>`;
-  const gridBody=list.map(g=>`<div class="gt-grow"><span class="gt-glabel">${esc(g.name)}</span>${days.map(d=>{ const ok=gachaCheckedOn(map,g.id,d); const past=d<TODAY;
-    // checked → green ✓ · genuinely missed PAST day → red ✗ · today-not-yet or future → neutral gray ○
-    const cls=ok?'ok':(past?'no':'pend'), ch=ok?'✓':(past?'✗':'○');
-    return `<span class="gt-cell ${cls}">${ch}</span>`; }).join("")}</div>`).join("");
-  const wkLabel=off===0?"This week":off===-1?"Last week":`${fmtDate(days[0])} – ${fmtDate(days[6])}`;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🎮 Gacha tracker</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done===goal&&goal?'pill-mint':'pill-gray'}">${done}/${goal}${done===goal&&goal?' ✦':''}</span><button class="btn" data-act="gachaEdit">${ed?'done':'edit'}</button></span></div>
-    <div class="gt-sec">Today</div>
-    <div class="gt-list">${todayRows}</div>
-    <div class="gt-complete">${done} / ${goal} complete</div>
-    ${ed?`<div class="gt-add"><input class="inp" id="gachaInput" placeholder="add a daily game…" value="${esc(state.gachaDraft||'')}"><button class="btn btn-grad" data-act="addGachaUI">add</button></div>`:''}
-    <div class="gt-div"></div>
-    <div class="gt-sec">🔥 Streaks</div>
-    <div>${streakRows}</div>
-    <div class="gt-div"></div>
-    <div class="gt-grid-top"><span class="gt-sec" style="margin:0">Last 7 days</span><span class="gt-nav"><button class="btn" data-act="gachaWeek" data-d="-1" title="previous week">‹</button><span class="gt-wklabel">${wkLabel}</span><button class="btn" data-act="gachaWeek" data-d="1" title="next week"${off>=0?' disabled':''}>›</button></span></div>
-    <div class="gt-grid">${gridHead}${gridBody}</div>
-  </section>`;
-}
-function cardBrainDump(){
-  const caps=(state.sentinel.captures||[]).slice().reverse();
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🎙️ Voice dump</span><button class="btn btn-grad" data-act="voiceOpen">＋ capture a thought</button></div>
-    <p class="soft" style="font-size:12px;margin:0 0 8px">Tap the button or the pink FAB — your thought lands here instantly. Pin 📌 any to a sticky.</p>
-    ${caps.length?`<div>${caps.map(c=>`<div class="listrow"><span class="soft" style="font-size:10px;margin-right:6px;flex-shrink:0">${(VOICE_CATS.find(x=>x[0]===c.cat)||["","💭"])[1]}</span><span class="grow" style="font-size:12.5px">${esc(c.text)}</span><button class="x" data-act="capPin" data-v="${c.id}" title="pin to a sticky">📌</button><button class="x" data-act="capDel" data-v="${c.id}">✕</button></div>`).join("")}</div>`:`<p class="soft" style="font-size:12.5px;margin:8px 0 0">Nothing captured yet — tap the button or use Alt+R to park a thought! 🌸</p>`}
-  </section>`;
-}
+
 
 function cardSnowfox(){ const energy=state.today.energy||0;
   return `<section class="panel">
@@ -914,63 +797,7 @@ function cardSnowfox(){ const energy=state.today.energy||0;
     <div style="margin-top:12px"><div class="label" style="margin-bottom:5px">Energy today 🥄</div>
       <div class="seg">${[["1","🌙","Low"],["3","🌤","Med"],["5","🌞","High"]].map(([v,e,l])=>`<button data-act="energySet" data-v="${v}" class="${energy==v?'on':''}">${e} ${l}</button>`).join("")}</div></div>
   </section>`; }
-/* mood taps live on Health & Care; the home greeting is the deterministic glance block (2026-06-12) */
-function cardGlance(){ const s=state.sentinel; const lastShot=(s.injectionLog||[]).slice(-1)[0];
-  let nextDose=null; if(lastShot){ const d=new Date(lastShot.date+"T00:00"); d.setDate(d.getDate()+7); nextDose=d.toLocaleDateString("en-CA"); }
-  const dueIn=nextDose?daysBetween(TODAY,nextDose):null;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">Today at a glance</span></div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <span class="pill pill-ice" style="padding:6px 11px">💉 ${lastShot?"Last shot "+fmtDate(lastShot.date):"No shot logged yet"}</span>
-      ${nextDose?`<span class="pill pill-lav" style="padding:6px 11px">📅 Next dose ${fmtDate(nextDose)}${dueIn!=null?` · ${dueIn<=0?'around now':'in '+dueIn+'d'}`:''}</span>`:''}
-      <span class="pill pill-peri" style="padding:6px 11px">💊 ${(s.medsList||[]).length} meds tracked</span>
-    </div>
-    <p class="soft" style="font-size:11.5px;margin-top:8px;text-align:center">No pressure — just a soft snapshot. ❄️</p>
-  </section>`; }
-/* a little data-driven, motivating health note linking hydration / muscle / fat / weight to how she feels */
-function healthInsight(){
-  const wl=(state.sentinel.weightLog||[]).filter(x=>x).slice().sort(cmpDate);
-  if(wl.length<2) return "";
-  const unit=CONFIG.weightUnit||"kg";
-  const pair=k=>{ const a=wl.filter(x=>x[k]!=null); return a.length>=2?[a[a.length-2],a[a.length-1]]:null; };
-  const msgs=[];
-  const w=pair("water"); if(w&&w[1].water<w[0].water-0.3) msgs.push("Your scale's body-water reading dipped a touch since last time 💧 — day-to-day wobble there is completely normal, and a few extra sips today never hurt. ❄️");
-  const f=pair("fat"), mu=pair("muscle");
-  if((f&&f[1].fat<f[0].fat-0.2)||(mu&&mu[1].muscle>mu[0].muscle+0.1)) msgs.push("Muscle and fat naturally wobble day to day, but yours are clearly heading the right direction 💪✨ — keep going, keep trying, you're doing it.");
-  const ws=wl.filter(x=>x.w!=null);
-  if(ws.length>=2){ const ch=ws[ws.length-1].w-ws[0].w; if(ch<=-0.5) msgs.push(`Down ${Math.abs(ch).toFixed(1)} ${unit} since you started tracking — slow and steady, exactly how it's meant to go. 🌱`); else if(ch>=0.8) msgs.push("A small up-tick lately — totally normal (water, hormones, the day). The line over weeks is what matters, and you're showing up for it. 💗"); }
-  if(!msgs.length) return "Every weigh-in is just one dot — the line across the weeks is the real story, and you're building it. 💗";
-  return msgs[parseInt(TODAY.replace(/-/g,""),10)%msgs.length];   // rotate daily so it stays fresh
-}
-function cardWeightTrend(){ const wl=(state.sentinel.weightLog||[]).slice().sort(cmpDate).filter(x=>x.w!=null).slice(-26);
-  const vals=wl.map(x=>x.w), unit=CONFIG.weightUnit||"kg";
-  let body='<p class="soft" style="font-size:12px">No weigh-ins yet.</p>';
-  if(vals.length===1){
-    body=`<div style="text-align:center;padding:6px 0"><span class="bignum">${vals[0].toFixed(1)} ${unit}</span><div class="soft" style="font-size:11px;margin-top:2px">${fmtDate(wl[0].date)} · one more weigh-in and your line begins ❄️</div></div>`;
-  } else if(vals.length>=2){
-    const mn=Math.min(...vals), mx=Math.max(...vals), rng=Math.max(0.4,mx-mn);
-    const W=280,H=72,pad=8,plotH=H-pad*2;
-    const xs=i=>pad+i*(W-pad*2)/(vals.length-1);
-    const ys=v=>pad+(mx-v)/rng*plotH;     // higher weight sits higher; the line dips as she loses
-    const line=vals.map((v,i)=>`${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).join(" ");
-    const area=`${pad.toFixed(1)},${(H-pad).toFixed(1)} ${line} ${(W-pad).toFixed(1)},${(H-pad).toFixed(1)}`;
-    const dots=vals.map((v,i)=>`<circle cx="${xs(i).toFixed(1)}" cy="${ys(v).toFixed(1)}" r="${i===vals.length-1?3:1.5}" fill="${i===vals.length-1?'var(--sakura-deep)':'var(--peri)'}"/>`).join("");
-    const cur=vals[vals.length-1], prev=vals[vals.length-2];
-    body=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="66" preserveAspectRatio="none" style="display:block;overflow:visible">
-        <polyline points="${area}" fill="rgba(255,158,216,.12)" stroke="none"/>
-        <polyline points="${line}" fill="none" stroke="var(--peri)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-        ${dots}
-      </svg>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px"><span>${fmtDate(wl[0].date)}</span><span>${fmtDate(wl[wl.length-1].date)}</span></div>
-      <div style="display:flex;justify-content:center;margin-top:8px">${UI.stat({icon:"⚖️",label:"Current weight",value:cur.toFixed(1),unit:unit,delta:+(cur-prev).toFixed(1),good:"down",hint:"since last weigh-in"})}</div>
-      <div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:2px">lowest ${mn.toFixed(1)} · highest ${mx.toFixed(1)} ${unit} over these weigh-ins</div>`;
-  }
-  const insight=healthInsight();
-  return `<section class="panel">
-    <div class="card-head"><span class="label">Weight trend</span><button class="btn" data-act="tab" data-tab="trends">open →</button></div>
-    ${body}
-    ${insight?`<p class="soft" style="font-size:11.5px;margin-top:8px;line-height:1.5;background:rgba(201,184,240,.14);border-radius:10px;padding:8px 10px">🦊 ${insight}</p>`:'<p class="soft" style="font-size:11.5px;margin-top:6px;text-align:center">The trend is the story, not any single day.</p>'}
-  </section>`; }
+
 
 /* ===================== HOME — dual structure (Creator OS ≠ Health OS), per Mifu's 2026-06 notes =====================
    Top: profile pic + BIG 24h clock + date + mode-specific daily check-in buttons (the OS only knows what
@@ -980,12 +807,16 @@ const CI_DEFS={
   creator:[["streamed","📺","Streamed Today"],["ytVideo","▶️","Uploaded YouTube Video"],["ytShort","🎬","Uploaded YouTube Short"]],
   health:[["medsAM","💊","Took Meds AM"],["medsPM","💊","Took Meds PM"],["weighed","⚖️","Weighed In"],["journaled","📓","Journaled"],["gym","💪","Went to Gym"],["walk","🚶","Walked a Bit"],["water","💧","Drank Water"],["sleep","😴","Slept Well"]]
 };
+
 /* meds classified AM vs PM by their time text — drives the AM/PM check-in linking */
 function medPeriod(m){ const t=String((m&&m.time)||"").toLowerCase();
   if(/\b(pm|night|evening|dinner|bed|bedtime|nighttime|supper|tea)\b/.test(t)) return "pm";
-  return "am"; }   // default to AM (morning/breakfast/anytime)
-const WATER_SUPP_NAMES=["electrolyte","creatine","collagen","psyllium"];   // her four morning-drink supplements (auto-tick with first water)
+  return "am"; }
+   // default to AM (morning/breakfast/anytime)
+const WATER_SUPP_NAMES=["electrolyte","creatine","collagen","psyllium"];
+   // her four morning-drink supplements (auto-tick with first water)
 function medsByPeriod(p){ return (state.sentinel.medsList||[]).filter(m=>medPeriod(m)===p); }
+
 /* some check-ins can be derived from data she already logs elsewhere — those light up on their own */
 function ciDerived(k){ const d=state.today||{};
   if(k==="madeArt") return (state.sentinel.artLog||[]).some(e=>e.date===TODAY);
@@ -996,13 +827,11 @@ function ciDerived(k){ const d=state.today||{};
   if(k==="water") return waterCups()>=CUPS_PER_40OZ;   // a full 40oz cup logged on Food counts
   if(k==="sleep") return Number(d.sleep)>=7;            // a real sleep log lights it
   return false; }
+
 function ciOn(k){ return !!(((state.today||{}).checkins||{})[k])||ciDerived(k); }
-function ciDays(k){ if(ciOn(k))return 0;
-  const log=((state.sentinel.checkinLog||{})[k]||[]); let last=log.length?log[log.length-1]:null;
-  if(k==="madeArt"){ const al=(state.sentinel.artLog||[]); const la=al.length?al[al.length-1].date:null; if(la&&(!last||la>last))last=la; }
-  return last?daysBetween(last,TODAY):null; }
-function ciWeek(k){ const wk=artMonday(TODAY); const set=new Set(((state.sentinel.checkinLog||{})[k]||[]).filter(d=>d>=wk&&d<=TODAY)); if(ciOn(k))set.add(TODAY); return set.size; }
+
 function nowHM(){ const d=new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
+
 function renderGlobalHeader(){
   const h=document.getElementById("global-header"); if(!h) return;
   const time=nowHM();
@@ -1026,51 +855,19 @@ function renderGlobalHeader(){
       </div>
     </div>`;
 }
-function cardHero(){
-  const creator=OS_MODE!=="health"; const d=new Date();
-  const date=d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
-  const defs=CI_DEFS[creator?"creator":"health"];
-  if(!creator) return `<section class="panel hero-card">
-    <div class="label" style="margin-bottom:8px;letter-spacing:.08em">TODAY'S CHECK-INS</div>
-    <div class="ci-grid">${defs.map(([k,em,l])=>`<button class="ci-btn ${ciOn(k)?'on':''}" data-act="ciToggle" data-k="${k}"><span class="ci-ic">${em}</span><span>${l}</span></button>`).join("")}</div>
-    <p class="soft" style="font-size:11.5px;text-align:center;margin:10px 0 0">✨ Click any check-in above when you complete it!</p>
-  </section>`;
-  return "";
-}
+
 /* deterministic observations — each one traceable to a check-in or stored number; ticking today resets it */
 function rangeRow(date){ const r=(state.range||[]).find(x=>x&&x.date===date); return r?(r.notes||{}):null; }
-function fmtSleep(hrs){ const H=Math.floor(hrs), M=Math.round((hrs-H)*60); return H+"h "+("0"+M).slice(-2)+"m"; }
-function sleepStreakUnder(h){ let n=0; for(let i=0;i<10;i++){ const d=i===0?(state.today||{}):rangeRow(dayAgo(-i)); if(!d)break; const s=Number(d.sleep); if(s&&s<h)n++; else break; } return n; }
+
 function waterWeekAvg(){ const vals=[]; for(let i=1;i<=7;i++){ const d=rangeRow(dayAgo(-i)); if(d&&d.mounjaro&&d.mounjaro.water!=null)vals.push(Number(d.mounjaro.water)||0); } return vals.length>=3?vals.reduce((a,b)=>a+b,0)/vals.length:null; }
-/* game-calendar nudges (Creator side only — respects the OS separation rule):
-   things leaving soon (uses endDate) + things worth pre-farming (upcoming start date). */
-function gameDeadlineObs(){
-  const O=[]; const seen=new Set();
-  (state.sentinel.calendarEvents||[]).filter(gameSrc).forEach(e=>{
-    if(!e||!e.date)return; const end=e.endDate||null;
-    // a live, multi-day event that's about to end — "finish it before it's gone"
-    if(end&&end>e.date&&e.date<=TODAY&&end>=TODAY){
-      const left=daysBetween(TODAY,end);
-      if(left>=0&&left<=7){ seen.add(e.id);
-        const span=left===0?"today is the last day":left===1?"1 day left":left+" days left";
-        O.push({t:`${e.title} leaves soon — ${span}. ⏳`,
-          focus:{t:`Finish the ${e.title} before it leaves soon — ${span}. ⏳`,tab:"calendar"}}); }
-    }
-    // an upcoming debut / new banner worth pre-farming (start 8–21 days out)
-    if(e.date>TODAY&&!seen.has(e.id)){
-      const d=daysBetween(TODAY,e.date);
-      if(d>=8&&d<=21){ const when=d>=13?Math.round(d/7)+" weeks":d+" days";
-        O.push({t:`${e.title} debuts in ${when}. 🌱`,
-          focus:{t:`Maybe pre-farm for ${e.title} — it debuts in about ${when}. 🌱`,tab:"calendar"}}); }
-    }
-  });
-  return O;
-}
+
 /* Kiko's notebook -> gentle forward nudges. Only surfaces durable notes that read like
    an intention/deadline (finish / before / pre-farm / due / debut / remember to ...),
    and keeps game-flavoured notes off the Health home to honour the OS separation. */
 const MEM_ACTION_RE=/\b(finish|before|pre-?farm|save up|don'?t forget|remember to|reminder|deadline|due|leaves?|ends?|debut|upcoming|need to|have to|should)\b/i;
+
 const MEM_GAME_RE=/\b(farm|banner|pull|gacha|debut|stream|patch|character|limited|arknights|endfield|genshin|hoyo|wuthering|star rail|zzz)\b/i;
+
 function memoryNudges(mode){
   const O=[]; const mem=(state.sentinel.kikoMemory||[]);
   for(let i=mem.length-1;i>=0&&O.length<2;i--){ const m=mem[i]; const tx=String((m&&m.text)||"").trim();
@@ -1080,26 +877,7 @@ function memoryNudges(mode){
     O.push({t:`Kiko remembered: ${short} 🧠`,focus:{t:short,seed:`help me make a tiny plan for: ${tx}`}}); }
   return O;
 }
-/* anchor: a single best nudge from what's still open today, so Suggested focus + Kiko
-   noticed are NEVER empty in either OS — always a "where am I headed today" idea. */
-function anchorFocus(mode){
-  const byEnergy=a=>({low:0,med:1,high:2}[(a&&a.energy)||"med"]);
-  if(mode==="creator"){
-    const gw=(state.sentinel.goalsWeek||[]).filter(g=>g&&!g.done);
-    if(gw.length) return {t:`${gw.length} weekly goal${gw.length>1?"s":""} still open. 🌷`,focus:{t:`A tiny step on “${gw[0].text}” would move the week forward. 🌷`,tab:"planner"}};
-    const cg=cgoalsList(), cc=(state.today||{}).cgoals||{}; const left=cg.filter(g=>!cc[g.id]).sort((a,b)=>byEnergy(a)-byEnergy(b));
-    if(left.length) return {t:`${left.length} daily goal${left.length>1?"s":""} left for today. 🎯`,focus:{t:`Start with the easy one: “${left[0].text}”. 🎯`,seed:`help me take the first tiny step on: ${left[0].text}`}};
-    const ci=CI_DEFS.creator.filter(d=>!ciOn(d[0]));
-    if(ci.length) return {t:`A few check-ins are still open today. 🌸`,focus:{t:`One gentle thing for today: ${ci[0][2]}. ${ci[0][1]}`,seed:`cheer me on to ${ci[0][2].toLowerCase()} today`}};
-    return {t:`Everything's checked off today — lovely. ✨`,focus:{t:`Follow your joy today — what's one small thing you'd love to make? ✨`,seed:"suggest one small joyful creative thing I could do today"}};
-  } else {
-    const hl=habitsList(), hc=(state.today||{}).habits||{}; const left=hl.filter(h=>!hc[h.id]).sort((a,b)=>byEnergy(a)-byEnergy(b));
-    if(left.length) return {t:`${left.length} daily habit${left.length>1?"s":""} left for today. ✅`,focus:{t:`Start small: “${left[0].text}”. ✅`,seed:`help me take the first tiny step on: ${left[0].text}`}};
-    const ci=CI_DEFS.health.filter(d=>!ciOn(d[0]));
-    if(ci.length) return {t:`A few check-ins are still open today. 🌸`,focus:{t:`One gentle thing for today: ${ci[0][2]}. ${ci[0][1]}`,seed:`cheer me on to ${ci[0][2].toLowerCase()} today`}};
-    return {t:`Every habit's done today — rest is productive too. 🌙`,focus:{t:`You're all caught up — a slow, kind evening counts as a win. 🌙`,seed:"suggest a gentle relaxing way to wind down tonight"}};
-  }
-}
+
 /* ── correlation engine: genuine relationships Kiko spots in her own logs ──
    Pearson over date-aligned daily metrics. Observations only (patterns, not proof,
    never causal) — these are the heart of "Kiko noticed". */
@@ -1107,6 +885,7 @@ function kikoPearson(pairs){ const n=pairs.length; if(n<5) return null;
   let sx=0,sy=0,sxx=0,syy=0,sxy=0; for(const p of pairs){ const x=p[0],y=p[1]; sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y; }
   const cov=sxy-sx*sy/n, vx=sxx-sx*sx/n, vy=syy-sy*sy/n; if(vx<=1e-9||vy<=1e-9) return null;
   return cov/Math.sqrt(vx*vy); }
+
 /* build one row per tracked day with every numeric signal aligned by date */
 function kikoCorrData(days){
   const byDate={}; (state.range||[]).forEach(r=>{ if(r&&r.date)byDate[r.date]=r.notes||{}; }); byDate[TODAY]=state.today||{};
@@ -1136,6 +915,7 @@ function kikoCorrData(days){
   }
   return rows;
 }
+
 function kikoCorrelations(mode){
   let rows; try{ rows=kikoCorrData(45); }catch(e){ return []; }
   if(rows.length<3) return [];
@@ -1165,223 +945,17 @@ function kikoCorrelations(mode){
   C.sort((a,b)=>b.score-a.score);
   return C.slice(0,3).map(c=>({t:c.t}));
 }
-/* ── Kiko noticed: trends, correlations & observations (NOT to-dos) ── */
-function kikoNoticed(mode){
-  const prio=[], O=[];
-  try{ kikoCorrelations(mode).forEach(o=>prio.push(o)); }catch(e){}
-  if(mode==="creator"){
-    // peek at today's health data to make observations feel personal
-    const _m=state.today.mind||{}, _sl=Number(state.today.sleep||0);
-    const _energy=_m.energy, _mood=_m.mood;
-    // ── streak / week observations ──
-    try{ const wkS=ciWeek("streamed"); if(wkS>=3) O.push({t:`You've streamed ${wkS} days this week — lovely momentum! 💜`}); }catch(e){}
-    try{ const wkA=ciWeek("madeArt"); if(wkA>=3) O.push({t:`You've made art ${wkA} days this week — your hands have been really busy! 🎨`}); }catch(e){}
-    try{ const wkY=ciWeek("ytShort")+ciWeek("ytVideo"); if(wkY>=2) O.push({t:`You've uploaded ${wkY} times to YouTube this week — staying visible! ▶️`}); }catch(e){}
-    try{ const gl=(state.sentinel.goalsWeek||[]); const done=gl.filter(g=>g&&g.done).length; if(gl.length&&done&&done>=Math.ceil(gl.length/2)) O.push({t:`You've cleared ${done}/${gl.length} weekly goals — over halfway. 🌷`}); }catch(e){}
-    // ── cross-data: energy/mood × creator activity ──
-    try{ const dArt=ciDays("madeArt");
-      if(dArt!=null&&dArt>=5&&_energy>=4) O.push({t:`Kiko noticed you haven't drawn in ${dArt} days — but your energy is at ${_energy}/5 today! Great time to pick up that pencil and draw something cute. 🎨`});
-      else if(dArt!=null&&dArt>=5&&_mood>=4) O.push({t:`No art in ${dArt} days, and your mood is looking bright today — sounds like the perfect excuse to doodle something. 🌸`});
-      else if(dArt!=null&&dArt>=7) O.push({t:`It's been ${dArt} days since you last drew something — even a tiny sketch counts! 🎨`}); }catch(e){}
-    try{ const dSh=ciDays("ytShort");
-      if(dSh!=null&&dSh>=7&&_energy>=3) O.push({t:`Shorts have been quiet for ${dSh} days — energy looks okay today, even a quick clip from a VOD would do! 🎬`}); }catch(e){}
-    try{ if(_energy!=null&&_energy<=1) O.push({t:`Energy's low today — Kiko says: rest IS part of the creative process. A good nap makes better art than a burnt-out stream. 🌙`}); }catch(e){}
-    // ── affirmation fallback so creator Kiko noticed is never empty ──
-    if(!O.length&&!prio.length){
-      const AFF=["You're building something real, one stream and one drawing at a time. Kiko believes in you. 🌸","Consistency beats perfection — showing up counts, even on slow days. 💜","Kiko noticed you're still here and still creating. That's the whole thing. ✨","Rest days are part of the creative schedule too. Recharge, come back stronger. 🦊","Your audience loves you for showing up as yourself. Keep doing that. 💗","Small channels with big hearts grow into something beautiful. This is that story. 🌱","Every piece of art, every stream, every short — it's all adding up. 🎨"];
-      O.push({t:AFF[Math.floor(Date.now()/86400000)%AFF.length]}); }
-  } else {
-    try{ const wl=(state.sentinel.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate); const u=CONFIG.weightUnit||"kg";
-      if(wl.length>=2){ const d2=wl[wl.length-1].w-wl[wl.length-2].w;
-        if(d2>=0.3) O.push({t:`Your weight is up ${d2.toFixed(1)} ${u} since your last weigh-in — day-to-day wobble is completely normal. ⚖️`});
-        else if(d2<=-0.3) O.push({t:`Down ${Math.abs(d2).toFixed(1)} ${u} since your last weigh-in. 🌱`}); } }catch(e){}
-    try{ const wl2=(state.sentinel.weightLog||[]).filter(x=>x).slice().sort(cmpDate);
-      const mu=wl2.filter(x=>x.muscle!=null), fa=wl2.filter(x=>x.fat!=null);
-      if(mu.length>=2&&mu[mu.length-1].muscle>mu[0].muscle+0.2) O.push({t:`Your muscle is trending up since ${fmtDate(mu[0].date)}. 💪`});
-      if(fa.length>=2&&fa[fa.length-1].fat<fa[0].fat-0.3) O.push({t:`Your body-fat % is trending down — the work is showing. 🌱`}); }catch(e){}
-    // anticipatory (Tier 3C down-payment): gentle forward-looking note from a robust pattern
-    try{ if(sleepStreakUnder(7)>=2) O.push({t:`Two short nights in a row — your energy often runs lower the day after, so today's a kind, gentle-pace day. 🌙`}); }catch(e){}
-    try{ const inj=(state.sentinel.injectionLog||[]).slice().sort(cmpDate); if(inj.length){ const nd=new Date(inj[inj.length-1].date+"T00:00"); nd.setDate(nd.getDate()+7); const di=daysBetween(TODAY,nd.toLocaleDateString("en-CA"));
-      if(di===0) O.push({t:`Today is your Mounjaro day. 💉`});
-      else if(di===1) O.push({t:`Your next Mounjaro shot is tomorrow. 💉`}); } }catch(e){}
-    try{ const c=state.sentinel.cycle||{}; if(c.lastStart){ const dx=daysBetween(c.lastStart,TODAY); if(dx>=45) O.push({t:`${dx} days since your last period — common with PCOS, but worth a gentle note for your doctor. 🌙`}); } }catch(e){}
-    try{ const hl=habitsList(), hc=(state.today||{}).habits||{}; if(hl.length&&hl.every(h=>hc[h.id])) O.push({t:`All your daily habits are done today — lovely. ✨`}); }catch(e){}
-    // ── Day-1 observations: fire from today's logged data alone ──
-    try{ const m=state.today.mind||{};
-      if(m.energy!=null){ if(m.energy<=1) O.push({t:`Energy is at ${m.energy}/5 today — a rest-and-recover day. No pressure to push through. 🌙`});
-        else if(m.energy>=4) O.push({t:`Energy at ${m.energy}/5 today — a good day to tackle something you've been putting off! ⚡`}); }
-      if(m.mood!=null&&m.mood<=1) O.push({t:`Mood is low today (${m.mood}/5) — Kiko sees you. You don't have to be "on" right now. 💜`});
-      if(m.anxiety!=null&&m.anxiety<=1) O.push({t:`Anxiety's high today — try to keep the to-do list short and be extra gentle with yourself. 🫂`}); }catch(e){}
-    try{ const mj=state.today.mounjaro||{};
-      if(mj.nausea!=null&&mj.nausea<=1) O.push({t:`Nausea's rough today — bland foods, slow sips, and small portions are your best friends right now. 💗`});
-      else if(mj.nausea!=null&&mj.nausea>=4) O.push({t:`Low nausea today — a good sign. Note what you ate so you can repeat it! 🥄`});
-      if(mj.foodnoise!=null&&mj.foodnoise<=1) O.push({t:`Food noise is loud today — that's the PCOS talking, not hunger. A high-protein snack can help quiet it. 🍩`}); }catch(e){}
-    try{ const sl=Number(state.today.sleep||0); if(sl>=1){
-      if(sl<6) O.push({t:`Only ${sl} hour${sl!==1?"s":""} of sleep last night — your body may feel it today. A gentle pace is a smart pace. 🌙`});
-      else if(sl>=8) O.push({t:`${sl} hours of sleep — well rested! That tends to carry into your energy and mood today. 💤`}); } }catch(e){}
-    try{ const w40=water40(), goal=CUPS_PER_40OZ*2;
-      if(w40>=goal) O.push({t:`Water goal hit today — that directly helps with nausea and food noise. Great job! 🥤`});
-      else if(w40===0&&new Date().getHours()>=14) O.push({t:`No water logged yet today — even one 40oz now makes a difference for nausea and energy. 💧`}); }catch(e){}
-    // ── Affirmation fallback: so the card is NEVER empty ──
-    if(!O.length&&!prio.length){
-      const AFF=["Managing PCOS and Mounjaro while creating is genuinely hard work. You're doing it. 💜","Every check-in you log is a gift to future-you — Kiko is keeping it safe. ✨","Rest is part of the plan, not a detour from it. 🌙","Your body is doing a lot right now. Be kind to it today. 💗","Small consistent days build the life you're after. You're already in it. 🌱","Kiko is proud of you for showing up, even on the hard ones. 🦊","You are allowed to have a low-output day and still count it as a win. 🌸"];
-      O.push({t:AFF[Math.floor(Date.now()/86400000)%AFF.length]}); }
-  }
-  return [...prio,...O].slice(0,6);
-}
-/* evergreen 5-minute creator nudges — fill Suggested focus when there's no specific
-   gap, so the creator side always has real content work to reach for (never game beats).
-   Grounded in the Growth Playbook: X rewards replies/conversation, short-form clips that
-   travel, sponsor outreach, collabs, pinned posts. Rotates daily so it stays fresh. */
-const EVERGREEN_CREATOR=[
-  {t:"Spend 5 minutes drafting an X post — replies and conversations are what the algorithm rewards now. 🐦",seed:"help me draft a quick, engaging X/Twitter post for today",cat:"x-post"},
-  {t:"Spend 5 minutes drafting a short script from a recent stream moment. 🎬",seed:"help me draft a 30-second short script from a recent stream moment",cat:"short-script"},
-  {t:"Spend 5 minutes hunting for one new sponsor to reach out to. 🤝",seed:"help me find one new sponsor to reach out to and draft a short pitch",cat:"sponsors"},
-  {t:"Reply to a few people on X for 5 minutes — returning fans bring the most traction. 💬",seed:"give me a quick 5-minute X engagement plan for today",cat:"x-engage"},
-  {t:"Reach out to one creator about a possible collab. 💜",seed:"help me draft a friendly collab message to another VTuber",cat:"collab"},
-  {t:"Refresh a pinned post or your tip menu. 📌",seed:"help me refresh my pinned posts and tip menu",cat:"pinned"},
-  {t:"Draft one clip idea that would travel beyond VTuber circles. ✂️",seed:"brainstorm a clip idea that would land with people who've never heard of VTubing",cat:"clip"},
-  {t:"Check in with your editors or reply to a couple of emails. ✉️",seed:"help me draft a quick check-in to my editors",cat:"email"},
-  {t:"Peek at the Growth Playbook for one fresh idea to try. 🌱",link:"https://creatorhub.eggieweggie.ca/growth.html",cat:"playbook"},
-];
-/* ── behavioural learning: Kiko watches which focus categories Mifu actually taps and
-   floats those up over time (recency-weighted). No labels, no retraining — just what she
-   does. (Tier 1B from KIKO-INTELLIGENCE-RESEARCH-2026-06-14.md.) ── */
-function focusAff(){ return (state.sentinel&&state.sentinel.focusAffinity)||{}; }
-function focusScore(cat){ if(!cat)return 0; const a=focusAff()[cat]; if(!a)return 0;
-  const n=a.n||0; const d=a.last?Math.max(0,daysBetween(a.last,TODAY)):999;
-  const rec=d<=3?1.6:d<=10?1.3:d<=30?1:0.7;   // recent taps weigh more than old ones
-  return n*rec; }
-function evergreenCreatorFocus(n, existing){
-  const have=new Set((existing||[]).map(o=>o&&o.t)); const out=[];
-  const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000), len=EVERGREEN_CREATOR.length;
-  // her most-engaged content types first; among ties rotate by day so it stays fresh
-  const pool=EVERGREEN_CREATOR.map((it,idx)=>({it,idx})).sort((a,b)=> focusScore(b.it.cat)-focusScore(a.it.cat) || ((a.idx+doy)%len)-((b.idx+doy)%len));
-  for(const p of pool){ if(out.length>=n)break; if(!have.has(p.it.t)){ out.push(p.it); have.add(p.it.t); } }
-  return out;
-}
-/* ── Suggested focus: actionable nudges from trends & gaps (content + health) ── */
-function suggestedFocus(mode){
-  const prio=[], F=[]; const push=f=>{ if(f&&f.t)F.push(f); };
-  if(mode==="creator"){
-    // 🎬 a stream is scheduled today but prep isn't finished → top priority
-    try{ const slot=todayStreamSlot(); if(slot){ const c=state.today.streamPrep||{}; const left=streamPrepList().filter(p=>!c[p.id]).length;
-      if(left>0) push({t:`${slot.show||slot.text||"Your stream"} is today${slot.time?" at "+slot.time:""} — ${left} stream-prep item${left>1?"s":""} left. Finish before going live. 🎬`,tab:"home",cat:"stream",urgent:true}); } }catch(e){}
-    // ⏳ only surface a game event if it ends TODAY — one compact nudge max, rest lives on Gachas page
-    try{ const todayEvs=gameDeadlineObs().filter(o=>o&&o.focus&&/today is the last day/i.test(o.focus.t)); if(todayEvs.length) push({...todayEvs[0].focus,cat:"game",t:`${todayEvs[0].focus.t} → Open Gachas for more.`}); }catch(e){}
-    // game pre-farm beats live only in the Game Updates box — content work goes here
-    const dArt=ciDays("madeArt"); if(dArt!=null&&dArt>=7) push({t:"You haven't drawn in a while — maybe it's time to make some art together! 🎨",tab:"art",cat:"art"});
-    const dYt=ciDays("ytVideo"); if(dYt!=null&&dYt>=7) push({t:"It's been a while since a YouTube upload — want to check in with your editors? 🎥",seed:"help me draft a check-in message to my YouTube editors",cat:"youtube"});
-    const dSh=ciDays("ytShort"); if(dSh!=null&&dSh>=7) push({t:"Shorts have been quiet — one clip from a recent VOD could be plenty! 🎬",tab:"script",cat:"shorts"});
-    const dCv=ciDays("coverSong"); if(dCv!=null&&dCv>=7) push({t:"30 gentle minutes of cover-song progress today? 🎤",seed:"help me plan a 30-minute cover song session for today",cat:"music"});
-    const dStr=ciDays("streamed"); if(dStr!=null&&dStr>=4) push({t:"It's been a few days since a stream — want to review this week's plans? 📺",tab:"optimize",cat:"stream"});
-    const dEm=ciDays("emails"); if(dEm!=null&&dEm>=5) push({t:"You haven't replied to emails in a while — a gentle 15-minute triage? ✉️",seed:"help me do a gentle 15-minute email triage",cat:"email"});
-    const dSp=ciDays("sponsors"); if(dSp!=null&&dSp>=7) push({t:"A quick look at sponsor opportunities? 🤝",tab:"money",cat:"sponsors"});
-    try{ (state.sentinel.sponsors||[]).forEach(sp=>{ const nm=sp.name||sp.brand||"a sponsor"; if(sp.due&&sp.status!=="done"){ const dd=daysBetween(TODAY,sp.due);
-      if(dd<0) push({t:`The ${nm} deliverable is overdue — want to sort it or push the date? 💼`,tab:"events",cat:"sponsors",urgent:true});
-      else if(dd<=3) push({t:`A ${nm} deliverable is coming up — block a little time? 💼`,tab:"events",cat:"sponsors",urgent:true}); } }); }catch(e){}
-    try{ const gw=(state.sentinel.goalsWeek||[]).filter(g=>!g.done); if(gw.length) push({t:`You've got ${gw.length} weekly goal${gw.length>1?"s":""} open — pick one tiny next step? 🌷`,tab:"planner",cat:"goals"}); }catch(e){}
-  } else {
-    try{ const tg=foodTargets(); const tt=foodTotals(); const y=rangeRow(dayAgo(-1));
-      const yp=y&&Array.isArray(y.food)&&y.food.length?y.food.reduce((a,f)=>a+Number(f.protein||0),0):null;
-      if(foodToday().length&&tt.protein<tg.protein&&yp!=null&&yp<tg.protein) push({t:"Protein's been low a couple of days — try adding more protein-rich meals today! 🥣",tab:"food",cat:"protein"});
-      else if(foodToday().length&&tt.protein<tg.protein*0.6) push({t:"Protein's running low today — a protein-y snack could help! 🥣",tab:"food",cat:"protein"});
-    }catch(e){}
-    const dG=ciDays("gym"); if(dG!=null&&dG>=3) push({t:"It's been a few days since the gym — how about a quick workout today? 💪",seed:"suggest a gentle quick workout for today",cat:"gym"});
-    const sl=sleepStreakUnder(7);
-    if(sl>=2) push({t:"Your sleep's been under 7 hours — try winding down a bit earlier tonight. 🌙",tab:"care",cat:"sleep"});
-    else { const s0=Number((state.today||{}).sleep); if(s0&&s0<7) push({t:"A short night — maybe an earlier wind-down tonight? 🌙",tab:"care",cat:"sleep"}); }
-    const dW=ciDays("walk"); if(dW!=null&&dW>=3) push({t:"A tiny 10-minute walk today? It absolutely counts! 🚶",seed:"motivate me for a tiny 10-minute walk",cat:"walk"});
-    try{ const avg=waterWeekAvg(); const goal=CUPS_PER_40OZ*2; if(avg!=null&&avg<goal*0.6) push({t:"Water's been low this week — a glass right now is a lovely start! 💧",tab:"food",cat:"water"}); }catch(e){}
-    try{ const inj=(state.sentinel.injectionLog||[]).slice().sort(cmpDate); if(inj.length){ const nd=new Date(inj[inj.length-1].date+"T00:00"); nd.setDate(nd.getDate()+7); const di=daysBetween(TODAY,nd.toLocaleDateString("en-CA"));
-      if(di===0) push({t:"It's your Mounjaro day — want a reminder for tonight and a fresh injection site? 💉",seed:"remind me to take my Mounjaro shot tonight",cat:"meds",urgent:true}); } }catch(e){}
-    try{ const je=(state.sentinel.journalEntries||[]).map(e=>e.date); (state.range||[]).forEach(r=>{ if(r&&r.notes&&r.notes.journal&&String(r.notes.journal).trim())je.push(r.date); }); if((state.today||{}).journal&&String(state.today.journal).trim())je.push(TODAY);
-      const lastJ=je.length?je.sort()[je.length-1]:null; const dj=lastJ?daysBetween(lastJ,TODAY):null;
-      if(dj==null||dj>=5) push({t:"A soft journal entry might feel nice — want to do one with Kiko? 📓",seed:"let's journal",cat:"journal"}); }catch(e){}
-    try{ const tg=foodTargets(), tt=foodTotals(); if(foodToday().length&&tt.fiber<tg.fiber*0.5) push({t:"Fibre's running low today — psyllium or some veggies could help. 🌿",tab:"food",cat:"fiber"}); }catch(e){}
-    try{ (state.sentinel.medsList||[]).forEach(m=>{ if(m.refill){ const dd=daysBetween(TODAY,m.refill); if(dd>=0&&dd<=5) push({t:`Your ${m.name} refill is coming up — worth sorting before you run low. 💊`,tab:"settings",cat:"meds",urgent:true}); } }); }catch(e){}
-  }
-  // 🗒️ planner task nudges — energy-aware, shown in both OS modes
-  try{ const _pt=(state.sentinel.tasks||[]).filter(t=>!t.done);
-    const _el=state.energyLevel||"medium";
-    const _ov=_pt.filter(t=>t.due&&t.due<TODAY);
-    const _td=_pt.filter(t=>t.due===TODAY);
-    const _urg=_pt.filter(t=>(t.priority||"medium")==="urgent"&&!_ov.some(x=>x.id===t.id)&&!_td.some(x=>x.id===t.id));
-    if(_ov.length) prio.push({t:`You have ${_ov.length} overdue task${_ov.length>1?"s":""} — start there first. 📋`,tab:"planner",cat:"planner",urgent:true});
-    else if(_td.length) F.push({t:`${_td.length} task${_td.length>1?"s":""} due today. 📌`,tab:"planner",cat:"planner"});
-    else if(_urg.length) F.push({t:`${_urg.length} urgent task${_urg.length>1?"s":""} waiting for attention. 🔥`,tab:"planner",cat:"planner"});
-    else if(_el!=="high"){ const _m=_pt.filter(t=>normEnergy(t.energy||t.spoon)===_el); if(_m.length) F.push({t:`${_m.length} ${_el}-energy task${_m.length>1?"s":""} ready for today. ⚡`,tab:"planner",cat:"planner"}); }
-  }catch(e){}
-  // NOTE: things Mifu tells Kiko (kikoMemory) are CONTEXT, not tasks — they must never be echoed
-  // here as Suggested Focus items. Suggested Focus only ever shows actionable, data-driven nudges.
-  // learn from what she taps: float her engaged categories up; urgent/time-sensitive stay first
-  const Fr=F.map((f,i)=>({f,i})).sort((a,b)=> (a.f.urgent?0:1)-(b.f.urgent?0:1) || focusScore(b.f.cat)-focusScore(a.f.cat) || a.i-b.i).map(x=>x.f);
-  let out=[...prio,...Fr];
-  // creator: top up with evergreen 5-minute content ideas so there's always real work here
-  if(mode==="creator"&&out.length<3){ try{ evergreenCreatorFocus(3-out.length,out).forEach(f=>out.push(f)); }catch(e){} }
-  out=out.slice(0,3);
-  // never leave Suggested focus empty — anchor to today's open work
-  if(!out.length){ try{ const a=anchorFocus(mode); if(a&&a.focus)out.push({...a.focus,cat:"anchor"}); }catch(e){} }
-  return out;
-}
-function glanceHeader(){ const d=logicalDisplayDate().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"Europe/Amsterdam"});
-  return `<div class="glance-head"><span class="glance-fox">🦊</span><div><h2>${greeting()}, ${esc(CONFIG.creator.name)}! 🌸</h2><div class="label" style="margin-top:3px">${d} • Today at a Glance</div></div></div>`; }
+
 function noticedCard(N){ return `<div class="gcard"><div class="sec-label">✨ Kiko noticed</div>
   ${N.length?N.map(o=>`<div class="kn-row"><span class="kn-dot"></span><span>${esc(o.t)}</span></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">No clear patterns yet — a few more tracked days and Kiko will start spotting trends and connections for you. ❄️</p>`}</div>`; }
-/* ===== Quick Notices — recent, actionable status with a tiny next step (lives up top) ===== */
-function quickNotices(mode){
-  const O=[]; const wkISO=mondayOf(new Date(TODAY+"T00:00")).toLocaleDateString("en-CA");
-  if(mode==="creator"){
-    try{ const slot=todayStreamSlot(); if(slot){ const c=state.today.streamPrep||{}, list=streamPrepList(), dn=list.filter(p=>c[p.id]).length; if(dn<list.length) O.push({t:`Stream today — ${dn}/${list.length} prep done.`,sub:"Finish before going live.",tab:"home"}); } }catch(e){}
-    try{ const gl=gachaList(), gc=state.today.gacha||{}, dn=gl.filter(g=>gc[g.id]).length; if(gl.length&&dn<gl.length) O.push({t:`Gacha dailies: ${dn}/${gl.length} done.`,sub:"A few left to clear.",tab:"gachas"}); }catch(e){}
-    try{ const gr=cgrowthList(), gc=state.today.cgrowth||{}, dn=gr.filter(h=>gc[h.id]).length; if(dn===0) O.push({t:`No creator-growth action yet today.`,sub:"Pick one low-energy one.",tab:"home"}); }catch(e){}
-    try{ const ends=(state.sentinel.calendarEvents||[]).filter(gameSrc).filter(e=>e&&e.endDate&&e.endDate>=TODAY&&e.date<=TODAY&&daysBetween(TODAY,e.endDate)<=2); if(ends.length) O.push({t:`${ends.length} game event${ends.length>1?"s":""} ending soon.`,sub:"Do them before they disappear.",tab:"calendar"}); }catch(e){}
-    try{ const vault=(state.sentinel.sparkVault||[]); if(!vault.some(x=>x&&x.date&&x.date>=wkISO)) O.push({t:`No new stream idea saved this week.`,sub:"Tap Creator Spark for one.",tab:"home"}); }catch(e){}
-  } else {
-    try{ const hl=habitsList(), hc=state.today.habits||{}, dn=hl.filter(h=>hc[h.id]).length; if(hl.length&&dn<hl.length) O.push({t:`Daily habits: ${dn}/${hl.length} done.`,sub:"Tick what you've done.",tab:"home"}); }catch(e){}
-    try{ const cups=waterCups(), goal=CUPS_PER_40OZ*2; if(cups<goal*0.5) O.push({t:`Water's low so far today.`,sub:"A glass now is a lovely start.",tab:"food"}); }catch(e){}
-    try{ const meds=(state.sentinel.medsList||[]), mt=state.today.medsTaken||{}, dn=meds.filter(m=>mt[m.id]).length; if(meds.length&&dn<meds.length) O.push({t:`Meds: ${dn}/${meds.length} taken today.`,tab:"food"}); }catch(e){}
-  }
-  return O.slice(0,4);
-}
-function quickNoticesCard(){ const Q=quickNotices(OS_MODE==="health"?"health":"creator");
-  return `<div class="gcard" style="padding:12px 14px"><div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">⚡ Notices</div>
-    ${Q.length?Q.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""}><span class="kn-dot" style="background:var(--lav-deep)"></span><span class="grow" style="text-align:left;font-size:12.5px">${esc(o.t)}${o.sub?`<br><span class="soft" style="font-size:11px">${esc(o.sub)}</span>`:""}</span>${o.tab?'<span class="fr-chev">›</span>':''}</button>`).join(""):`<p class="soft" style="font-size:12px;margin:0">All caught up — nothing needs you right now. ✨</p>`}</div>`;
-}
-/* ===== Kiko noticed — reflective observations (lives lower on the page) ===== */
-function deepPatternsCard(){ const N=kikoNoticed(OS_MODE==="health"?"health":"creator");
-  return `<section class="panel"><div class="card-head"><span class="label">🦊 Kiko noticed</span></div>
-    <p class="soft" style="font-size:11px;margin:0 0 8px">Things Kiko is keeping an eye on for you. 💜</p>
-    ${N.length?N.map(o=>`<div class="kn-row"><span class="kn-dot"></span><span>${esc(o.t)}</span></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">All caught up — Kiko's watching and will flag things as they come. ❄️</p>`}</section>`;
-}
-function focusCard(F){ F=(F||[]).slice(0,3);
-  return `<div class="gcard" style="padding:12px 14px">
-    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">✦ Focus</div>
-    ${F.length?F.map(o=>`<button class="focus-row" data-act="focusGo" ${o.tab?`data-tab="${o.tab}"`:""} ${o.seed?`data-seed="${esc(o.seed)}"`:""} ${o.link?`data-link="${esc(o.link)}"`:""} ${o.cat?`data-cat="${esc(o.cat)}"`:""}><span class="kn-dot" style="background:var(--sakura-deep)"></span><span class="grow" style="text-align:left;font-size:12.5px">${esc(o.t)}</span>${(o.tab||o.seed||o.link)?'<span class="fr-chev">›</span>':''}</button>`).join(""):`<p class="soft" style="font-size:12px;margin:0">No nudges today — follow your joy. ✨</p>`}
-  </div>`; }
+
 function gameUpdatesCard(){
   const evs=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=14).sort((a,b)=>a.days-b.days).slice(0,6);
   return `<div class="gcard"><div class="sec-label">🎮 Game updates</div>
     ${evs.length?evs.map(e=>`<div class="kn-row"><span class="kn-dot"></span><span class="grow">${esc(e.title)}</span>${evTierChip(e.days,false,fmtDate(e.date))}</div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">No game beats on the radar — ask Kiko to refresh the game calendar. 🎮</p>`}
     <button class="btn" data-act="tab" data-tab="calendar" style="margin-top:10px">view all game events →</button></div>`;
 }
-function hsBar(l,v,p,grad){ p=Math.max(0,Math.min(1,p||0));
-  return `<div class="hs-row"><span class="hs-l">${l}</span><span class="hs-v num">${v}</span><span class="hs-bar"><span style="width:${Math.round(p*100)}%;background:${grad}"></span></span></div>`; }
-function healthSnapshotCard(){
-  const rows=[]; const u=CONFIG.weightUnit||"kg";
-  const wl=(state.sentinel.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate);
-  if(wl.length>=2){ const d2=wl[wl.length-1].w-wl[wl.length-2].w;
-    rows.push(`<div class="hs-row"><span class="hs-l">Weight Trend</span><span class="hs-v" style="color:${d2>0.05?'#c0566a':d2<-0.05?'#2f9d79':'var(--ink-soft)'}">${Math.abs(d2)<0.05?"steady →":(d2>0?"Up ":"Down ")+Math.abs(d2).toFixed(1)+" "+u+(d2>0?" ↑":" ↓")}</span></div>`); }
-  else if(wl.length===1) rows.push(`<div class="hs-row"><span class="hs-l">Weight</span><span class="hs-v">${wl[0].w} ${u}</span></div>`);
-  try{ if(foodToday().length){ const tg=foodTargets(), tt=foodTotals(); rows.push(hsBar("Protein Goal",Math.round(tt.protein)+" / "+tg.protein+"g",tt.protein/tg.protein,"linear-gradient(90deg,var(--sakura),var(--sakura-deep))")); } }catch(e){}
-  const cups=waterCups(), goalC=CUPS_PER_40OZ*2, L=c=>(c*0.2366);
-  rows.push(hsBar("Water Intake",L(cups).toFixed(1)+" / "+L(goalC).toFixed(1)+" L",cups/goalC,"linear-gradient(90deg,var(--ice),var(--peri))"));
-  const meds=(state.sentinel.medsList||[]); if(meds.length){ const mt=(state.today||{}).medsTaken||{}; const dn=meds.filter(m2=>mt[m2.id]).length; rows.push(hsBar("Meds Today",dn+" / "+meds.length,dn/meds.length,"linear-gradient(90deg,var(--lav),var(--lav-deep))")); }
-  const sl=Number((state.today||{}).sleep); if(sl) rows.push(hsBar("Sleep",fmtSleep(sl),Math.min(1,sl/8),"linear-gradient(90deg,var(--lav),var(--peri))"));
-  return `<div class="gcard"><div class="sec-label">💗 Today's health snapshot</div>
-    ${rows.length?rows.join(""):'<p class="soft" style="font-size:12.5px;margin:0">Log a weigh-in, a meal, or some water and your snapshot appears here. ❄️</p>'}
-    <button class="btn" data-act="tab" data-tab="trends" style="margin-top:10px">view full health stats →</button></div>`;
-}
+
 /* ===== On This Day — gentle date-anchored memory resurfacing (Idea #14) =====
    Reads the shared buildMemoryIndex() and surfaces past memories that fall on
    today's anniversary or in soft windows (last week / two weeks / a month / ~a year).
@@ -1406,6 +980,7 @@ function onThisDayPicks(){
   out.sort((a,b)=>a.rank-b.rank);   // anniversaries first; index is already newest-first within a rank
   return out;
 }
+
 function cardOnThisDay(){
   const picks=onThisDayPicks();
   const head=`<div class="card-head"><span class="label">🗓️ On this day</span>${picks.length>1?`<button class="btn" data-act="otdAnother">↻ another</button>`:""}</div>`;
@@ -1423,24 +998,7 @@ function cardOnThisDay(){
     ${picks.length>1?`<p class="soft" style="font-size:10.5px;margin:8px 0 0;text-align:right">${i+1} of ${picks.length}</p>`:""}
   </section>`;
 }
-/* ===================== 🎮 GACHAS PAGE ===================== */
-function gachaKeywords(g){
-  const n=(g.name||'').toLowerCase().replace(/\W+/g,'');
-  const MAP={nikki:['nikki','infinity','infinitynikki'],r1999:['r1999','reverse1999','reverse','1999'],arknights:['arknights','endfield'],zzz:['zzz','zenless'],nte:['nte','neverness'],wuwa:['wuwa','wuthering'],genshin:['genshin'],hsr:['hsr','starrail','honkai']};
-  for(const [k,kws] of Object.entries(MAP)) if(n.includes(k)||kws.some(w=>n.includes(w))) return kws;
-  return [n.slice(0,6)||g.id];
-}
-function gachaEventsForGame(g,allEvs){
-  const kws=gachaKeywords(g);
-  return allEvs.filter(e=>{ const t=(e.title||'').toLowerCase().replace(/\W+/g,''); return kws.some(kw=>t.includes(kw)); }).sort((a,b)=>a.days-b.days);
-}
-function gachaEventType(e){
-  if(e.src==='gamestream'||/livestream|showcase|preview|reveal|special program/i.test(e.title||'')) return 'Livestream';
-  if(/banner|rerun|\bwarp\b|light cone|\bphase\s*[12]\b|\([^)]+\/[^)]+\)|\bwish\b|\bconvene\b|\bresonator\b|w-engine|signal search|\bheadhunting\b|wishing well|stylist.?s choice|invitation of fates|resonance vision|\bglimpse\b|\bpull\b|\bsummon\b|\bgacha\b|tempered blade|bygone reminiscence/i.test(e.title||'')) return 'Banner';
-  if(/\breset\b/i.test(e.title||'')) return 'Reset';
-  if(/\bupdate\b|\bversion\b|\bpatch\b/i.test(e.title||'')) return 'Update';
-  return 'Event';
-}
+
 function gachaGameSpark(g,evs){
   const n=g.name;
   // only upcoming STARTS — skip anything with "end/ends/close/last day" in the title
@@ -1451,45 +1009,7 @@ function gachaGameSpark(g,evs){
   const when=e.days===0?'today':e.days===1?'tomorrow':`in ${e.days} days`;
   return {text:`${type} — "${e.title}" starts ${when}. Stream idea?`, type};
 }
-function evDaysChip(days, dateStr){
-  // always show "In X days" for future events instead of vague "This Month"
-  let label, cls;
-  if(days<=0){ label="Today"; cls="tier-today"; }
-  else if(days===1){ label="Tomorrow"; cls="tier-tmrw"; }
-  else{ label=`In ${days} day${days===1?'':'s'}`; cls=days<=7?"tier-week":"tier-month"; }
-  return `<span class="pill ${cls}" style="flex:none;white-space:nowrap">${label}${dateStr?" • "+dateStr:""}</span>`;
-}
-const EV_TYPE_ICONS={"Livestream":"📺","Banner":"✦","Update":"🔄","Event":"🎉","Reset":"🔁"};
-function evTypeLabel(e){
-  const t=gachaEventType(e);
-  const icon=EV_TYPE_ICONS[t]||"🎮";
-  return `<span style="font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--muted);margin-right:3px">${icon} ${t.toUpperCase()}</span>`;
-}
-function gachaGameCard(g,checks,weeklies,allEvs){
-  const done=!!checks[g.id], streak=gachaStreak(g.id);
-  const evs=gachaEventsForGame(g,allEvs);
-  const isEnding=e=>/\bend\b|\bends\b|\bclos|\breset\b/i.test(e.title||'');
-  const ending=evs.filter(e=>e.days>=0&&e.days<=14&&isEnding(e)).slice(0,3);
-  const coming=evs.filter(e=>e.days>=0&&!isEnding(e)).slice(0,3);
-  const wkDone=gachaWkDoneThisWeek(g.id);
-  const evRow=(e,orange)=>`<div class="kn-row" style="font-size:11.5px;align-items:flex-start;gap:6px">
-    <span class="kn-dot" style="margin-top:4px;flex:none${orange?';background:#e07030':''}"></span>
-    <span class="grow" style="line-height:1.4">${evTypeLabel(e)}${esc(e.title)}</span>
-    ${evDaysChip(e.days,fmtDate(orange?(e.endDate||e.date):e.date))}
-  </div>`;
-  return `<div class="gg-card ${done?'gg-done':''}">
-    <div class="gg-head">
-      <span class="gg-name">${esc(g.name)}</span>
-      <div style="display:flex;gap:5px;align-items:center">
-        ${streak>0?`<span class="gg-streak">🔥${streak}</span>`:''}
-        ${done?`<span class="pill pill-mint" style="font-size:10px;padding:2px 7px">done</span>`:''}
-      </div>
-    </div>
-    <button class="chiptog ${wkDone?'on':''}" data-act="gachaWkToggle" data-v="${g.id}" style="width:100%;justify-content:center;margin-bottom:8px"><span>${wkDone?'✓':'◦'}</span>${wkDone?'Weekly done':'Mark weekly done'}</button>
-    ${ending.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px;color:#e07030">⏳ Ending soon</div>${ending.map(e=>evRow(e,true)).join('')}`:''}
-    ${coming.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px">🌟 Coming up</div>${evRow(coming[0],false)}${coming.length>1?`<button class="soft" data-act="gachaCardMore" data-gid="${g.id}" style="font-size:11px;background:none;border:none;cursor:pointer;padding:3px 0;display:block;color:var(--muted)">${(state.gachaExpanded||{})[g.id]?'▾':'▸'} ${coming.length-1} more future update${coming.length-1===1?'':'s'}</button>${(state.gachaExpanded||{})[g.id]?coming.slice(1).map(e=>evRow(e,false)).join(''):''}`:''}`:''}
-  </div>`;
-}
+
 function gachaUpdatesSection(allEvs){
   const fut=allEvs.filter(e=>e.days>=0&&e.days<=21).sort((a,b)=>a.days-b.days);
   const ending=fut.filter(e=>/end|close|last\s*day/i.test(e.title||''));
@@ -1499,6 +1019,7 @@ function gachaUpdatesSection(allEvs){
   const body=mkSec('⏳','Ending soon',ending)+mkSec('🌟','Updates & banners',rest)+mkSec('📺','Livestreams',streams);
   return `<section class="panel" style="margin-bottom:16px"><div class="card-head"><span class="label">🗓️ Game events</span><button class="btn" data-act="tab" data-tab="calendar">calendar →</button></div>${body||`<p class="soft" style="font-size:12.5px;margin:0">No game events on the radar. Add them to the Calendar to see them here. 🎮</p>`}</section>`;
 }
+
 function compactGachaAlert(){
   const list=gachaList(), checks=state.today.gacha||{};
   const done=list.filter(g=>checks[g.id]).length, total=list.length;
@@ -1510,6 +1031,7 @@ function compactGachaAlert(){
     <button class="btn" data-act="tab" data-tab="gachas" style="margin-top:10px;width:100%">Open Gachas →</button>
   </div>`;
 }
+
 function pulsePrompt(gameName){
   return `Today is ${TODAY}. You are a community sentiment researcher for a VTuber content creator who covers gacha games. Search Reddit (r/${gameName.replace(/\s/g,'')}, r/gachagaming), Twitter/X trending posts, and YouTube video comments RIGHT NOW.
 
@@ -1546,6 +1068,7 @@ DRAMA: [one sentence — the most significant real community frustration/backlas
 IDEA: [one punchy stream or video title reacting to the REAL community mood — something you could actually click on YouTube]
 DETAIL: [full breakdown: what happened, timeline, how the community reacted, notable Reddit posts or tweets, direct quotes if you can find them, why this matters for a streamer covering ${gameName}]`;
 }
+
 async function refreshCommunityPulse(gid){
   const btn=document.getElementById("pulse-btn-"+gid);
   if(btn){ btn.disabled=true; btn.textContent="🦊…"; }
@@ -1557,6 +1080,7 @@ async function refreshCommunityPulse(gid){
     try{ render(); }catch(_){}
   }catch(e){ if(btn){ btn.disabled=false; btn.textContent="research"; } }
 }
+
 async function refreshAllCommunityPulse(){
   const btn=document.getElementById("pulseAllBtn");
   if(btn){ btn.disabled=true; btn.textContent="🦊 researching…"; }
@@ -1572,61 +1096,7 @@ async function refreshAllCommunityPulse(){
   try{ render(); }catch(_){}
   if(btn){ btn.disabled=false; btn.textContent="🔄 refresh all"; }
 }
-function cardGachaCommunityPulse(){
-  const list=gachaList();
-  const vault=(state.sentinel.sparkVault||[]).slice().reverse();
-  const gameIdeas=list.map(g=>{
-    const match=vault.find(v=>v.gid===g.id);
-    return{g,idea:match};
-  });
-  return `<section class="panel" style="margin-top:16px">
-    <div class="card-head"><span class="label">🦊 Community Pulse</span><button id="pulseAllBtn" class="btn btn-grad" data-act="refreshAllCommunityPulse">🔄 refresh all</button></div>
-    <div style="background:rgba(180,150,220,.09);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
-      <span style="font-size:18px;flex:none">🦊</span>
-      <p style="font-size:12px;line-height:1.5;margin:0">Kiko searches Reddit, YouTube &amp; Twitter live to find real community buzz — hype, drama, and a content idea per game. Hit research to refresh any game instantly, no chat needed!</p>
-    </div>
-    ${gameIdeas.map(({g,idea})=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--line)">
-      <div style="width:34px;height:34px;border-radius:50%;background:#EEEDFE;color:#534AB7;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;line-height:1.2">${esc(g.name.slice(0,5))}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;margin-bottom:4px">${esc(g.name)}</div>
-        ${idea?(()=>{
-          const expanded=(state.pulseExpanded||{})[g.id];
-          const p=parsePulse(idea.text);
-          const collapsed=`<div style="font-size:12px;line-height:1.7;margin:0 0 4px">
-            ${p.hype?`<div><span style="font-weight:700;color:var(--peri-deep)">Hype:</span> ${esc(p.hype)}</div>`:""}
-            ${p.drama?`<div><span style="font-weight:700;color:var(--sakura-deep)">Drama:</span> ${esc(p.drama)}</div>`:""}
-            ${p.idea?`<div><span style="font-weight:700;color:var(--mint)">Idea:</span> ${esc(p.idea)}</div>`:""}
-          </div>`;
-          const expandedView=`<div style="display:flex;flex-direction:column;gap:8px;margin:0 0 6px">
-            ${p.hype?`<div style="background:rgba(100,120,220,.10);border-left:3px solid var(--peri-deep);border-radius:0 8px 8px 0;padding:8px 10px">
-              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--peri-deep);margin-bottom:3px">✨ HYPE</div>
-              <div style="font-size:12.5px;line-height:1.6">${renderMd(p.hype)}</div>
-            </div>`:""}
-            ${p.drama?(()=>{ const quiet=/no significant|nothing significant|no major|no notable|no drama|no controversy|no backlash|no frustration/i.test(p.drama); return `<div style="background:${quiet?'rgba(150,150,150,.05)':'rgba(220,100,130,.10)'};border-left:3px solid ${quiet?'rgba(150,150,150,.2)':'var(--sakura-deep)'};border-radius:0 8px 8px 0;padding:8px 10px">
-              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:${quiet?'var(--muted)':'var(--sakura-deep)'};margin-bottom:3px">🔥 DRAMA</div>
-              <div style="font-size:12px;line-height:1.6;color:${quiet?'var(--muted)':''}">${quiet?'No significant drama in the past 14 days.':renderMd(p.drama)}</div>
-            </div>`; })():""}
-            ${p.idea?`<div style="background:rgba(100,200,160,.10);border-left:3px solid var(--mint);border-radius:0 8px 8px 0;padding:8px 10px">
-              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--mint);margin-bottom:3px">💡 STREAM IDEA</div>
-              <div style="font-size:12.5px;line-height:1.6">${renderMd(p.idea)}</div>
-            </div>`:""}
-            ${p.detail?`<div style="background:rgba(150,150,150,.07);border-radius:8px;padding:8px 10px">
-              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">📋 FULL BREAKDOWN</div>
-              <div style="font-size:12px;line-height:1.7;color:var(--text)">${renderMd(p.detail)}</div>
-            </div>`:""}
-          </div>`;
-          return `${expanded?expandedView:collapsed}
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <span style="font-size:10px;color:var(--muted)">Saved ${fmtDate(idea.date)}</span>
-            <button class="x" style="font-size:11px;color:var(--lav-deep)" data-act="togglePulseExpand" data-gid="${esc(g.id)}">${expanded?"▲ collapse":"▼ read more"}</button>
-          </div>`;
-        })():`<p style="font-size:12px;color:var(--muted);margin:0">No data yet — hit research! 🦊</p>`}
-      </div>
-      <button id="pulse-btn-${esc(g.id)}" class="btn" style="font-size:11px;flex-shrink:0" data-act="refreshCommunityPulse" data-id="${esc(g.id)}">research</button>
-    </div>`).join('')}
-    <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.4">Kiko connects to the internet live — results are always fresh, never pre-programmed. 🌐</p>
-  </section>`;
-}
+
 function viewGachas(){
   const list=gachaList(), checks=state.today.gacha||{};
   const done=list.filter(g=>checks[g.id]).length, total=list.length;
@@ -1702,6 +1172,7 @@ function viewGachas(){
   </div>`;
 }
 
+
 function viewHome(){
   const m=state.today.mind||{};
   if(PREF.focus){
@@ -1742,110 +1213,22 @@ function viewHome(){
   ];
   return `<div class="home-fixed">${cardHero()}${glance}</div>${modularGrid(creator?"home":"homehealth",items)}${DISCLAIMER}`;
 }
-function cardThisWeek(){
-  const rows=[];
-  const isEnding=t=>/\bend\b|\bends\b|\bclos|\blast\s*day/i.test(t||'');
-  const isBanner=t=>/banner|rerun/i.test(t||'');
-  const isStream=src=>src==='stream'||src==='streamday';
-  // birthdays in the next 14 days
-  try{(state.sentinel.birthdays||[]).map(b=>({...b,...nextBirthdayInfo(b)})).filter(x=>x.days>=0&&x.days<=14).sort((a,b)=>a.days-b.days).forEach(b=>rows.push({days:b.days,date:b.date,icon:'🎂',text:`${esc(b.name)}'s birthday`,src:'bday'}));}catch(_){}
-  // calendar events starting in next 14 days — no streams, no endings, no banners, deduplicated by title
-  try{const seen=new Set();(state.sentinel.calendarEvents||[]).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=14&&!isStream(e.src)&&!isEnding(e.title)&&!isBanner(e.title)).sort((a,b)=>a.days-b.days).forEach(e=>{const key=(e.title||'').toLowerCase().replace(/speculated|estimated|rumored|confirmed/g,'').replace(/[^a-z0-9]/g,'');if(seen.has(key))return;seen.add(key);rows.push({days:e.days,date:e.date,icon:gameSrc(e)?'🎮':'🌸',text:esc(e.title),src:e.src});});}catch(_){}
-  rows.sort((a,b)=>a.days-b.days);
-  return `<section class="panel">
-    <div class="card-head"><span class="label">📅 Coming up</span><button class="btn" data-act="tab" data-tab="calendar">calendar →</button></div>
-    ${rows.length?rows.slice(0,6).map(r=>`<div class="kn-row"><span style="font-size:15px;flex:none;line-height:1">${r.icon}</span><span class="grow" style="font-size:13px">${r.text}</span>${evTierChip(r.days,r.days===0,fmtDate(r.date))}</div>`).join(''):`<p class="soft" style="font-size:12.5px;margin:0">Nothing new in the next two weeks — enjoy the calm! ✨</p>`}
-  </section>`;
-}
+
 /* ===================== 🎉 EVENTS — dedicated page (never mixed with game updates) ===================== */
 function evTier(days,urgent){ if(urgent)return ["Urgent","tier-urgent"]; if(days<=0)return["Today","tier-today"]; if(days===1)return["Tomorrow","tier-tmrw"]; if(days<=7)return["This Week","tier-week"]; if(days<=30)return["This Month","tier-month"]; return["Later","tier-later"]; }
+
 function evTierChip(days,urgent,dateStr){ const T=evTier(days,urgent); return `<span class="pill ${T[1]}" style="flex:none">${T[0]}${dateStr?" • "+dateStr:""}</span>`; }
-function viewEvents(){
-  const evs=(state.sentinel.calendarEvents||[]).filter(e=>!gameSrc(e)).map(e=>({...e,days:daysBetween(TODAY,e.date)})).filter(e=>e.days>=0&&e.days<=180);
-  const sps=(state.sentinel.sponsors||[]).filter(s=>s.due).map(s=>({id:"sp"+s.id,title:"💼 "+(s.brand||s.name||"Sponsor")+" deliverable",date:s.due,days:daysBetween(TODAY,s.due),sponsor:true})).filter(s=>s.days>=-7&&s.days<=180);
-  const all=[...evs,...sps].sort((a,b)=>a.days-b.days);
-  const row=e=>{ const urgent=(e.sponsor&&e.days<=0)||(!!e.important&&e.days<=0);
-    return `<div class="listrow"><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,urgent,fmtDate(e.date))}</div>`; };
-  const groups=[["🌸 Today & tomorrow",e=>e.days<=1],["💙 This week",e=>e.days>1&&e.days<=7],["💜 This month",e=>e.days>7&&e.days<=30],["🩶 Later",e=>e.days>30]];
-  // ── birthdays, one month at a time — the list stays calm as the circle grows ──
-  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const curM=new Date(TODAY+"T00:00").getMonth()+1;
-  const selM=state.evBdayMonth||curM;
-  const monthBdays=(state.sentinel.birthdays||[]).filter(b=>Number(b.month)===selM)
-    .map(b=>({...b,...nextBirthdayInfo(b)})).sort((a,b)=>Number(a.day)-Number(b.day));
-  const bdayRows=monthBdays.length?monthBdays.map(b=>`<div class="agenda-row"><span class="agenda-when">${MONTHS[selM-1]} ${b.day}</span><span class="agenda-dot" style="background:var(--lav)"></span><span class="grow">🎂 ${esc(b.name)} <span class="soft" style="font-size:11px">· ${whenLabel(b.days)}</span></span><button class="x" data-act="delBirthday" data-v="${b.id}" title="remove">✕</button></div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:6px 0 0">No birthdays in ${MONTHS[selM-1]} yet — add one below. 🎂</p>`;
-  const monthChips=MONTHS.map((m,i)=>`<button class="chiptog ${selM===i+1?'on':''}" data-act="evBdayMonth" data-v="${i+1}">${m}${i+1===curM?' ·':''}</button>`).join("");
-  return `<div class="page">
-    <section class="panel"><div class="card-head"><h2 style="font-size:18px">🎉 Events &amp; birthdays</h2></div>
-      <p class="soft" style="font-size:12px;margin:0">Your one place for the people and plans that matter. Add events by tapping a day on the 📅 Calendar; birthdays live right here. 🌸</p>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-        <span class="pill tier-today">Today</span><span class="pill tier-tmrw">Tomorrow</span><span class="pill tier-week">This Week</span><span class="pill tier-month">This Month</span><span class="pill tier-later">Later</span><span class="pill tier-urgent">Urgent — real deadlines only</span>
-      </div></section>
-    <section class="panel"><div class="card-head"><h2 style="font-size:17px">📌 Coming up</h2></div>
-      ${all.length?groups.map(([t,f])=>{const L2=all.filter(f); return L2.length?`<div class="label" style="margin:8px 0 4px">${t}</div>${L2.map(row).join("")}`:"";}).join(""):`<p class="soft" style="font-size:12.5px;margin:0">Nothing on the horizon — add a con, a collab, or a trip on the Calendar and it shows up here. ❄️</p>`}
-    </section>
-    <section class="panel">
-      <div class="card-head"><h2 style="font-size:17px">🎂 Birthdays</h2></div>
-      <p class="soft" style="font-size:12px;margin:0 0 8px">Pick a month to see just those people — the list stays calm as your circle grows. 💗</p>
-      <div class="chiprow" style="margin-bottom:10px">${monthChips}</div>
-      ${bdayRows}
-      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
-        <input class="inp" id="bdayName" placeholder="name" style="flex:1;min-width:90px">
-        <input class="inp" id="bdayDate" type="date" style="max-width:150px">
-        <button class="btn btn-grad" data-act="addBirthday">+ add</button>
-      </div>
-    </section>
-    ${cardEventPrep()}
-  </div>`;
-}
+
 /* toolbox keeps half-typed inputs across re-renders (same capture pattern as the script tab) */
 function tbCapture(){ if(!state.tb)state.tb={spice:3}; const g=id=>{const e=document.getElementById(id);return e?e.value:null;};
   const t=g("tbTask"); if(t!=null)state.tb.task=t; const f=g("tbFText"); if(f!=null)state.tb.fText=f;
   const tn=g("tbFTone"); if(tn!=null)state.tb.fTone=tn; const e2=g("tbETask"); if(e2!=null)state.tb.eTask=e2; const c=g("tbCText"); if(c!=null)state.tb.cText=c;
   const tt=g("tbTText"); if(tt!=null)state.tb.tText=tt; }
+
 /* shared store for event-prep + birthday-prep checklists (sentinel.eventPrep / sentinel.bdayPrep) */
 async function prepWrite(kind,key,fn){ const field=kind==="bday"?"bdayPrep":"eventPrep";
   await setSent(n=>{ const all={...(n[field]||{})}; const cur={items:[],...(all[key]||{})}; all[key]=fn({...cur,items:(cur.items||[]).slice()}); return {...n,[field]:all}; }); render(); }
-/* (the AI "daily briefing" card was replaced 2026-06-12 by the deterministic glance — per Mifu's notes,
-   every home observation must be explainable from check-ins and stored data; no generated guesses) */
-/* ===== Event prep assistant — never arrive unprepared (lives on the Events page) ===== */
-const PREP_TEMPLATE=["Hotel booked","Ticket booked","Travel booked","Merch ordered","Business cards ready"];
-function nextBigEvent(){
-  const evs=(state.sentinel.calendarEvents||[]).filter(e=>!gameSrc(e)).map(e=>({...e,days:daysBetween(TODAY,e.date)}))
-    .filter(e=>e.days>=0&&e.days<=180).sort((a,b)=>a.days-b.days);
-  const withList=evs.find(e=>((state.sentinel.eventPrep||{})[e.id]||{}).items&&(state.sentinel.eventPrep||{})[e.id].items.length);
-  return withList||evs.find(e=>e.days>=7)||evs[0]||null;
-}
-function cardEventPrep(){
-  const ev=nextBigEvent();
-  if(!ev) return `<section class="panel"><div class="label" style="margin-bottom:6px">🧳 Event prep</div><p class="soft" style="font-size:12px">No upcoming events to prep — when something lands on the calendar (a con, a collab, a trip), the checklist appears here. ❄️</p></section>`;
-  const prep=((state.sentinel.eventPrep||{})[ev.id])||{items:[]};
-  const items=prep.items||[];
-  const doneN=items.filter(i=>i.done).length;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🧳 ${esc(ev.title)}</span><span class="pill pill-lav">${ev.days===0?"today!":ev.days===1?"tomorrow":"in "+ev.days+"d"}</span></div>
-    ${items.length?`<div style="margin-bottom:6px">${items.map(i=>`<div class="listrow"><button class="x" data-act="prepToggle" data-kind="event" data-key="${esc(ev.id)}" data-v="${i.id}" style="font-size:16px;color:${i.done?'var(--mint,#2f9d79)':'var(--muted)'}">${i.done?'●':'○'}</button><span class="grow ${i.done?'soft':''}" style="font-size:12.5px;${i.done?'text-decoration:line-through':''}">${esc(i.text)}</span><button class="x" data-act="prepDel" data-kind="event" data-key="${esc(ev.id)}" data-v="${i.id}">✕</button></div>`).join("")}<p class="soft" style="font-size:10.5px;margin-top:4px">${doneN}/${items.length} sorted ✨</p></div>`
-      :`<p class="soft" style="font-size:12px;margin:0 0 6px">Nothing to forget yet — add what needs doing, or tap a suggestion:</p>`}
-    <div class="chiprow" style="margin-bottom:8px">${PREP_TEMPLATE.filter(t=>!items.some(i=>i.text===t)).map(t=>`<button class="chiptog" data-act="prepAddChip" data-kind="event" data-key="${esc(ev.id)}" data-t="${esc(t)}"><span>＋</span>${esc(t)}</button>`).join("")}</div>
-    <div style="display:flex;gap:6px"><input class="inp" id="prepInput_${esc(ev.id)}" placeholder="add a prep item…"><button class="btn" data-act="prepAdd" data-kind="event" data-key="${esc(ev.id)}">add</button></div>
-  </section>`;
-}
-/* ===== Birthday assistant — remember people without another system ===== */
-function cardBirthdayPrep(){
-  const bd=(state.sentinel.birthdays||[]).map(b=>({...b,...nextBirthdayInfo(b)})).sort((a,b)=>a.days-b.days)[0];
-  if(!bd||bd.days>30) return `<section class="panel"><div class="label" style="margin-bottom:6px">🎂 Birthday assistant</div><p class="soft" style="font-size:12px">${bd?`Next up: ${esc(bd.name)} in ${bd.days} days — I'll set this up closer to the date. ❄️`:"Add birthdays on the 🎉 Events tab and I'll help you remember the people who matter. 💗"}</p></section>`;
-  const key=bd.id+"-"+bd.date.slice(0,4);
-  const prep=((state.sentinel.bdayPrep||{})[key])||{items:[],skipped:false};
-  if(prep.skipped) return `<section class="panel"><div class="label" style="margin-bottom:6px">🎂 Birthday assistant</div><p class="soft" style="font-size:12px">${esc(bd.name)}'s birthday — skipped this year, no guilt. 💗</p></section>`;
-  const SUG=["Send a message","Buy a gift","Commission artwork"];
-  const items=prep.items||[];
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🎂 ${esc(bd.name)}'s birthday</span><span class="pill pill-sak">${bd.days===0?"today!":bd.days===1?"tomorrow":"in "+bd.days+"d"}</span></div>
-    ${items.length?`<div style="margin-bottom:6px">${items.map(i=>`<div class="listrow"><button class="x" data-act="prepToggle" data-kind="bday" data-key="${esc(key)}" data-v="${i.id}" style="font-size:16px;color:${i.done?'var(--mint,#2f9d79)':'var(--muted)'}">${i.done?'●':'○'}</button><span class="grow ${i.done?'soft':''}" style="font-size:12.5px;${i.done?'text-decoration:line-through':''}">${esc(i.text)}</span><button class="x" data-act="prepDel" data-kind="bday" data-key="${esc(key)}" data-v="${i.id}">✕</button></div>`).join("")}</div>`:""}
-    <div class="chiprow" style="margin-bottom:8px">${SUG.filter(t=>!items.some(i=>i.text===t)).map(t=>`<button class="chiptog" data-act="prepAddChip" data-kind="bday" data-key="${esc(key)}" data-t="${esc(t)}"><span>＋</span>${esc(t)}</button>`).join("")}<button class="chiptog" data-act="bdaySkip" data-key="${esc(key)}" title="totally allowed"><span>🌙</span>Skip this year</button></div>
-    <div style="display:flex;gap:6px"><input class="inp" id="prepInput_${esc(key)}" placeholder="add your own…"><button class="btn" data-act="prepAdd" data-kind="bday" data-key="${esc(key)}">add</button></div>
-  </section>`;
-}
+
 /* ===== Stream prep — a per-stream checklist that flips to off-stream work on non-stream days ===== */
 /* both lists are editable + saved on the sentinel; stream-prep checks live per-day on today.streamPrep,
    off-stream built-ins reuse the check-in system, and custom off-stream tasks live on today.offStreamX. */
@@ -1856,42 +1239,18 @@ const STREAM_PREP_DEFAULT=[
   {id:"youtube",em:"📺",text:"YouTube premiere / stream"},
   {id:"scene",em:"🎬",text:"Scene + overlays ready"},
 ];
+
 function streamPrepList(){ const l=state.sentinel.streamPrepList; return (Array.isArray(l)&&l.length)?l:STREAM_PREP_DEFAULT; }
-/* today's stream from the calendar/schedule (matches the weekday slot) */
-function todayStreamSlot(){ const wd=DOW_ORDER[(new Date().getDay()+6)%7];
-  const slots=slotsForDate(new Date(TODAY+"T00:00"))||[]; return slots.find(s=>s.day===wd&&(s.show||s.text))||null; }
+
 /* off-stream content work — 4 built-ins (wired to the check-in system) + her own custom tasks */
 const OFFSTREAM_WORK=[["emails","✉️","Reply to emails"],["sponsors","🤝","Work on sponsorships"],["coverSong","🎤","Cover-song progress"],["madeArt","🎨","Make art"]];
+
 function offStreamExtra(){ const l=state.sentinel.offStreamExtra; return Array.isArray(l)?l:[]; }
+
 function offStreamAllDone(){ const x=state.today.offStreamX||{}; return OFFSTREAM_WORK.every(w=>ciOn(w[0])) && offStreamExtra().every(e=>x[e.id]); }
+
 function streamPrepAllDone(){ const c=state.today.streamPrep||{}; return streamPrepList().every(p=>c[p.id]); }
-function cardContentOps(){
-  const slot=todayStreamSlot(), ed=!!state.spEdit;
-  if(slot){
-    const show=slot.show||slot.text||"Stream"; const list=streamPrepList(); const checks=state.today.streamPrep||{};
-    const done=list.filter(p=>checks[p.id]).length, total=list.length, pct=total?Math.round(done/total*100):0;
-    return `<section class="panel">
-      <div class="card-head"><span class="label">🎬 Stream prep</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span><button class="btn" data-act="spEdit">${ed?'done':'edit'}</button></span></div>
-      <div style="font-size:14px;margin-bottom:2px"><b>${esc(show)}</b> <span class="soft">· stream today${slot.time?" · "+esc(slot.time):""}</span></div>
-      <p class="soft" style="font-size:11.5px;margin:0 0 8px">Let's get ready — tap each as you go 💜</p>
-      <div class="ck-prog"><span style="width:${pct}%"></span></div>
-      <div class="gt-list">${list.map(p=>`<button class="ck-row" data-act="streamPrepToggle" data-k="${p.id}"><span class="ck-box ${checks[p.id]?'on':''}">${checks[p.id]?'✓':''}</span><span class="ck-icon">${p.em||'📝'}</span><span class="ck-name ${checks[p.id]?'ck-donetxt':''}">${esc(p.text)}</span>${ed?`<span class="ck-del" data-act="delStreamPrep" data-v="${p.id}" title="remove">✕</span>`:''}</button>`).join("")}</div>
-      ${ed?`<div class="gt-add"><input class="inp" id="spInput" placeholder="add a prep step…" value="${esc(state.spDraft||'')}"><button class="btn btn-grad" data-act="addStreamPrep">add</button></div>`:''}
-    </section>`;
-  }
-  // not a stream day → off-stream content work (built-ins + custom)
-  const extra=offStreamExtra(), xchecks=state.today.offStreamX||{};
-  const total=OFFSTREAM_WORK.length+extra.length;
-  const done=OFFSTREAM_WORK.filter(w=>ciOn(w[0])).length + extra.filter(e=>xchecks[e.id]).length;
-  const pct=total?Math.round(done/total*100):0;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🌙 Off-stream prep</span><span style="display:flex;gap:6px;align-items:center"><span class="pill ${done===total&&total?'pill-mint':'pill-gray'}">${done}/${total}${done===total&&total?' ✦':''}</span><button class="btn" data-act="spEdit">${ed?'done':'edit'}</button></span></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">No stream today — a calm day for the behind-the-scenes work. 🌸</p>
-    <div class="ck-prog"><span style="width:${pct}%"></span></div>
-    <div class="gt-list">${OFFSTREAM_WORK.map(([k,em,l])=>`<button class="ck-row" data-act="ciToggle" data-k="${k}"><span class="ck-box ${ciOn(k)?'on':''}">${ciOn(k)?'✓':''}</span><span class="ck-icon">${em}</span><span class="ck-name ${ciOn(k)?'ck-donetxt':''}">${esc(l)}</span></button>`).join("")}${extra.map(e=>`<button class="ck-row" data-act="offStreamXToggle" data-k="${e.id}"><span class="ck-box ${xchecks[e.id]?'on':''}">${xchecks[e.id]?'✓':''}</span><span class="ck-icon">📝</span><span class="ck-name ${xchecks[e.id]?'ck-donetxt':''}">${esc(e.text)}</span>${ed?`<span class="ck-del" data-act="delOffStream" data-v="${e.id}" title="remove">✕</span>`:''}</button>`).join("")}</div>
-    ${ed?`<div class="gt-add"><input class="inp" id="osInput" placeholder="add an off-stream task…" value="${esc(state.osDraft||'')}"><button class="btn btn-grad" data-act="addOffStream">add</button></div>`:''}
-  </section>`;
-}
+
 /* celebration popper — confetti bursts OUTWARD from the finished card (like a party popper / firework),
    peaks, then falls with gravity. Pass the card element so it pops right where you tapped. Respects Calm. */
 function popConfetti(anchor){
@@ -1917,6 +1276,7 @@ function popConfetti(anchor){
   }catch(e){}
 }
 
+
 /* ===================== 🎨 ART STUDIO — full creative suite (ported from Eggie OS 2026-06-12) =====================
    16 cards: permission slip · challenges · draw-this prompt · art minutes · practice timer (+focus mode) ·
    100-of-anything · ideas dump · inspiration vault · emote previewer · value checker · palette & ramps ·
@@ -1926,9 +1286,13 @@ const ART_SUBJECTS=[
   "your OC at a summer festival (yukata)","your OC as a magical girl","your OC in their dream outfit","your OC in the clothes you're wearing right now","your OC as a flower fairy","your OC with wings","your OC in a Ghibli-esque style","your OC's most powerful moment","your OC on a rainy day in their world","your OC meeting their rival","your OC as a mecha pilot","your OC mid-laugh, a genuine smile","your OC half-asleep / just woke up","your OC bundled up for winter","your OC's villain alt / dark version","your OC as royalty","your OC as a café maid / butler","your OC and their pet or familiar","your OC taking a selfie","your OC in an idol stage outfit","your OC caught in the rain","your OC as a vampire / monster cutie","your OC at a school festival","your OC in a battle stance","your OC giving a shy confession","your OC in a cozy oversized hoodie","your OC as a fellow VTuber's design (fanart)","your OC reimagined in another art style",
   "your VTuber OC, half-body bust, ¾ view","a chibi version of your OC","an emote concept (pog / happy / crying)","an expression sheet, 5 emotions","a key-visual splash of your OC","a 'currently streaming' screen illustration","a detailed anime eye study","your OC's hairstyle explored 3 ways"
 ];
+
 const ART_MOODS=["soft anime cel-shading","golden-hour rim light","neon cyberpunk glow","dreamy pastel gradient","moody dramatic backlight","sakura petals & bloom","cozy warm indoor light","ethereal cool blues","high-contrast manga inks","vaporwave sunset"];
+
 const ART_CONSTRAINTS=["cel-shade with 2 light values","limited 3-colour palette","clean, finished lineart","one accent colour only","push the expression further","fully render the eyes","try foreshortening","background gradient + bloom","post it even if unfinished","30-minute speedpaint"];
+
 const ART_GESTURES=["anime ¾ face","expressive anime eyes","dynamic action pose","hands holding a prop","idol / performance pose","cozy seated pose","hair-flow study","chibi proportions","dramatic foreshortening","two characters interacting","clothing-fold study","confident hero pose"];
+
 const ART_REFRAMES=[
   "Art isn't a detour from your work — it's the well your work draws from. A dry well makes nothing. 🌊",
   "You're allowed to make things that only matter to you. That's not wasted time, that's being a person. 💗",
@@ -1939,8 +1303,11 @@ const ART_REFRAMES=[
   "Your worth isn't an output. You're allowed to make art for absolutely no reason. ✨",
   "The pressure to be 'productive' is what's stealing your art — not the art stealing your productivity. 🌙"
 ];
+
 const ART_DAILY=["warm up with 5 expression doodles","a quick chibi of your OC","one detailed anime eye study","redraw an old piece of your OC art","30-min colour study from an anime screencap","design one new emote","ink one clean character","draw your OC's hairstyle 3 ways","a half-body bust, sketch only","gesture 5 poses, 30s each"];
+
 const ART_WEEKLY=["finish one polished half-body illustration of your OC","design a post-ready emote","a master study of an artist you admire","render your OC in a brand-new outfit","build an expression sheet you can reuse","make a key-visual splash to post","draw fanart of a VTuber you like","learn + apply one new rendering technique"];
+
 const DEFAULT_ART_RES=[
   {id:"r1",title:"Line of Action — gesture / figure timer",url:"https://line-of-action.com/practice-tools/",tag:"reference"},
   {id:"r2",title:"Coolors — palette generator",url:"https://coolors.co/",tag:"colour"},
@@ -1950,6 +1317,7 @@ const DEFAULT_ART_RES=[
   {id:"r6",title:"17 digital drawing exercises (Don Corgi)",url:"https://doncorgi.com/blog/digital-drawing-exercises/",tag:"learn"},
   {id:"r7",title:"Color theory for digital artists (Clip Studio)",url:"https://www.clipstudio.net/how-to-draw/archives/161372",tag:"learn"}
 ];
+
 /* research pack — added via the one-tap button (never force-merged, so deletes stick) */
 const ART_PACK=[
   {title:"AdorkaStock — photo poses (CC, diverse, SFW)",url:"https://www.adorkastock.com",tag:"reference"},
@@ -1967,101 +1335,23 @@ const ART_PACK=[
   {title:"Coblis — colour-blindness check for emotes/thumbs",url:"https://www.color-blindness.com/coblis-color-blindness-simulator/",tag:"colour"},
   {title:"PureRef — floating reference board (pay-what-you-want)",url:"https://www.pureref.com",tag:"other"},
 ];
-/* Live2D cut-prep rules, from Live2D's official docs (one part = one layer etc.) */
-const LIVE2D_ITEMS=[
-  ["onepart","one part = one layer (no merged bits)"],["nomask","no layer masks — bake them in"],["srgb","sRGB · 8-bit · PSD"],
-  ["hair","hair split: bangs / sides / back"],["eyes","eyes split: lash / iris / white-as-mask"],["mouth","mouth split: upper lip / lower lip / inside"],
-  ["overdraw","overdraw hidden skin under hair & clothes"],["neck","neck drawn up to mouth height"],["sway","swayable bits (ribbons, tails) on own layers"],["names","every layer uniquely named"],
-];
-/* spec cheat sheet (verified against official docs 2026-06-10) */
-const ART_SPECS=[
-  ["Twitch emote","PNG transparent · 28/56/112px · ≤1MB (animated: GIF 112px ≤60 frames)"],
-  ["Twitch sub badge","18/36/72px · ≤25KB each"],
-  ["Twitch panel","320px wide"],
-  ["Discord emoji","≤256KB · renders 22px inline (48px on hover)"],
-  ["Discord sticker","exactly 320×320 APNG · ≤512KB"],
-  ["Discord banner","960×540 or larger (Boost L2)"],
-  ["YouTube thumbnail","3840×2160 official rec (16:9) · ≤50MB — must read at 160×90; avoid bottom-right (duration badge) + bottom 15%"],
-];
+
 function aid(p){ return (p||"a")+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
 function artRand(a){ return a[Math.floor(Math.random()*a.length)]; }
+
 function seedPick(list,seed){ let h=0; for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))>>>0; return list[h%list.length]; }
+
 function artMonday(d){ const dt=new Date(d+"T00:00"); const off=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-off); return dt.toLocaleDateString("en-CA"); }
+
 function fmtClock(s){ s=Math.max(0,s); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
-/* colour maths — no libraries */
-function hex2hsl(hex){ hex=(hex||"#ff9ed8").replace("#",""); if(hex.length===3)hex=hex.split("").map(c=>c+c).join(""); const r=parseInt(hex.slice(0,2),16)/255,g=parseInt(hex.slice(2,4),16)/255,b=parseInt(hex.slice(4,6),16)/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h,s,l=(mx+mn)/2; if(mx===mn){h=s=0;}else{const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;} h/=6;} return {h:h*360,s:s*100,l:l*100}; }
+
 function hsl2hex(h,s,l){ h=(h%360+360)%360; s=Math.max(0,Math.min(100,s))/100; l=Math.max(0,Math.min(100,l))/100; const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2; let r,g,b; if(h<60){r=c;g=x;b=0;}else if(h<120){r=x;g=c;b=0;}else if(h<180){r=0;g=c;b=x;}else if(h<240){r=0;g=x;b=c;}else if(h<300){r=x;g=0;b=c;}else{r=c;g=0;b=x;} const t=v=>("0"+Math.round((v+m)*255).toString(16)).slice(-2); return "#"+t(r)+t(g)+t(b); }
-function genPalette(base,scheme){ const {h,s,l}=hex2hsl(base); const mk=(dh,dl,ds)=>hsl2hex(h+dh,s+(ds||0),Math.max(10,Math.min(94,l+(dl||0))));
-  switch(scheme){
-    case "complementary": return [mk(0,20),mk(0,4),mk(0,-12),mk(180,8),mk(180,-12)];
-    case "triadic": return [mk(0,0),mk(120,6),mk(240,6),mk(120,-18),mk(0,20)];
-    case "split": return [mk(0,4),mk(0,20),mk(150,2),mk(210,2),mk(180,-14)];
-    case "tetradic": return [mk(0,2),mk(90,4),mk(180,2),mk(270,4),mk(0,22)];
-    case "mono": return [mk(0,30),mk(0,15),mk(0,0),mk(0,-15),mk(0,-30)];
-    default: return [mk(-60,6),mk(-30,3),mk(0,0),mk(30,3),mk(60,6)]; // analogous
-  }
-}
+
 function randHex(){ return hsl2hex(Math.random()*360, 42+Math.random()*42, 44+Math.random()*26); }
-/* value ramp + cel-shade pair from a base colour (pure HSL math) */
-function genRamp(hex){ const {h,s}=hex2hsl(hex); const out=[]; for(let i=0;i<7;i++){ const li=88-i*11; out.push(hsl2hex(h,Math.min(95,s+(i>3?6:0)),Math.max(10,li))); } return out; }
-function celPair(hex){ const {h,s,l}=hex2hsl(hex); return [hsl2hex(h,s,l), hsl2hex((h+330)%360,Math.min(95,s+12),Math.max(8,l-22))]; }
-/* notan/value checker: grayscale + posterize the uploaded image onto the canvas */
-function artNotanPaint(){
-  const A=state.art||{}; const n=A.notan; const cv=document.getElementById("notanCv"); if(!n||!cv)return;
-  const steps=Math.max(2,Math.min(6,A.notanSteps||3));
-  const im=new Image();
-  im.onload=()=>{ try{
-    const k=Math.min(1,560/Math.max(im.width||1,im.height||1)); cv.width=Math.max(1,Math.round(im.width*k)); cv.height=Math.max(1,Math.round(im.height*k));
-    const ctx=cv.getContext("2d"); ctx.drawImage(im,0,0,cv.width,cv.height);
-    const d=ctx.getImageData(0,0,cv.width,cv.height), p=d.data;
-    for(let i=0;i<p.length;i+=4){ const g=0.2126*p[i]+0.7152*p[i+1]+0.0722*p[i+2]; const q=Math.round(Math.round((g/255)*(steps-1))/(steps-1)*255); p[i]=p[i+1]=p[i+2]=q; }
-    ctx.putImageData(d,0,0);
-  }catch(e){} };
-  im.src=n.data;
-}
-/* clip an infinite line (point + direction) to the WxH box → two edge points */
-function clipSeg(px,py,vx,vy,W,H){ const ts=[]; const E=0.001;
-  if(Math.abs(vx)>E){ let t=(0-px)/vx,y=py+t*vy; if(y>=-E&&y<=H+E)ts.push([0,y]); t=(W-px)/vx; y=py+t*vy; if(y>=-E&&y<=H+E)ts.push([W,y]); }
-  if(Math.abs(vy)>E){ let t=(0-py)/vy,x=px+t*vx; if(x>=-E&&x<=W+E)ts.push([x,0]); t=(H-py)/vy; x=px+t*vx; if(x>=-E&&x<=W+E)ts.push([x,H]); }
-  return ts.slice(0,2);
-}
-function goldenSpiralPath(w,h){
-  const k=Math.log(1.6180339887)/(Math.PI/2); const thetaMax=4*Math.PI/2, steps=260, pts=[];
-  for(let i=0;i<=steps;i++){ const th=(i/steps)*thetaMax; const r=Math.exp(k*th); pts.push([r*Math.cos(th), r*Math.sin(th)]); }
-  let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9; pts.forEach(p=>{mnx=Math.min(mnx,p[0]);mny=Math.min(mny,p[1]);mxx=Math.max(mxx,p[0]);mxy=Math.max(mxy,p[1]);});
-  const sw=mxx-mnx, sh=mxy-mny, sc=Math.min(w/sw,h/sh)*0.98, ox=(w-sw*sc)/2-mnx*sc, oy=(h-sh*sc)/2-mny*sc;
-  return "M "+pts.map(p=>(p[0]*sc+ox).toFixed(1)+" "+(p[1]*sc+oy).toFixed(1)).join(" L ");
-}
-/* unified drawing-guide / composition-overlay SVG. type: thirds, phi, spiral, armature, radial, iso, persp1/2/3 */
-function artGuideSVG(type,W,H,opt){
-  opt=opt||{}; const sk='stroke="#a9b4d8" stroke-width="1.1"', sk2='stroke="#d5dbee" stroke-width="1"', accent='stroke="#ec74bf" stroke-width="1.6"'; let L="";
-  const phi1=0.381966, phi2=0.618034;
-  if(type==="thirds"){ [W/3,2*W/3].forEach(x=>L+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" ${sk}/>`); [H/3,2*H/3].forEach(y=>L+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" ${sk}/>`); }
-  else if(type==="phi"){ [phi1*W,phi2*W].forEach(x=>L+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" ${sk}/>`); [phi1*H,phi2*H].forEach(y=>L+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" ${sk}/>`); }
-  else if(type==="spiral"){ const o=opt.orient||0, fx=(o===1||o===3)?-1:1, fy=(o===2||o===3)?-1:1; const tx=fx<0?W:0, ty=fy<0?H:0; L+=`<rect x="0" y="0" width="${W}" height="${H}" fill="none" ${sk2}/><g transform="translate(${tx} ${ty}) scale(${fx} ${fy})"><path d="${goldenSpiralPath(W,H)}" fill="none" ${accent}/></g>`; [phi1*W,phi2*W].forEach(x=>L+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" ${sk2}/>`); [phi1*H,phi2*H].forEach(y=>L+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" ${sk2}/>`); }
-  else if(type==="armature"){ L+=`<line x1="0" y1="0" x2="${W}" y2="${H}" ${sk}/><line x1="${W}" y1="0" x2="0" y2="${H}" ${sk}/>`;
-    const recip=(qx,qy,dx,dy)=>{ const v=[dy,-dx]; const s=clipSeg(qx,qy,v[0],v[1],W,H); if(s.length===2)L+=`<line x1="${s[0][0].toFixed(1)}" y1="${s[0][1].toFixed(1)}" x2="${s[1][0].toFixed(1)}" y2="${s[1][1].toFixed(1)}" ${sk2}/>`; };
-    recip(W,0,W,H); recip(0,H,W,H); recip(0,0,-W,H); recip(W,H,-W,H);
-    L+=`<line x1="${W/2}" y1="0" x2="${W/2}" y2="${H}" ${sk2}/><line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" ${sk2}/>`; }
-  else if(type==="radial"){ const n=Math.max(4,Math.min(24,opt.spokes||12)), cx=W/2, cy=H/2; for(let i=0;i<n;i++){ const a=(i/n)*Math.PI*2, s=clipSeg(cx,cy,Math.cos(a),Math.sin(a),W,H); if(s.length===2)L+=`<line x1="${s[0][0].toFixed(1)}" y1="${s[0][1].toFixed(1)}" x2="${s[1][0].toFixed(1)}" y2="${s[1][1].toFixed(1)}" ${i%((n/4)|0||1)===0?sk:sk2}/>`; } const rr=Math.min(W,H)/2; for(let j=1;j<=3;j++)L+=`<circle cx="${cx}" cy="${cy}" r="${(rr/3)*j}" fill="none" ${sk2}/>`; L+=`<line x1="${cx}" y1="0" x2="${cx}" y2="${H}" ${accent}/><line x1="0" y1="${cy}" x2="${W}" y2="${cy}" ${accent}/>`; }
-  else if(type==="iso"){ const g=opt.gap||38, dx=H/Math.tan(Math.PI/6);
-    for(let x=-Math.ceil(dx/g)*g;x<=W+dx;x+=g){ L+=`<line x1="${x}" y1="0" x2="${x+dx}" y2="${H}" ${sk2}/>`; L+=`<line x1="${x+dx}" y1="0" x2="${x}" y2="${H}" ${sk2}/>`; }
-    for(let x=0;x<=W;x+=g)L+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#e3e8f5" stroke-width="1"/>`; }
-  else if(type==="persp1"||type==="persp2"||type==="persp3"){ const hy=H*0.5,vx=W/2;
-    if(type==="persp1"){ for(let i=0;i<=24;i++){ const x=(W/24)*i; L+=`<line x1="${x}" y1="0" x2="${vx}" y2="${hy}" ${sk2}/><line x1="${x}" y1="${H}" x2="${vx}" y2="${hy}" ${sk2}/>`; } }
-    else if(type==="persp2"){ const v1=-W*0.45,v2=W*1.45; for(let i=-8;i<=32;i++){ const y=(H/24)*i; L+=`<line x1="${v1}" y1="${hy}" x2="${W}" y2="${y}" ${sk2}/><line x1="${v2}" y1="${hy}" x2="0" y2="${y}" ${sk2}/>`; } for(let i=2;i<=22;i+=2){ const x=(W/24)*i; L+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#e3e8f5" stroke-width="1"/>`; } }
-    else { const v1=-W*0.35,v2=W*1.35,v3y=H*1.7; for(let i=-6;i<=28;i++){ const y=(H/22)*i; L+=`<line x1="${v1}" y1="${hy}" x2="${W}" y2="${y}" ${sk2}/><line x1="${v2}" y1="${hy}" x2="0" y2="${y}" ${sk2}/>`; } for(let i=0;i<=24;i++){ const x=(W/24)*i; L+=`<line x1="${x}" y1="0" x2="${vx}" y2="${v3y}" ${sk2}/>`; } }
-    L+=`<line x1="0" y1="${hy}" x2="${W}" y2="${hy}" ${accent} stroke-dasharray="7 5"/>`; }
-  return `<svg id="artGridSvg" viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style="display:block;background:#fff;max-height:420px;margin:0 auto">${L}<rect x="0.5" y="0.5" width="${W-1}" height="${H-1}" fill="none" stroke="#cdd5ea" stroke-width="1"/></svg>`;
-}
-/* mood-board cards */
-function mbCardHTML(c){
-  const pos=`left:${c.x||0}px;top:${c.y||0}px;width:${c.w||160}px;height:${c.h||160}px`;
-  if(c.type==="img") return `<div class="mb-card img" data-mb="${c.id}" style="${pos};background-image:url('${esc(c.url)}')"><button class="mb-x" data-act="mbDel" data-id="${c.id}">×</button><span class="mb-rz" data-mbrz="${c.id}">◢</span></div>`;
-  if(c.type==="note") return `<div class="mb-card note" data-mb="${c.id}" style="${pos}"><button class="mb-x" data-act="mbDel" data-id="${c.id}">×</button><textarea data-mbnote="${c.id}" placeholder="jot a note…">${esc(c.text||"")}</textarea><span class="mb-rz" data-mbrz="${c.id}">◢</span></div>`;
-  return `<div class="mb-card swatch" data-mb="${c.id}" style="${pos};background:${esc(c.color||"#ff9ed8")}"><button class="mb-x" data-act="mbDel" data-id="${c.id}">×</button><span class="mb-hex" data-act="copyHex" data-t="${esc(c.color||"")}">${esc(c.color||"")}</span><span class="mb-rz" data-mbrz="${c.id}">◢</span></div>`;
-}
+
 async function mbUpdate(id,patch){ await setSent(n=>({...n,artBoard:(n.artBoard||[]).map(c=>c.id===id?{...c,...patch}:c)})); }
+
 /* uploaded photos → downscaled data-URL so they persist in the DB and always export to PNG (no CORS) */
 function mbFileToDataURL(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
   img.onload=()=>{ const MAX=900; let w=img.width,h=img.height; if(Math.max(w,h)>MAX){ const s=MAX/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
@@ -2069,7 +1359,9 @@ function mbFileToDataURL(file){ return new Promise((res,rej)=>{ const img=new Im
     const png=(file.type==="image/png"); res({url:cv.toDataURL(png?"image/png":"image/jpeg",0.82), ar:w/h}); };
   img.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error("couldn't read image")); };
   img.src=u; }); }
+
 function mbWrapText(ctx,text,x,y,maxW,lh){ let yy=y; String(text).split("\n").forEach(para=>{ const words=para.split(/\s+/); let line=""; words.forEach(w=>{ const test=line?line+" "+w:w; if(ctx.measureText(test).width>maxW && line){ ctx.fillText(line,x,yy); line=w; yy+=lh; } else line=test; }); ctx.fillText(line,x,yy); yy+=lh; }); }
+
 /* rasterise the freeform mood board to a PNG (for importing into Clip Studio etc.). CORS-blocked
    images can't be read back by the browser, so those become placeholder boxes — layout is preserved. */
 async function exportMoodBoardPNG(){
@@ -2095,6 +1387,7 @@ async function exportMoodBoardPNG(){
   try{ cv.toBlob(b=>{ if(!b){ toast("Couldn't make the PNG 🌸"); return; } const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download="mood-board.png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),1500); toast(failed?("Saved 🎨 — "+failed+" image"+(failed>1?"s":"")+" couldn't embed (that site blocks it)"):"Mood board saved as PNG 🎨"); },"image/png"); }
   catch(err){ toast("Some images block PNG export — try CORS-friendly image links 🌸"); }
 }
+
 /* challenges refresh daily/weekly by DERIVING from the date — no render-time write */
 function artChallengeState(sent){
   const ch=sent.artChallenge||{}; const wk=artMonday(TODAY);
@@ -2106,250 +1399,30 @@ function artChallengeState(sent){
     weekDone:ch.weekDoneWk===wk
   };
 }
+
 /* practice timer — global interval so it survives re-renders; updates the DOM by id */
 let _artInt=null;
+
 function artPickGesture(){ return ART_GESTURES[Math.floor(Math.random()*ART_GESTURES.length)]; }
+
 function artTimerStart(){ if(!state.art)state.art={}; const t=state.art.timer=state.art.timer||{len:60,round:0,left:60}; t.on=true; t.left=t.len; t.round=(t.round||0)+1; t.elapsed=0; t.subject=artPickGesture(); state.art.pendingLog=null; if(_artInt)clearInterval(_artInt); _artInt=setInterval(artTick,1000); render(); }
-function artTimerStop(){ const t=state.art&&state.art.timer; if(t){ t.on=false; if((t.elapsed||0)>=60) state.art.pendingLog=Math.round(t.elapsed/60); t.elapsed=0; } if(_artInt){clearInterval(_artInt);_artInt=null;} render(); }   /* stopping offers to log the minutes — practice counts */
+
+function artTimerStop(){ const t=state.art&&state.art.timer; if(t){ t.on=false; if((t.elapsed||0)>=60) state.art.pendingLog=Math.round(t.elapsed/60); t.elapsed=0; } if(_artInt){clearInterval(_artInt);_artInt=null;} render(); }
+   /* stopping offers to log the minutes — practice counts */
 function artTimerSkip(){ const t=state.art&&state.art.timer; if(!t||!t.on)return; t.left=t.len; t.round=(t.round||0)+1; t.subject=artPickGesture(); artPaint(); }
+
 function artPaint(){ const t=state.art&&state.art.timer; if(!t)return; const d=document.getElementById("artTimerDisp"); if(d)d.textContent=fmtClock(t.left); const s=document.getElementById("artTimerSub"); if(s)s.textContent=t.subject||""; const r=document.getElementById("artTimerRound"); if(r)r.textContent="round "+t.round; }
+
 function artTick(){ const t=state.art&&state.art.timer; if(!t||!t.on||state.tab!=="art"){ if(_artInt){clearInterval(_artInt);_artInt=null;} if(t&&t.on){ t.on=false; if((t.elapsed||0)>=60)state.art.pendingLog=Math.round(t.elapsed/60); t.elapsed=0; } return; } t.elapsed=(t.elapsed||0)+1; t.left--; if(t.left<0){ t.round++; t.left=t.len-1; t.subject=artPickGesture(); const w=document.getElementById("artStage"); if(w){ w.style.background="#fdeaf6"; setTimeout(()=>{ w.style.background=""; },450); } } artPaint(); }
-function viewArt(){
-  const sent=state.sentinel||{};
-  if(!state.art)state.art={};
-  const A=state.art;
-  const log=sent.artLog||[];
-  const wk=artMonday(TODAY);
-  const ch=artChallengeState(sent);
-  // minutes this week + sparkline (old entries without min still count as a made-art day)
-  const weekMin=log.filter(e=>e.date>=wk).reduce((a,e)=>a+Number(e.min||0),0);
-  const weekDays=new Set(log.filter(e=>e.date>=wk&&(e.min==null||Number(e.min)>0)).map(e=>e.date)).size;
-  const days14=[]; for(let i=13;i>=0;i--){ const d=new Date(TODAY+"T00:00"); d.setDate(d.getDate()-i); const ds=d.toLocaleDateString("en-CA"); days14.push(log.filter(e=>e.date===ds).reduce((a,e)=>a+Number(e.min||0),0)); }
-  const maxd=Math.max(30,...days14);
-  const spark=`<div style="display:flex;align-items:flex-end;gap:3px;height:34px">${days14.map(v=>`<span style="flex:1;border-radius:3px;background:linear-gradient(180deg,var(--sakura),var(--peri));height:${v?Math.max(3,(v/maxd)*32):2}px;opacity:${v?1:.3}" title="${v} min"></span>`).join("")}</div>`;
-  const reframe=A.reframe||seedPick(ART_REFRAMES,TODAY);
-  const P=A.prompt||(A.prompt={subject:artRand(ART_SUBJECTS),mood:artRand(ART_MOODS),constraint:artRand(ART_CONSTRAINTS)});
-  const pBase=A.pBase||"#ff9ed8", pScheme=A.pScheme||"analogous", pal=genPalette(pBase,pScheme);
-  const SCHEMES=[["analogous","Analogous"],["complementary","Complement"],["triadic","Triadic"],["split","Split"],["tetradic","Tetradic"],["mono","Monochrome"]];
-  const sw=arr=>`<div class="art-sw">${arr.map(c=>`<button style="background:${c}" data-act="copyHex" data-t="${c}">${c}</button>`).join("")}</div>`;
-  const t=A.timer||{len:60,round:0,left:60}; const tLen=t.len||60;
-  const lenSeg=[[30,"30s"],[60,"1m"],[120,"2m"],[300,"5m"]].map(([v,l])=>`<button data-act="artTimerLen" data-v="${v}" class="${tLen===v?'on':''}" ${t.on?'disabled':''}>${l}</button>`).join("");
-  const GUIDES=[["thirds","Rule of thirds"],["phi","Phi grid · golden"],["spiral","Golden spiral 🐚"],["armature","Dynamic symmetry"],["radial","Radial / mirror"],["iso","Isometric"],["persp1","1-pt perspective"],["persp2","2-pt perspective"],["persp3","3-pt perspective"]];
-  const GHINT={thirds:"subject on the lines, interest at the crossings",phi:"like thirds but at the golden ratio — gentler, more natural",spiral:"lead the eye along the curl; the tightest curl is your focal point 🐚",armature:"classical 'sacred geometry' — place subjects on the diagonals & their crossings",radial:"for mandalas & symmetry — pink lines are your mirror axes",iso:"true isometric grid for pixel art, rooms & objects",persp1:"one vanishing point — hallways, roads, head-on rooms",persp2:"two vanishing points — corners of buildings & objects",persp3:"three points — dramatic up/down hero shots"};
-  const RATIOS=[["3:2",900,600],["1:1",720,720],["4:5",600,750],["16:9",960,540],["9:16",506,900]];
-  const gType=A.gType||"thirds", gRatio=A.gRatio||"3:2", rd=RATIOS.find(r=>r[0]===gRatio)||RATIOS[0], GW=rd[1], GH=rd[2], gOrient=A.gOrient||0, gSpokes=A.gSpokes||12;
-  const board=sent.artBoard||[], boardMax=!!A.boardMax;
-  const boardCtrls=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-      <input class="inp" id="mbImgUrl" placeholder="paste an image URL…" style="flex:1;min-width:140px"/>
-      <button class="btn btn-grad" data-act="mbAddImage">🖼️ image</button>
-      <input type="file" id="mbFile" accept="image/*" multiple style="display:none"/>
-      <button class="btn" data-act="mbUpload">⤒ upload</button>
-      <button class="btn" data-act="mbAddNote">📝 note</button>
-      <button class="btn" data-act="mbAddColor">🎨 colour</button>
-      <button class="btn" data-act="mbExport">⤓ PNG</button>
-      <button class="btn" data-act="mbMax">${boardMax?'⤡ minimize':'⤢ expand'}</button></div>`;
-  const boardInner=`<div class="mb-board ${boardMax?'max':''}" id="moodBoard">${board.length?board.map(mbCardHTML).join(""):`<div class="label" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;opacity:.65;width:80%">your canvas is empty ❄️<br>add an image, note, or colour below — then drag things anywhere</div>`}</div>`;
-  const res=sent.artResources||DEFAULT_ART_RES;
-  const resTags={reference:"🧍",colour:"🎨",perspective:"📐",learn:"📚",other:"🔗"};
-  const pendingChip=A.pendingLog?`<div style="margin-top:10px;text-align:center"><button class="btn btn-grad" data-act="artLogQuick" data-m="${A.pendingLog}">🎨 log those ${A.pendingLog} min — they count!</button> <button class="ft-ic" data-act="artLogDismiss" title="skip logging">✕</button></div>`:"";
-  /* art focus mode — enter play, see ONLY play (timer + prompt + log). Everything else waits. */
-  if(A.focus){
-    return `<div style="max-width:560px;margin:4vh auto;display:flex;flex-direction:column;gap:14px;text-align:center">
-      <div class="label">🎨 art focus · just you and the page</div>
-      <div class="panel" style="background:linear-gradient(135deg,#fdf0fb,#eef2fb)"><div class="art-prompt" style="background:none;border:none;padding:0;font-size:15px">${esc(reframe)}</div></div>
-      <div class="panel"><div class="art-prompt">Draw <b>${esc(P.subject)}</b><br><span style="font-size:14px;color:var(--lav-deep)">${esc(P.mood)} · ${esc(P.constraint)}</span></div>
-        <button class="btn" data-act="artPromptRoll" style="margin-top:10px">🎲 different prompt</button></div>
-      <div class="panel">
-        <div id="artStage" style="border-radius:14px;padding:16px;transition:background .6s">
-          <div class="art-tim" id="artTimerDisp">${fmtClock(t.left??tLen)}</div>
-          <div style="font-family:var(--display);font-size:16px;color:var(--sakura-deep);min-height:22px" id="artTimerSub">${t.on?esc(t.subject||""):"press start to begin"}</div>
-          <div class="label" id="artTimerRound">${t.on?("round "+t.round):"&nbsp;"}</div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap">
-          <div class="seg">${lenSeg}</div>
-          ${t.on?`<button class="btn btn-grad" data-act="artTimerStop">⏹ stop</button><button class="btn" data-act="artTimerSkip">⏭ next pose</button>`:`<button class="btn btn-grad" data-act="artTimerStart">▶ start</button>`}
-        </div>
-        ${pendingChip}
-      </div>
-      <div><button class="btn" data-act="artFocusExit">← back to the full studio</button></div>
-    </div>`;
-  }
-  /* expanded mood board keeps its own full-screen stage */
-  if(boardMax) return `<div class="mb-full"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-size:17px;font-family:var(--display);flex:1">🖼️ Mood board</h2></div>${boardCtrls}<div style="flex:1;min-height:0;display:flex">${boardInner}</div></div>`;
-  /* === the 16 cards === */
-  const heroCard=`<section class="panel art-span2" style="background:linear-gradient(135deg,#fdf0fb,#eef2fb)">
-      <div class="art-prompt" style="background:none;border:none;padding:0">${esc(reframe)}</div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
-        <button class="btn btn-grad" data-act="artStartNow">🎨 I'm making art now</button>
-        <button class="btn" data-act="artReframe">↻ another reminder</button>
-        <button class="btn" data-act="inspoPick" title="decision paralysis? let the fox choose">🦊 pick something for me</button>
-      </div>
-      <p class="soft" style="font-size:11px;text-align:center;margin:8px 0 0">the 50% rule: half your practice time can be pure play — that IS the curriculum 💗</p>
-    </section>`;
-  const challengesCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">🌱 Challenges</h2><span class="label">tiny + weekly</span></div>
-      <div class="card-head" style="margin:4px 0 2px"><span class="label">🌱 today's tiny challenge</span><button class="btn" data-act="artRoll" data-scope="day" style="padding:2px 8px">↻</button></div>
-      <button class="hbtn ${ch.dayDone?'done':''}" data-act="artChallengeDone" data-scope="day" style="display:flex;gap:9px;align-items:center;width:100%;text-align:left"><span class="check ${ch.dayDone?'on':''}"></span><span style="font-size:13.5px">${esc(ch.dayText)}</span></button>
-      <div class="card-head" style="margin:12px 0 2px"><span class="label">🌷 this week's challenge</span><button class="btn" data-act="artRoll" data-scope="week" style="padding:2px 8px">↻</button></div>
-      <button class="hbtn ${ch.weekDone?'done':''}" data-act="artChallengeDone" data-scope="week" style="display:flex;gap:9px;align-items:center;width:100%;text-align:left"><span class="check ${ch.weekDone?'on':''}"></span><span style="font-size:13.5px">${esc(ch.weekText)}</span></button>
-    </section>`;
-  const promptCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">🎲 Draw-this prompt</h2><button class="btn btn-grad" data-act="artPromptRoll">↻ roll a new one</button></div>
-      <div class="art-prompt">Draw <b>${esc(P.subject)}</b><br><span style="font-size:14px;color:var(--lav-deep)">${esc(P.mood)} · ${esc(P.constraint)}</span></div>
-      ${P.fromIdea?`<div class="label" style="text-align:center;margin-top:6px">💡 from your own ideas dump — past-you had taste</div>`:""}
-    </section>`;
-  const minutesCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">⏱️ Art minutes</h2><span class="label">every minute counts — even 5</span></div>
-      <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
-        <div><div class="num" style="font-size:30px;font-family:var(--display);color:var(--sakura-deep)">${weekMin}<span style="font-size:14px"> min</span></div><div class="label">💗 this week · ${weekDays} day${weekDays===1?'':'s'} of play</div></div>
-        <div class="grow" style="min-width:180px">${spark}<div class="label" style="margin-top:2px">last 14 days</div></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
-        <span class="label">log</span>
-        <button class="btn" data-act="artLogQuick" data-m="15">+15</button>
-        <button class="btn" data-act="artLogQuick" data-m="30">+30</button>
-        <button class="btn" data-act="artLogQuick" data-m="60">+60</button>
-        <input class="inp" id="artMin" type="number" placeholder="min" style="width:80px"/>
-        <input class="inp" id="artNote" placeholder="what did you make? (optional)" style="flex:1;min-width:140px"/>
-        <button class="btn btn-grad" data-act="artLogMin">＋ log</button>
-      </div>
-      ${log.length?`<details class="acc" style="margin-top:8px"><summary>📜 art rhythm (${log.length} entries)</summary><div class="acc-body">${log.slice(-20).reverse().map(a=>`<div class="listrow"><span class="grow" style="font-size:12px">${fmtDate(a.date)}${a.min?` · ${a.min} min`:""}${a.note?" · "+esc(a.note):""}</span></div>`).join("")}</div></details>`:""}
-    </section>`;
-  const timerCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">⏲️ Practice timer</h2><div style="display:flex;gap:8px;align-items:center"><button class="btn" data-act="artFocusEnter" title="hide everything except play">⛶ focus</button><span class="label">gesture / warm-ups</span></div></div>
-      <div id="artStage" style="border-radius:14px;padding:16px;text-align:center;transition:background .6s">
-        <div class="art-tim" id="artTimerDisp">${fmtClock(t.left??tLen)}</div>
-        <div style="font-family:var(--display);font-size:16px;color:var(--sakura-deep);min-height:22px" id="artTimerSub">${t.on?esc(t.subject||""):"press start to begin"}</div>
-        <div class="label" id="artTimerRound">${t.on?("round "+t.round):"&nbsp;"}</div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap">
-        <div class="seg">${lenSeg}</div>
-        ${t.on?`<button class="btn btn-grad" data-act="artTimerStop">⏹ stop</button><button class="btn" data-act="artTimerSkip">⏭ next pose</button>`:`<button class="btn btn-grad" data-act="artTimerStart">▶ start</button>`}
-      </div>
-      ${pendingChip}
-    </section>`;
-  const cnt=sent.artCount||{label:"heads",n:0,goal:100};
-  const cPct=Math.min(1,(cnt.n||0)/(cnt.goal||100)), cDash=(cPct*213.6).toFixed(1);
-  const headsCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">💯 100 ${esc(cnt.label)}</h2><button class="btn" data-act="artCountEdit" style="padding:2px 9px">✎</button></div>
-      ${A.countEdit?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input class="inp" id="cnt_label" value="${esc(cnt.label)}" placeholder="heads / hands / eyes…" style="flex:1;min-width:100px"/><input class="inp num" id="cnt_goal" type="number" value="${cnt.goal||100}" style="width:80px"/><button class="btn btn-grad" data-act="artCountSave">💾</button><button class="btn" data-act="artCountReset" style="color:var(--sakura-deep)">↺ restart at 0</button></div>`:""}
-      <div style="display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap">
-        <svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="34" fill="none" stroke="#eef0fa" stroke-width="9"/><circle cx="43" cy="43" r="34" fill="none" stroke="url(#artCntG)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${cDash} 213.6" transform="rotate(-90 43 43)"/><defs><linearGradient id="artCntG"><stop offset="0%" stop-color="#758ac6"/><stop offset="100%" stop-color="#ff9ed8"/></linearGradient></defs><text x="43" y="40" text-anchor="middle" style="font-size:17px;font-weight:700;fill:var(--ink)">${cnt.n||0}</text><text x="43" y="56" text-anchor="middle" style="font-size:10px;fill:#9b96b6">of ${cnt.goal||100}</text></svg>
-        <button class="btn btn-grad" data-act="artCountInc" style="font-size:15px;padding:10px 18px">＋1 ${esc(cnt.label.replace(/s$/,""))}</button>
-      </div>
-      <p class="soft" style="font-size:10.5px;text-align:center;margin:7px 0 0">5–10 min each, no deadline — the pile grows when it grows 💗</p>
-    </section>`;
-  const ideasCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">💡 Ideas dump</h2><span class="pill pill-lav">${(sent.artIdeas||[]).length} idea${(sent.artIdeas||[]).length===1?"":"s"}</span></div>
-      <div style="display:flex;gap:8px;margin-bottom:12px"><input class="inp" id="ideaText" placeholder="that piece I suddenly want to draw…"/><button class="btn btn-grad" data-act="artIdeaAdd">＋ park it</button></div>
-      ${(sent.artIdeas||[]).length?`<div class="idea-grid">${(sent.artIdeas||[]).slice().reverse().map((i,ix)=>{const cols2=["#fff3c9","#ffe1ee","#e7defb","#dcf4ea","#ffe7d6"];return `<div class="idea-card" style="background:${cols2[ix%5]};transform:rotate(${ix%2?0.8:-0.8}deg)">${esc(i.text)}<div class="ic-tools"><button class="ft-ic" data-act="artIdeaToBoard" data-id="${i.id}" title="pin to mood board">📌</button><button class="ft-ic" data-act="artIdeaDel" data-id="${i.id}" style="color:var(--sakura-deep)">🗑</button></div></div>`;}).join("")}</div>`:`<p class="soft" style="font-size:12px;margin:0">Every "ooh I should draw that" lands here as a sticky — no more losing them. 📌 pins one to the mood board. 🌸</p>`}
-    </section>`;
-  const vault=(sent.inspoVault||[]); const picked=state.inspoPicked;
-  const inspoCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">✨ Inspiration vault</h2><div style="display:flex;gap:8px;align-items:center"><span class="pill pill-sak">${vault.filter(s2=>!s2.done).length} to try · ${vault.filter(s2=>s2.done).length} done</span></div></div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <input class="inp" id="inspoText" placeholder="an idea, a vibe, why it sparked you…" style="flex:2;min-width:150px" value="${esc((state.inspoDraft||{}).text||'')}"/>
-        <input class="inp" id="inspoUrl" placeholder="link (tweet, trend, artwork…)" style="flex:2;min-width:140px" value="${esc((state.inspoDraft||{}).url||'')}"/>
-        <label class="btn" style="cursor:pointer" title="add a reference image">🖼️<input type="file" id="artFile" accept="image/*" style="display:none"></label>
-        <button class="btn btn-grad" data-act="inspoAdd">＋ save</button>
-      </div>
-      ${vault.length?`<div class="inspo-grid">${vault.slice().reverse().map(s2=>{let host="link";try{host=new URL(s2.url).hostname.replace("www.","");}catch(e){} const isImg=s2.img||/\.(png|jpe?g|gif|webp)(\?|$)/i.test(s2.url||"");
-        const thumb=s2.img?`style="background-image:url('${esc(s2.img)}')"`:(isImg&&s2.url?`style="background-image:url('${esc(s2.url)}')"`:"");
-        return `<div class="inspo-card ${s2.done?'done':''}" ${picked===s2.id?'style="outline:2.5px solid var(--sakura);outline-offset:2px;border-radius:14px"':""}>
-          ${s2.url?`<a href="${esc(s2.url)}" target="_blank" rel="noopener"><div class="inspo-thumb" ${thumb}>${isImg?"":`<img src="https://www.google.com/s2/favicons?domain=${esc(host)}&sz=64" style="width:34px;height:34px;border-radius:9px" data-hide-on-error/>`}</div></a>`:`<div class="inspo-thumb" ${thumb}>${isImg?"":"💡"}</div>`}
-          <div class="inspo-body">
-            ${s2.url?`<a href="${esc(s2.url)}" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;color:var(--lav-deep);text-decoration:none">${esc(host)} ↗</a>`:""}
-            ${s2.text?`<div class="soft" style="font-size:11.5px;${s2.done?'text-decoration:line-through':''}">${esc(s2.text)}</div>`:""}
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto"><button class="chiptog ${s2.done?'on':''}" data-act="inspoDone" data-v="${s2.id}" style="font-size:10.5px;padding:3px 9px">${s2.done?'✓ tried it!':'mark tried'}</button><button class="ft-ic" data-act="inspoDel" data-v="${s2.id}" style="color:var(--sakura-deep)">🗑</button></div>
-          </div>
-        </div>`;}).join("")}</div>`:`<p class="soft" style="font-size:12px;margin:0">Drop a link or idea — cards with images show the picture. Stops things living in 47 open tabs. 💗</p>`}
-    </section>`;
-  const em=A.emote;
-  const chk=`background:repeating-conic-gradient(#e9e6f4 0 25%,#ffffff 0 50%);background-size:14px 14px`;
-  const emRow=(bg,fg,label,sizes,inline)=>`<div style="background:${bg};border-radius:10px;padding:9px 11px;margin-top:6px">
-        <div style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:${fg}88;margin-bottom:5px">${label}</div>
-        ${inline?`<div style="font-size:13px;color:${fg};display:flex;align-items:center;gap:5px;flex-wrap:wrap"><b style="color:#a970ff">mifu</b>: omg <img src="${em?em.data:""}" style="width:${inline}px;height:${inline}px;object-fit:contain"/> so cute!!</div>`:""}
-        <div style="display:flex;gap:12px;align-items:flex-end;margin-top:7px">${sizes.map(s2=>`<div style="text-align:center"><img src="${em?em.data:""}" style="width:${s2}px;height:${s2}px;object-fit:contain"/><div style="font-size:9.5px;color:${fg}88;margin-top:2px">${s2}px</div></div>`).join("")}</div>
-      </div>`;
-  const kb=em?Math.max(1,Math.round(em.size/1024)):0;
-  const sizePill=(lim,name)=>em?`<span class="pill ${kb<=lim?'pill-mint':''}" ${kb>lim?'style="background:#fde4e4;color:#c0566a"':''}>${name}: ${kb<=lim?"✓":"✗"} ${kb}KB / ${lim>=1024?(lim/1024)+"MB":lim+"KB"}</span>`:"";
-  const emoteCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">🟣 Emote previewer</h2>${em?`<button class="btn" data-act="artEmoteClear">✕ clear</button>`:`<span class="label">chat-size reality check</span>`}</div>
-      <input type="file" id="emoteFile" accept="image/png,image/gif,image/webp" style="display:none"/>
-      ${em?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">${sizePill(1024,"Twitch emote")}${sizePill(256,"Discord emoji")}${sizePill(25,"sub badge")}</div>
-        ${emRow("#18181b","#efeff1","Twitch · dark",[112,56,28],28)}
-        ${emRow("#313338","#dbdee1","Discord · dark",[48,22],22)}
-        ${emRow("#ffffff;border:1px solid var(--line)","#1f1633","light mode",[56,28],28)}
-        <div style="${chk};border-radius:10px;padding:9px 11px;margin-top:6px"><div style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:#9b96b6;margin-bottom:5px">transparency check</div><img src="${em.data}" style="width:72px;height:72px;object-fit:contain"/></div>`
-      :`<p class="soft" style="font-size:11.5px;margin:0 0 8px">Upload a PNG → see it at real chat sizes (Twitch, Discord, light) with size-limit checks. 💗</p>
-        <button class="btn btn-grad" data-act="artEmotePick">🖼 choose a PNG</button>`}
-    </section>`;
-  const nSteps=Math.max(2,Math.min(6,A.notanSteps||3));
-  const valueCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">◐ Value checker</h2>${A.notan?`<button class="btn" data-act="artNotanClear">✕ clear</button>`:`<span class="label">squint, but scientific</span>`}</div>
-      <input type="file" id="notanFile" accept="image/*" style="display:none"/>
-      <p class="soft" style="font-size:11.5px;margin:0 0 8px">Drop your WIP in → collapses to ${A.notan?nSteps:"2–6"} values. If it reads here, it reads anywhere. 🌗</p>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn ${A.notan?'':'btn-grad'}" data-act="artNotanPick">🖼 ${A.notan?"different image":"choose your WIP"}</button>
-        <span class="label">values</span><div class="seg">${[2,3,4,5,6].map(v=>`<button data-act="artNotanSteps" data-v="${v}" class="${nSteps===v?'on':''}">${v}</button>`).join("")}</div>
-      </div>
-      ${A.notan?`<canvas id="notanCv" style="max-width:100%;border-radius:10px;margin-top:10px;border:1px solid var(--line)"></canvas>`:""}
-    </section>`;
-  const paletteCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">🎨 Palette & ramps</h2></div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-        <label class="art-chip">base <input type="color" id="artBase" value="${pBase}" style="width:34px;height:24px;border:none;background:none;padding:0;cursor:pointer"/></label>
-        <button class="btn" data-act="artPaletteRoll">🎲 random base</button>
-        <div class="seg" style="flex-wrap:wrap">${SCHEMES.map(([v,l])=>`<button data-act="artPaletteScheme" data-v="${v}" class="${pScheme===v?'on':''}">${l}</button>`).join("")}</div>
-      </div>
-      ${sw(pal)}
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><span class="label">🃏 limited-palette challenge — draw with only these</span><button class="btn btn-grad" data-act="artLimited">🎲 roll 3</button></div>
-      ${A.limited?sw(A.limited):`<p class="soft" style="font-size:11.5px;margin:6px 0 0">Draw with only these three — great for learning colour mixing.</p>`}
-      <div class="label" style="margin:10px 0 4px">🪜 value ramp <span class="muted">· light → dark</span></div>
-      ${sw(genRamp(pBase))}
-      <div class="label" style="margin:8px 0 4px">⛅ cel pair <span class="muted">· base + hue-shifted shadow</span></div>
-      ${sw(celPair(pBase))}
-      <p class="soft" style="font-size:11px;margin:7px 0 0">Tap any swatch to copy its hex 💗</p>
-    </section>`;
-  const specsCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">📏 Platform specs</h2><span class="label">verified 2026-06-10</span></div>
-      ${ART_SPECS.map(([n2,s2])=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><div style="font-size:12.5px;font-weight:700">${n2}</div><div class="soft" style="font-size:11.5px;margin-top:1px">${s2}</div></div>`).join("")}
-      <p class="soft" style="font-size:11px;margin:8px 0 0">the blogs are stale — these came from the official docs 🌸</p>
-    </section>`;
-  const l2=sent.live2dCheck||{name:"",items:{}};
-  const l2n=LIVE2D_ITEMS.filter(([k])=>l2.items&&l2.items[k]).length;
-  const live2dCard=`<section class="panel"><div class="card-head"><h2 style="font-size:17px">🧩 Live2D cut prep</h2><div style="display:flex;gap:8px;align-items:center"><span class="pill ${l2n===LIVE2D_ITEMS.length?'pill-mint':'pill-lav'}">${l2n}/${LIVE2D_ITEMS.length}</span><button class="btn" data-act="l2dReset" title="new model — clear all ticks">↺</button></div></div>
-      <input class="inp" id="l2dName" value="${esc(l2.name||"")}" placeholder="model / outfit name (optional)…" style="margin-bottom:8px"/>
-      ${LIVE2D_ITEMS.map(([k,l])=>`<button class="hbtn ${l2.items&&l2.items[k]?'done':''}" data-act="l2dToggle" data-k="${k}" style="display:flex;gap:9px;align-items:center;width:100%;margin-top:5px;text-align:left"><span class="check ${l2.items&&l2.items[k]?'on':''}"></span><span style="font-size:12.5px">${l}</span></button>`).join("")}
-    </section>`;
-  const guidesCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">📐 Drawing guides & overlays</h2></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-        <select class="inp" id="artGType" style="width:auto">${GUIDES.map(([v,l])=>`<option value="${v}" ${gType===v?'selected':''}>${l}</option>`).join("")}</select>
-        <span class="label">canvas</span><div class="seg">${RATIOS.map(r=>`<button data-act="artGRatio" data-v="${r[0]}" class="${gRatio===r[0]?'on':''}">${r[0]}</button>`).join("")}</div>
-        ${gType==="spiral"?`<button class="btn" data-act="artGOrient">↻ flip</button>`:""}
-        ${gType==="radial"?`<label class="art-chip">spokes <input type="range" id="artSpokes" min="4" max="24" value="${gSpokes}" style="width:84px"></label>`:""}
-      </div>
-      <div class="art-grid-wrap">${artGuideSVG(gType,GW,GH,{orient:gOrient,spokes:gSpokes})}</div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" data-act="artGridDownload">⤓ download SVG</button><span class="soft" style="font-size:11.5px;align-self:center">${GHINT[gType]||"drop it under your canvas as a guide layer"}</span></div>
-    </section>`;
-  const boardCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">🖼️ Mood board</h2><span class="label">drag anything anywhere · auto-saves</span></div>
-      ${boardCtrls}
-      ${boardInner}
-      <p class="soft" style="font-size:11.5px;margin:10px 0 0">Paste links, notes, colour chips — drag into layout, grab ◢ to resize. ❄️</p>
-    </section>`;
-  const packNew=ART_PACK.filter(p=>!res.some(r=>r.url===p.url)).length;
-  const libraryCard=`<section class="panel art-span2"><div class="card-head"><h2 style="font-size:17px">📚 Tools & tutorials</h2>${packNew?`<button class="btn btn-grad" data-act="artResPack" title="adds the research-verified pose/anatomy/colour links — all free, all checked alive">🌟 add research pack (${packNew})</button>`:`<span class="label">your own library</span>`}</div>
-      <div id="artResList" style="display:flex;flex-direction:column;gap:6px">${res.map(r=>`<div data-resid="${r.id}" style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);background:#fff;border-radius:8px"><span class="res-grip" data-resgrip title="drag to reorder">⠿</span><span>${resTags[r.tag]||"🔗"}</span><a href="${esc(r.url)}" target="_blank" rel="noopener" class="grow" style="font-size:13px;color:var(--lav-deep);text-decoration:none">${esc(r.title)} ↗</a><button class="ft-ic" data-act="artResDel" data-id="${r.id}" style="color:var(--sakura-deep)">🗑</button></div>`).join("")}</div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <input class="inp" id="artResTitle" placeholder="title" style="flex:1;min-width:120px"/>
-        <input class="inp" id="artResUrl" placeholder="https://…" style="flex:1;min-width:140px"/>
-        <select class="inp" id="artResTag" style="width:auto">${Object.keys(resTags).map(k=>`<option value="${k}">${resTags[k]} ${k}</option>`).join("")}</select>
-        <button class="btn btn-grad" data-act="artResAdd">＋ save</button>
-      </div>
-    </section>`;
-  return `<div class="page" style="max-width:1100px">
-    <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-      <h2 style="font-size:22px;font-family:var(--display)">🎨 Art studio</h2>
-      <span class="label">🌸 just for you · play is allowed</span>
-    </div>
-    <div class="art-cols">${heroCard}${challengesCard}${promptCard}${minutesCard}${timerCard}${headsCard}${ideasCard}${inspoCard}${emoteCard}${valueCard}${paletteCard}${specsCard}${live2dCard}${guidesCard}${boardCard}${libraryCard}</div>
-  </div>`;
-}
+
 /* ===================== 📓 JOURNAL — private life archive (calendar · entries · capsules) =====================
    Privacy-first: the grid shows only summary chips; her written words appear ONLY after she opens a day.
    No forked data: it reads/writes the same day rows everything else uses (mood, sleep, weight, symptoms,
    the `journal` text) — new fields are just stress, sleepQ, tags, special. */
 const JR_MOODS=["😶","🌧️","😔","😌","🙂","✨"];
+
 function jrYM(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+
 async function jrFetchMonth(ref){
   const ym=jrYM(ref); state.jrCache=state.jrCache||{};
   if(state.jrCache[ym]) return state.jrCache[ym];
@@ -2361,6 +1434,7 @@ async function jrFetchMonth(ref){
   if(TODAY.slice(0,7)===ym) rows[TODAY]={...(rows[TODAY]||{}),...state.today};
   state.jrCache[ym]=rows; return rows;
 }
+
 async function jrFetchAll(){
   if(state.jrAll) return state.jrAll;
   let rows={};
@@ -2369,6 +1443,7 @@ async function jrFetchAll(){
   rows[TODAY]={...(rows[TODAY]||{}),...state.today};
   state.jrAll=rows; return rows;
 }
+
 /* write to ANY day's row (today or the past) and keep caches in step */
 async function setDay(date,merge){
   const next=await DB.saveDaily(date,n=>merge(n));
@@ -2378,30 +1453,16 @@ async function setDay(date,merge){
   if(state.jrAll) state.jrAll[date]=next;
   return next;
 }
+
 function jrWeightMap(){ const m={}; (state.sentinel.weightLog||[]).forEach(x=>{ if(x.w!=null)m[x.date]=x.w; }); return m; }
+
 /* was this date a stream day? best effort: planned week slots (current/overridden weeks; past defaults under-detect) */
 function jrStreamDay(date){ try{ const d=new Date(date+"T00:00"); const wd=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
   return slotsForDate(d).some(s=>s.day===wd); }catch(e){ return false; } }
-function jrSpecial(date,n){ if(n&&n.special)return true; return (state.sentinel.calendarEvents||[]).some(e=>!gameSrc(e)&&e.date===date); }
-function jrDayColor(n,special){ if(special)return "#ece2fb"; const mo=n&&n.mind&&n.mind.mood;
-  if(mo==null)return "#eef3fa"; return mo>=4?"#e0f5ea":mo===3?"#fdf3da":"#fde6e9"; }
+
 function jrSymptomFlag(n){ if(!n)return false; const p=n.pcos||{},mj=n.mounjaro||{};
   return ["fatigue","bloating","acne","shedding","cravings"].some(k=>(p[k]||0)>=3)||["nausea","constipation","diarrhea","reflux","belly"].some(k=>(mj[k]||0)>=3); }
-function jrStats(rows){
-  const ds=Object.entries(rows||{}).map(([date,n])=>({date,n})).sort(cmpDate);
-  const pick=(f)=>ds.map(d=>f(d.n)).filter(v=>v!=null);
-  const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10:null;
-  const moods=pick(n=>n.mind&&n.mind.mood), en=pick(n=>n.mind&&n.mind.energy), sl=pick(n=>n.sleep), fn=pick(n=>n.mounjaro&&n.mounjaro.foodnoise);
-  const wm=jrWeightMap(); const wIn=ds.map(d=>wm[d.date]).filter(v=>v!=null);
-  const scored=ds.filter(d=>d.n.mind&&d.n.mind.mood!=null).map(d=>({date:d.date,score:d.n.mind.mood+(d.n.mind.energy||0)/2-(d.n.stress||0)/2}));
-  const best=scored.slice().sort((a,b)=>b.score-a.score)[0], hard=scored.slice().sort((a,b)=>a.score-b.score)[0];
-  const sym={}; ds.forEach(d=>{ const p=d.n.pcos||{},mj=d.n.mounjaro||{}; [["fatigue",p],["bloating",p],["cravings",p],["nausea",mj],["reflux",mj],["belly",mj]].forEach(([k,o])=>{ if((o[k]||0)>=3) sym[k]=(sym[k]||0)+1; }); });
-  const topSym=Object.entries(sym).sort((a,b)=>b[1]-a[1])[0];
-  return { logged:ds.filter(d=>d.n.mind&&d.n.mind.mood!=null).length, avgMood:avg(moods), avgEnergy:avg(en), avgSleep:avg(sl),
-    wDelta:wIn.length>1?Math.round((wIn[wIn.length-1]-wIn[0])*10)/10:null,
-    fnTrend:fn.length>=4?(avg(fn.slice(-Math.ceil(fn.length/2)))-avg(fn.slice(0,Math.floor(fn.length/2)))):null,
-    best, hard, topSym };
-}
+
 /* ============================================================================
    GLOBAL MEMORY SYSTEM (foundation) — one index that Search, Timeline, Favourites and
    Bunny-timeline all read from. Derived from existing stores (no migration) + explicit
@@ -2409,9 +1470,11 @@ function jrStats(rows){
    Next slice: the Media Library (uploads) that these items will reference by id.
    ============================================================================ */
 const MEM_ICON={journal:"📖",milestone:"⚖️",quote:"💬",memcard:"✨",health:"💗",bunny:"🐰",bunnymoment:"🐰",event:"🎉",photo:"📸",win:"🏆",lore:"📜",house:"🏡"};
-const MEM_STOP=new Set("the a an i my me you we us to of in on at and or for with about was were is are be been did do does day find show me when where what our this that it i'm".split(" "));
+
 function memFavSet(){ return new Set((state.sentinel&&state.sentinel.memFav)||[]); }
+
 function memMonthLabel(ym){ try{ return new Date(ym+"-01T00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"}); }catch(e){ return ym; } }
+
 function buildMemoryIndex(){
   const s=state.sentinel||{}; const out=[]; const seen=new Set();
   const clip=(t,n)=>{ t=String(t||"").replace(/\s+/g," ").trim(); n=n||130; return t.length>n?t.slice(0,n-1).trim()+"…":t; };
@@ -2439,34 +1502,31 @@ function buildMemoryIndex(){
   out.sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0);   // newest first
   return out;
 }
+
 function memIsBunny(m){ const p=(m.people||[]).map(x=>String(x).toLowerCase()); return p.includes("myla")||p.includes("kieran")||/\b(myla|kieran|bunny|bunnies|rabbit)\b/i.test((m.title||"")+" "+(m.preview||"")); }
-function searchMemories(q, idx){
-  q=String(q||"").toLowerCase().trim(); if(!q)return [];
-  const terms=q.split(/[^a-z0-9]+/).filter(t=>t&&!MEM_STOP.has(t)); if(!terms.length)return [];
-  const res=[];
-  (idx||buildMemoryIndex()).forEach(m=>{ const hay=((m.title||"")+" "+(m.preview||"")+" "+(m.tags||[]).join(" ")+" "+(m.people||[]).join(" ")).toLowerCase();
-    const hits=terms.filter(t=>hay.includes(t)); if(hits.length) res.push({...m, _score:hits.length, reason:"mentions "+hits.join(", ")}); });
-  res.sort((a,b)=> b._score-a._score || (a.date<b.date?1:-1));
-  return res.slice(0,40);
-}
+
 /* ---- Media library: assets live in their OWN lazily-loaded row (not the hot sentinel, so boot
    stays fast), referenced by id. Client-side compression keeps each photo small; writes bypass
    the undo system (a multi-MB image snapshot would blow the localStorage undo quota). Scale-up
    path = Supabase Storage (URLs only) when the library outgrows a curated set — see the blueprint. */
 const MEDIA_KEY="2000-01-02", MEDIA_CAP=80;
+
 async function loadMedia(){ if(state.media!==undefined||state._mediaLoading)return; state._mediaLoading=true;
   try{ const notes=await DB.daily(MEDIA_KEY); state.media=(notes&&notes.media)||[]; }catch(e){ state.media=[]; } state._mediaLoading=false; }
+
 async function setMedia(fn){
   const cur=(state.media!==undefined&&state.media!==null)?state.media:(((await DB.daily(MEDIA_KEY))||{}).media||[]);
   const next=fn(cur.slice()).slice(-MEDIA_CAP); state.media=next;
   if(DEMO){ demo[MEDIA_KEY]={media:next}; return; }
   if(SB){ try{ await SB.from("daily_logs").upsert({user_id:UID,date:MEDIA_KEY,notes:{media:next}},{onConflict:"user_id,date"}); }catch(e){ console.error(e); toast("couldn't save media 🌧️"); } }
 }
+
 function compressImage(file,maxDim=1000,q=0.72){ return new Promise(res=>{ try{ const r=new FileReader();
   r.onload=()=>{ const img=new Image(); img.onload=()=>{ try{ let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
     if(!w||!h){ res(r.result); return; } if(w>maxDim||h>maxDim){ const s=maxDim/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
     const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h); res(c.toDataURL("image/jpeg",q)); }catch(_){ res(r.result); } };
     img.onerror=()=>res(null); img.src=r.result; }; r.onerror=()=>res(null); r.readAsDataURL(file); }catch(_){ res(null); } }); }
+
 function wireMedia(){
   const inp=$("#mediaFile");
   if(inp&&!inp._wired){ inp._wired=true; inp.addEventListener("change", async ()=>{
@@ -2480,374 +1540,11 @@ function wireMedia(){
     el.addEventListener("blur", async ()=>{ const id=el.dataset.id, cap=String(el.value||"").slice(0,160);
       const m=(state.media||[]).find(x=>x.id===id); if(!m||m.caption===cap)return; await setMedia(arr=>arr.map(x=>x.id===id?{...x,caption:cap}:x)); }); });
 }
-function mediaGallerySection(){
-  if(state.media===undefined){ return `<section class="panel"><div class="card-head"><span class="label">📸 Media library</span></div><p class="soft" style="font-size:12.5px;margin:0">${UI.spinner({label:"loading your photos…"})}</p></section>`; }
-  const PEOPLE=["myla","kieran","together","manfu"];
-  let lib=(state.media||[]); if(state.memBunny) lib=lib.filter(memIsBunny);
-  const tile=m=>`<div class="md-tile">
-    <img src="${esc(m.url)}" alt="${esc(m.caption||'photo')}" loading="lazy" data-act="mediaView" data-id="${esc(m.id)}">
-    <div class="md-tools"><button class="x" data-act="mediaFav" data-id="${esc(m.id)}" title="favourite" aria-label="favourite">${m.fav?"⭐":"☆"}</button><button class="x" data-act="mediaDel" data-id="${esc(m.id)}" title="delete" aria-label="delete">✕</button></div>
-    <input class="md-cap" data-act="noop" data-id="${esc(m.id)}" value="${esc(m.caption||'')}" placeholder="caption…" maxlength="160">
-    <div class="md-people">${PEOPLE.map(p=>`<button class="md-pchip ${(m.people||[]).includes(p)?'on':''}" data-act="mediaTag" data-id="${esc(m.id)}" data-p="${p}">${p}</button>`).join("")}</div>
-  </div>`;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">📸 Media library</span><span class="soft" style="font-size:11px">${(state.media||[]).length}/${MEDIA_CAP}</span></div>
-    <p class="soft" style="font-size:12px;margin:0 0 10px">Upload once, use everywhere — photos here flow into Search, your Timeline, and (soon) Journal &amp; Care. Tag who's in each one. 🐰</p>
-    <div style="margin-bottom:10px"><label class="btn btn-grad" for="mediaFile" style="cursor:pointer">⬆️ Upload photos</label><input type="file" id="mediaFile" accept="image/*" multiple style="display:none"></div>
-    ${lib.length?`<div class="md-grid">${lib.slice().reverse().map(tile).join("")}</div>`:`<p class="soft" style="font-size:12.5px;margin:0">${state.memBunny?"No bunny photos yet — tag some with Myla or Kieran.":"No photos yet — upload your first memory. ❄️"}</p>`}
-  </section>`;
-}
-function viewMemories(){
-  const idx=buildMemoryIndex();
-  const q=state.memQuery||"", bunny=!!state.memBunny;
-  let list=bunny?idx.filter(memIsBunny):idx;
-  const favs=list.filter(m=>m.fav);
-  const results=q?(bunny?searchMemories(q,list):searchMemories(q,idx)):null;
-  const tl=list.filter(m=>m.fav||["milestone","event","quote","memcard"].includes(m.kind));
-  const groups={}; tl.forEach(m=>{ const ym=(m.date||"").slice(0,7); (groups[ym]=groups[ym]||[]).push(m); });
-  const ymKeys=Object.keys(groups).sort().reverse();
-  const row=m=>`<div class="listrow"><span style="font-size:15px;flex:0 0 auto">${MEM_ICON[m.kind]||"✨"}</span><span class="grow" style="min-width:0"><b style="font-size:12.5px">${esc(m.title||"")}</b> <span class="soft" style="font-size:11px">· ${esc(fmtDate(m.date))}</span><div class="soft" style="font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.preview||"")}</div>${m.reason?`<div class="soft" style="font-size:10px">${esc(m.reason)}</div>`:""}</span><button class="x" data-act="memFav" data-id="${esc(m.id)}" aria-label="favourite" title="favourite">${m.fav?"⭐":"☆"}</button>${m.kind==="photo"?`<button class="btn" data-act="mediaView" data-id="${esc(m.mediaId||"")}">view</button>`:(m.source?`<button class="btn" data-act="memOpen" data-page="${esc(m.source.page)}" data-ref="${esc(m.source.refId||"")}">open</button>`:"")}</div>`;
-  return `<div class="page"><section class="panel">
-    <div class="card-head"><h2 style="font-size:17px">✨ Memories</h2><span class="soft" style="font-size:11px">${idx.length} remembered</span></div>
-    <p class="soft" style="font-size:12px;margin:0 0 10px">Everything worth keeping in one place — search it, pin it, and walk your timeline. Photos &amp; a full media library come in the next update. ❄️</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
-      <input class="inp" id="memSearchInput" placeholder="search your memories… (house approval, Myla, nausea)" style="flex:1;min-width:200px" value="${esc(q)}">
-      <button class="btn btn-grad" data-act="memSearch">🔎 Search</button>
-      ${q?`<button class="btn" data-act="memSearchClear">clear</button>`:""}
-      <button class="btn ${bunny?'btn-grad':''}" data-act="memBunny" aria-pressed="${bunny}">🐰 Bunny</button>
-    </div>
-    <p class="soft" style="font-size:11px;margin:0">For fuzzy, feeling-based searches (“days I felt less nauseous”), ask Kiko — he searches by meaning.</p>
-  </section>
-  ${results?`<section class="panel"><div class="sec-label">🔎 Results for “${esc(q)}”</div>${results.length?results.map(row).join(""):`<p class="soft" style="font-size:12.5px;margin:0">No matches — try fewer words, or ask Kiko to search by meaning.</p>`}</section>`:""}
-  ${mediaGallerySection()}
-  ${favs.length?`<section class="panel"><div class="sec-label">⭐ Favourites</div>${favs.slice(0,30).map(row).join("")}</section>`:""}
-  <section class="panel"><div class="sec-label">🕒 ${bunny?"Bunny timeline":"Life timeline"}</div>
-    ${ymKeys.length?ymKeys.map(ym=>`<div style="margin-top:10px"><div class="label">${esc(memMonthLabel(ym))}</div>${groups[ym].map(row).join("")}</div>`).join(""):`<p class="soft" style="font-size:12.5px;margin:0">Your timeline fills in as you journal, log weigh-ins, and mark special days. ❄️</p>`}
-  </section></div>`;
-}
-/* ============================================================================
-   DIGITAL HOBONICHI JOURNAL (slice 1) — the daily page is the hero: month colour theme,
-   Kiko's Day-at-a-Glance, lined paper, voice-or-type, constant auto-save. The proven data
-   layer (setDay / jrFetchMonth / jrCache) is reused untouched. Heavy freeform canvas +
-   scrapbook drawers + font controls + templates come in the next journal slice.
-   ============================================================================ */
-const JR_THEME={ "01":["#D85C2E","#B03E18"],"02":["#A8785A","#855840"],
-  "03":["#A87898","#846078"],"04":["#D87880","#B05860"],
-  "05":["#A89828","#847810"],"06":["#789870","#587850"],
-  "07":["#4878A8","#305888"],"08":["#8878B8","#685898"],
-  "09":["#B87858","#985840"],"10":["#9878A8","#785888"],
-  "11":["#387870","#185850"],"12":["#C83828","#A01810"] };
-const JR_COLOR_NAMES={"01":"Tangerine Red","02":"Caramel Brown","03":"Dusty Mauve","04":"Rose Pink","05":"Olive Moss","06":"Hydrangea Blue","07":"Cornflower","08":"Wisteria","09":"Terracotta","10":"Lavender","11":"Forest Teal","12":"Crimson"};
-function jrTheme(date){ return JR_THEME[(date||TODAY).slice(5,7)]||JR_THEME["06"]; }
-function jrColorName(ym){ return JR_COLOR_NAMES[(ym||TODAY).slice(5,7)]||""; }
+
 function jrMonthLabel(ym){ const d=new Date((ym||TODAY.slice(0,7))+"-01T00:00"); return d.toLocaleDateString("en-US",{month:"long"})+" · "+jrColorName(ym); }
-function dayShift(date,n){ const d=new Date(date+"T00:00"); d.setDate(d.getDate()+n); return d.toLocaleDateString("en-CA"); }
-function jrWeekNum(date){ const d=new Date(date+"T00:00"); const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const day=dt.getUTCDay()||7; dt.setUTCDate(dt.getUTCDate()+4-day); const ys=new Date(Date.UTC(dt.getUTCFullYear(),0,1)); return Math.ceil((((dt-ys)/86400000)+1)/7); }
-function jrGlance(date,n){ n=n||{}; const out=[]; const m=n.mind||{};
-  try{ const wm=jrWeightMap(); if(wm[date]!=null) out.push(`Weighed in: ${wm[date]} ${CONFIG.weightUnit||"kg"}`); }catch(e){}
-  if(m.energy!=null) out.push(`Energy ${m.energy>=4?"was higher than usual":m.energy<=1?"ran low":"was steady"}`);
-  if(m.mood!=null) out.push(`Mood ${m.mood>=4?"was lovely":m.mood<=1?"was tough":"was okay"}`);
-  if(n.sleep!=null) out.push(`Slept ${n.sleep}h`);
-  try{ const ci=n.checkins||{}; const lbl={streamed:"streamed",ytVideo:"uploaded a video",ytShort:"posted a Short",madeArt:"made art",gym:"hit the gym",walk:"went for a walk",water:"hydrated well",journaled:"journaled"};
-    const named=Object.keys(ci).filter(k=>ci[k]&&lbl[k]).map(k=>lbl[k]).slice(0,3); if(named.length) out.push(named.join(", ")); }catch(e){}
-  if(n.special) out.push("💜 A special day");
-  if(jrStreamDay(date)) out.push("🔴 Stream day");
-  return out;
-}
-function jrDailyPage(date){
-  date=date||TODAY; if(date>TODAY) date=TODAY;
-  const ym=date.slice(0,7);
-  const n=(date===TODAY?(state.today||{}):(((state.jrCache||{})[ym]||{})[date]||{}));
-  const d=new Date(date+"T00:00"), isToday=date===TODAY;
-  const wd=d.toLocaleDateString("en-US",{weekday:"long"}), dnum=d.getDate(), mon=d.toLocaleDateString("en-US",{month:"long"}), wk=jrWeekNum(date);
-  const [accent,ink]=jrTheme(date); const glance=jrGlance(date,n);
-  return `<section class="panel jr-page" style="--jr-accent:${accent};--jr-ink:${ink}">
-    <div class="jr-page-head">
-      <div><div class="jr-page-wd">${esc(wd)}</div><div class="jr-page-date"><span class="jr-page-day">${dnum}</span> ${esc(mon)}</div><div class="jr-page-wk">Week ${wk}${isToday?" · today":""}</div></div>
-      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-        <button class="btn" data-act="jrPick" data-date="${dayShift(date,-1)}" title="previous day">‹</button>
-        ${isToday?"":`<button class="btn" data-act="jrPick" data-date="${TODAY}">today</button>`}
-        <button class="btn" data-act="jrPick" data-date="${dayShift(date,1)}" ${date>=TODAY?'disabled style="opacity:.4;pointer-events:none"':''} title="next day">›</button>
-        <button class="btn" data-act="jrOpenDay" data-date="${date}" title="mood, sleep, tags & details">✏️ details</button>
-      </div>
-    </div>
-    ${glance.length?`<div class="jr-glance"><div class="jr-glance-h">🦊 Kiko's day at a glance</div><ul>${glance.map(g=>`<li>${esc(g)}</li>`).join("")}</ul></div>`:`<div class="jr-glance jr-glance-empty">🦊 Write below — Kiko fills in your day-at-a-glance from what you log.</div>`}
-    <div class="jr-paper">
-      <div id="jrPageText" class="jr-pagetext" contenteditable="true" data-date="${date}" data-placeholder="${isToday?'talk or type — today, in your own words…  ♡':'this day, in your words…'}">${n.journalHtml||nl2br(esc(n.journal||''))}</div>
-    </div>
-    <div class="jr-toolbar" id="jrToolbar">
-      <select class="jr-tb-select" id="jrFont" title="Font family">
-        <option value="">Default</option>
-        <option value="'Georgia',serif">Georgia</option>
-        <option value="'Palatino Linotype',serif">Palatino</option>
-        <option value="'Courier New',monospace">Courier New</option>
-        <option value="'Comic Sans MS',cursive">Comic Sans</option>
-        ${(state.sentinel.jrFonts||[]).map(f=>`<option value="'${esc(f.name)}',sans-serif">${esc(f.name)}</option>`).join('')}
-        <option value="__add__">✚ add a font…</option>
-      </select>
-      <select class="jr-tb-select jr-tb-size" id="jrSize" title="Font size">
-        ${[10,11,12,13,14,16,18,20,24,28,32,40].map(s=>`<option value="${s}" ${s===14?'selected':''}>${s}</option>`).join('')}
-      </select>
-      <span class="jr-tb-div"></span>
-      <div class="jr-color-swatches" id="jrSwatches">
-        ${(state.jrRecentColors&&state.jrRecentColors.length?state.jrRecentColors:['#9b8ec4','#c87080','#5a8a70']).slice(0,3).map(c=>`<button class="jr-swatch" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('')}
-        <label class="jr-swatch jr-swatch-pick" title="Pick any color" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);cursor:pointer">
-          <input type="color" id="jrColorPick" style="opacity:0;position:absolute;width:0;height:0">
-        </label>
-      </div>
-      <span class="jr-tb-div"></span>
-      <button class="jr-tb-btn" data-cmd="bold" title="Bold"><b>B</b></button>
-      <button class="jr-tb-btn" data-cmd="italic" title="Italic"><i>I</i></button>
-      <button class="jr-tb-btn" data-cmd="underline" title="Underline"><u>U</u></button>
-      <span class="jr-tb-div"></span>
-      <button class="jr-tb-btn" data-cmd="insertUnorderedList" title="Bullet list" style="font-size:15px">•≡</button>
-      <button class="jr-tb-btn" data-cmd="insertOrderedList" title="Numbered list" style="font-size:13px">1.≡</button>
-      <button class="jr-tb-btn" data-cmd="removeFormat" title="Remove all formatting from selection" style="font-size:11px">clear fmt</button>
-    </div>
-    <div class="jr-page-foot">
-      <button class="btn ${state._jrMic?'btn-grad':''}" data-act="jrMic" title="speak your entry (Chrome/Edge)">${state._jrMic?"⏹ listening…":"🎤 Speak"}</button>
-      <span class="soft" id="jrSaveState" style="font-size:11px">auto-saves as you write ✨</span>
-      <button class="btn btn-grad" data-act="kikoReadJournal" data-date="${date}" style="margin-left:auto" title="Kiko reads your entry and detects mood, energy, symptoms and more">🦊 Kiko, read this</button>
-    </div>
-  </section>
-  ${kikoDetectedPanel(date, n)}`;
-}
-function kikoDetectedPanel(date, n){
-  const det=(state.kikoDetected||{})[date];
-  const theme=jrTheme(date); const col=theme[0];
-  if(!det&&!(n&&n.journal&&n.journal.trim())) return '';
-  if(!det) return `<section class="panel" style="border-left:3px solid ${col}">
-    <div class="card-head"><span class="label">🦊 Kiko Detected</span><span class="soft" style="font-size:11px">auto-detected from your entry</span></div>
-    <p class="soft" style="font-size:12.5px;margin:0">Tap <b>"🦊 Kiko, read this"</b> above and Kiko will extract your mood, energy, sleep, symptoms and more from your words. ✨</p>
-  </section>`;
-  const row=(icon,label,val)=>val!=null?`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--line)">
-    <span style="font-size:15px;width:22px;text-align:center">${icon}</span>
-    <span style="font-size:12px;color:var(--muted);width:72px;flex-shrink:0">${label}</span>
-    <span style="font-size:13px;font-weight:500;flex:1">${esc(String(val))}</span>
-  </div>`:'';
-  const moodEmoji=['😶','😢','😔','😐','🙂','😊'][Math.max(0,Math.min(5,det.mood||0))];
-  return `<section class="panel" style="border-left:3px solid ${col}">
-    <div class="card-head"><span class="label">🦊 Kiko Detected</span><span class="soft" style="font-size:11px">auto-detected from your entry</span></div>
-    <div>
-      ${row('😊','Mood',det.mood!=null?`${moodEmoji} ${['—','Rough','Low','Okay','Good','Lovely'][det.mood]||det.mood}`:null)}
-      ${row('⚡','Energy',det.energy!=null?det.energy+'/5':null)}
-      ${row('🫨','Stress',det.stress!=null?det.stress+'/5':null)}
-      ${row('🌙','Sleep',det.sleep!=null?det.sleep+'h':null)}
-      ${row('🩹','Symptoms',det.symptoms&&det.symptoms.length?det.symptoms.join(', '):(det.symptoms||null))}
-      ${row('💬','Topics',det.topics&&det.topics.length?det.topics.join(', '):(det.topics||null))}
-      ${row('💜','Special day',det.special?'Yes ✨':null)}
-      ${row('🌈','Day colour',det.dayColor||null)}
-    </div>
-    ${det.summary?`<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 0;line-height:1.5;font-style:italic">"${esc(det.summary)}"</p>`:''}
-    <button class="btn" data-act="kikoReadJournal" data-date="${date}" style="margin-top:10px;font-size:11px">↺ re-read entry</button>
-  </section>`;
-}
-function nl2br(s){ return (s||'').replace(/\n/g,'<br>'); }
+
 let _jrSaveT=null;
-function wireJrPage(){
-  const el=$("#jrPageText"); if(!el||el._wired)return; el._wired=true; const date=el.dataset.date||TODAY;
-  // auto-save on input
-  el.addEventListener("input",()=>{
-    const ss=$("#jrSaveState"); if(ss)ss.textContent="saving…"; clearTimeout(_jrSaveT);
-    _jrSaveT=setTimeout(async()=>{
-      try{
-        const html=el.innerHTML.replace(/​/g,'');
-        const plain=el.innerText.replace(/​/g,'');
-        await setDay(date,n=>({...n,journal:plain,journalHtml:html}));
-        const s2=$("#jrSaveState"); if(s2)s2.textContent="saved ✓";
-      }catch(e){ const s2=$("#jrSaveState"); if(s2)s2.textContent="couldn't save 🌧️"; }
-    },1100);
-  });
-  // toolbar wiring
-  const tb=$("#jrToolbar"); if(!tb) return;
-  // format buttons
-  tb.querySelectorAll("[data-cmd]").forEach(btn=>{
-    btn.addEventListener("mousedown",e=>{
-      e.preventDefault(); // keep focus in editor
-      document.execCommand(btn.dataset.cmd,false,null);
-      btn.classList.toggle("active", document.queryCommandState(btn.dataset.cmd));
-    });
-  });
-  // color swatches
-  tb.querySelectorAll(".jr-swatch[data-color]").forEach(sw=>{
-    sw.addEventListener("mousedown",e=>{ e.preventDefault(); applyJrColor(sw.dataset.color); });
-  });
-  // color picker (rainbow circle)
-  const colorPick=$("#jrColorPick");
-  if(colorPick){
-    colorPick.parentElement.addEventListener("mousedown",e=>{ e.preventDefault(); colorPick.click(); });
-    colorPick.addEventListener("input",()=>applyJrColor(colorPick.value));
-  }
-  function applyJrColor(hex){
-    const sel=window.getSelection();
-    if(sel&&sel.rangeCount){
-      const range=sel.getRangeAt(0);
-      if(range.collapsed){
-        // Insert a color-anchor span so typing continues in that color
-        const span=document.createElement("span");
-        span.style.color=hex;
-        span.innerHTML="&#8203;"; // zero-width space placeholder
-        range.insertNode(span);
-        const r2=document.createRange();
-        r2.setStart(span.firstChild,1); r2.collapse(true);
-        sel.removeAllRanges(); sel.addRange(r2);
-      } else {
-        document.execCommand("styleWithCSS",false,true);
-        document.execCommand("foreColor",false,hex);
-      }
-    }
-    // update recents
-    const DEFAULTS=["#9b8ec4","#c87080","#5a8a70"];
-    const recents=(state.jrRecentColors&&state.jrRecentColors.length===3?state.jrRecentColors:DEFAULTS.slice());
-    state.jrRecentColors=[hex,...recents.filter(c=>c!==hex)].slice(0,3);
-    // repaint swatch row live without full render
-    const swRow=$("#jrSwatches"); if(!swRow) return;
-    swRow.querySelectorAll(".jr-swatch[data-color]").forEach((el,i)=>{
-      const c=state.jrRecentColors[i]||'#ccc';
-      el.dataset.color=c; el.style.background=c; el.title=c;
-    });
-  }
-  // font family
-  const fontSel=$("#jrFont");
-  if(fontSel) fontSel.addEventListener("change",()=>{
-    if(fontSel.value==="__add__"){
-      const name=prompt("Font name (e.g. 'Pacifico'):");
-      if(!name){fontSel.value="";return;}
-      const url=prompt("Google Fonts URL (paste the @import link, or leave blank to use system font):");
-      if(url&&url.trim()){
-        const link=document.createElement("link"); link.rel="stylesheet"; link.href=url.trim(); document.head.appendChild(link);
-      }
-      const fonts=state.sentinel.jrFonts||[];
-      fonts.push({name:name.trim(),url:url||""});
-      state.sentinel.jrFonts=fonts;
-      saveSentinel().catch(()=>{});
-      // add to select and apply
-      const opt=document.createElement("option"); opt.value=`'${name}',sans-serif`; opt.textContent=name;
-      fontSel.insertBefore(opt, fontSel.querySelector("option[value='__add__']"));
-      fontSel.value=opt.value;
-      document.execCommand("fontName",false,opt.value);
-      return;
-    }
-    if(fontSel.value) document.execCommand("fontName",false,fontSel.value);
-  });
-  // font size (execCommand uses 1-7, we map px sizes)
-  const sizeSel=$("#jrSize");
-  if(sizeSel) sizeSel.addEventListener("change",()=>{
-    const px=parseInt(sizeSel.value);
-    // insert a span with the size instead, execCommand fontSize is too coarse
-    const sel=window.getSelection(); if(!sel.rangeCount) return;
-    const range=sel.getRangeAt(0);
-    if(range.collapsed) return;
-    const span=document.createElement("span");
-    span.style.fontSize=px+"px";
-    range.surroundContents(span);
-    sel.removeAllRanges();
-  });
-  // update active states on selection change
-  el.addEventListener("keyup", updateToolbarState);
-  el.addEventListener("mouseup", updateToolbarState);
-  function updateToolbarState(){
-    tb.querySelectorAll("[data-cmd]").forEach(btn=>{
-      try{ btn.classList.toggle("active", document.queryCommandState(btn.dataset.cmd)); }catch(_){}
-    });
-  }
-}
-function viewJournal(){
-  if(!state.jrRef){ const t=new Date(); state.jrRef=new Date(t.getFullYear(),t.getMonth(),1); }
-  const ref=state.jrRef, ym=jrYM(ref);
-  const rows=(state.jrCache||{})[ym];
-  if(!rows){ setTimeout(async()=>{ try{ await jrFetchMonth(state.jrRef); if(state.tab==="journal") render(); }catch(_){} },10); }
-  const R=rows||{};
-  const st=jrStats(R); const wm=jrWeightMap();
-  const monthName=ref.toLocaleDateString("en-US",{month:"long",year:"numeric"});
-  const startDow=new Date(ref.getFullYear(),ref.getMonth(),1).getDay();
-  const daysIn=new Date(ref.getFullYear(),ref.getMonth()+1,0).getDate();
-  let cells="";
-  for(let i=0;i<startDow;i++) cells+=`<div></div>`;
-  for(let d=1;d<=daysIn;d++){
-    const ds=ym+"-"+String(d).padStart(2,"0"); const n=R[ds]; const sp=jrSpecial(ds,n);
-    const mo=n&&n.mind&&n.mind.mood; const future=ds>TODAY;
-    cells+=`<div class="jr-cell ${ds===TODAY?'today':''} ${ds===(state.jrDay||TODAY)?'jr-sel':''}" style="background:${future?'#fff':jrDayColor(n,sp)};${future?'opacity:.45;':''}cursor:${future?'default':'pointer'}" ${future?'':`data-act="jrPick" data-date="${ds}"`}>
-      <div style="display:flex;justify-content:space-between;align-items:center"><span class="cal-daynum">${d}</span>${mo!=null?`<span style="font-size:13px">${JR_MOODS[Math.max(0,Math.min(5,mo))]}</span>`:""}</div>
-      ${n||wm[ds]?`<div class="jr-meta">${wm[ds]!=null?`⚖️${wm[ds]}`:""} ${n&&n.mind&&n.mind.energy!=null?`⚡${n.mind.energy}`:""} ${n&&n.sleep!=null?`🌙${n.sleep}h`:""}</div>
-      <div class="jr-meta">${n&&n.stress!=null?`🫨${n.stress}`:""} ${jrSymptomFlag(n)?"🩹":""} ${n&&n.journal?"📝":""} ${jrStreamDay(ds)?"🔴":""} ${sp?"💜":""}</div>`:""}
-    </div>`;
-  }
-  const caps=state.sentinel.memoryCapsules||{};
-  const capYMs=(function(){ const out=[]; const t=new Date(); for(let i=1;i<=6;i++){ const d=new Date(t.getFullYear(),t.getMonth()-i,1); out.push(jrYM(d)); } return out; })();
-  const srch=state.jrSearch||{};
-  const theme=jrTheme(state.jrDay||TODAY); const col=theme[0];
-  const monthLabel=ref.toLocaleDateString("en-US",{month:"long"});
-  const stickers=(state.sentinel.jrStickers||[]).filter(s=>!s.month||s.month===ym);
-  const washi=(state.sentinel.jrWashi||[]).filter(w=>!w.month||w.month===ym);
-  const photos=(state.sentinel.jrPhotos||[]).filter(p=>!p.month||p.month===ym);
-  return `<div class="page"><div class="jr-layout">
-  <div class="page-main">
-  ${jrDailyPage(state.jrDay||TODAY)}
-  <section class="panel">
-    <div class="card-head"><h2 style="font-size:18px">📓 ${monthName} <span class="soft" style="font-size:12px;font-weight:500">· month overview</span></h2>
-      <div style="display:flex;gap:6px"><button class="btn" data-act="jrShift" data-d="-1">‹</button><button class="btn" data-act="jrToday">today</button><button class="btn" data-act="jrShift" data-d="1">›</button><button class="btn btn-grad" data-act="jrPick" data-date="${TODAY}">📝 today's page</button></div></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px">
-      ${[["🌤️ avg mood",st.avgMood!=null?st.avgMood+"/5":"—"],["⚡ avg energy",st.avgEnergy!=null?st.avgEnergy+"/5":"—"],["🌙 avg sleep",st.avgSleep!=null?st.avgSleep+"h":"—"],["⚖️ this month",st.wDelta!=null?(st.wDelta>0?"+":"")+st.wDelta+CONFIG.weightUnit:"—"],["✨ best day",st.best?fmtDate(st.best.date):"—"],["🌧️ hardest",st.hard?fmtDate(st.hard.date):"—"]].map(([l,v])=>`<div class="soft-card" style="padding:8px 10px;text-align:center"><div class="label" style="font-size:9px">${l}</div><div style="font-weight:700;font-size:14px">${v}</div></div>`).join("")}
-    </div>
-    <div class="cal-grid" style="margin-bottom:4px">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div class="cal-dow">${d}</div>`).join("")}</div>
-    <div class="cal-grid">${cells}</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:8px">
-      <span><span class="jr-dot" style="background:#e0f5ea"></span> lovely</span><span><span class="jr-dot" style="background:#fdf3da"></span> okay</span><span><span class="jr-dot" style="background:#fde6e9"></span> rough</span><span><span class="jr-dot" style="background:#eef3fa"></span> unlogged</span><span><span class="jr-dot" style="background:#ece2fb"></span> special 💜</span><span>· 📝 has words · 🩹 symptoms · 🔴 stream day</span>
-    </div>
-    <p class="soft" style="font-size:10.5px;margin-top:6px">Your written words never show here — open a day to read them. 🔒💗</p>
-  </section>
-  <section class="panel">
-    <div class="label" style="margin-bottom:6px">🔎 Find a day</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <input class="inp" id="jrQ" placeholder="search your words &amp; tags…" style="flex:2;min-width:150px" value="${esc(srch.q||'')}">
-      <select class="inp" id="jrMood" style="max-width:150px">${[["","any mood"],["low","rough days (≤2)"],["mid","okay days (3)"],["high","lovely days (≥4)"]].map(([v,l])=>`<option value="${v}" ${srch.mood===v?'selected':''}>${l}</option>`).join("")}</select>
-      <label class="chiptog ${srch.stream?'on':''}" style="cursor:pointer"><input type="checkbox" id="jrStream" ${srch.stream?'checked':''} style="display:none"><span>${srch.stream?'✓':''}</span>🔴 stream days</label>
-      <label class="chiptog ${srch.sym?'on':''}" style="cursor:pointer"><input type="checkbox" id="jrSym" ${srch.sym?'checked':''} style="display:none"><span>${srch.sym?'✓':''}</span>🩹 symptom days</label>
-      <button class="btn btn-grad" data-act="jrSearch">search</button>
-    </div>
-    ${srch.results?`<div style="margin-top:10px">${srch.results.length?srch.results.slice(0,40).map(r=>`<div class="listrow" data-act="jrPick" data-date="${r.date}" style="cursor:pointer"><span class="grow" style="font-size:12.5px"><b>${fmtDate(r.date)}</b> <span class="soft" style="font-size:11px">${r.meta}</span></span><span class="soft" style="font-size:11px">open →</span></div>`).join(""):'<p class="soft" style="font-size:12px">nothing matched — try fewer filters 🌸</p>'}${srch.results.length>40?`<p class="soft" style="font-size:10.5px">showing 40 of ${srch.results.length}</p>`:""}</div>`:""}
-  </section>
-  <section class="panel">
-    <div class="card-head"><span class="label">💊 Monthly memory capsules</span><span class="pill pill-gray">a keepsake per month</span></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Kiko folds a whole month into a tiny keepsake — best day, hardest day, wins, and a line of yours worth keeping. 💗</p>
-    ${capYMs.map(cym=>{ const c=caps[cym]; const label=new Date(cym+"-01T00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"});
-      return c?`<details class="acc" style="margin-bottom:6px"><summary>💊 ${label}</summary><div class="acc-body"><div style="white-space:pre-wrap;font-size:12.5px;line-height:1.65">${esc(c.text)}</div><button class="btn" data-act="jrCapsule" data-ym="${cym}" style="margin-top:8px">↻ rebuild</button></div></details>`
-        :`<div class="listrow"><span class="grow" style="font-size:12.5px">${label}</span><button class="btn" data-act="jrCapsule" data-ym="${cym}">✨ build capsule</button></div>`; }).join("")}
-  </section>
-  ${DISCLAIMER}
-  </div><!-- /page-main --><aside class="jr-asset-panel">
-    ${(()=>{
-    const ph=(n,icon)=>Array.from({length:n},(_,i)=>`<div class="jr-asset-placeholder">${i===0?icon:''}</div>`).join('');
-    const allMonths=[...new Set([...(state.sentinel.jrStickers||[]),...(state.sentinel.jrWashi||[]),...(state.sentinel.jrPhotos||[])].map(x=>x.month).filter(Boolean))].sort().reverse();
-    const monthOpts=allMonths.map(m=>`<option value="${m}" ${m===ym?'selected':''}>${new Date(m+'-01T00:00').toLocaleDateString('en-US',{month:'long'})} · ${jrColorName(m)}</option>`).join('');
-    const selMonth=state.jrAssetMonth||ym;
-    const stk=(state.sentinel.jrStickers||[]).filter(s=>!s.month||s.month===selMonth).slice(0,6);
-    const wsh=(state.sentinel.jrWashi||[]).filter(w=>!w.month||w.month===selMonth).slice(0,4);
-    const pht=(state.sentinel.jrPhotos||[]).filter(p=>!p.month||p.month===selMonth).slice(0,6);
-    const thumb=(s,type)=>`<img class="jr-asset-thumb" src="${esc(s.url)}" title="${esc(s.name||'')}" draggable="true" data-act="jrInsertAsset" data-url="${esc(s.url)}" data-type="${type}">`;
-    const strip=(w)=>`<img class="jr-asset-strip" src="${esc(w.url)}" title="${esc(w.name||'')}" draggable="true" data-act="jrInsertAsset" data-url="${esc(w.url)}" data-type="washi">`;
-    return `
-    <div class="jr-asset-card">
-      <div class="jr-asset-card-head"><span class="jr-asset-card-title">Stickers</span><span class="jr-asset-card-see">see all</span></div>
-      <select class="jr-asset-month" data-act="jrAssetMonthPick"><option value="">all months</option>${monthOpts}</select>
-      <div class="jr-asset-grid">${stk.map(s=>thumb(s,'sticker')).join('')}${ph(Math.max(0,6-stk.length),'🌸')}</div>
-      <label class="jr-add-btn" style="display:block;text-align:center;cursor:pointer">+ add stickers to database<input type="file" accept="image/*" multiple style="display:none" data-act="jrUploadAsset" data-type="stickers"></label>
-    </div>
-    <div class="jr-asset-card">
-      <div class="jr-asset-card-head"><span class="jr-asset-card-title">Washi</span><span class="jr-asset-card-see">see all</span></div>
-      <select class="jr-asset-month" data-act="jrAssetMonthPick"><option value="">all months</option>${monthOpts}</select>
-      ${wsh.map(w=>strip(w)).join('')}${Array.from({length:Math.max(0,4-wsh.length)},(_,i)=>`<div class="jr-asset-strip-ph">${i===0?'🎀':''}</div>`).join('')}
-      <label class="jr-add-btn" style="display:block;text-align:center;cursor:pointer;margin-top:4px">+ add washi to database<input type="file" accept="image/*" multiple style="display:none" data-act="jrUploadAsset" data-type="washi"></label>
-    </div>
-    <div class="jr-asset-card">
-      <div class="jr-asset-card-head"><span class="jr-asset-card-title">Photos</span><span class="jr-asset-card-see">see all</span></div>
-      <div class="jr-asset-grid">${pht.map(p=>thumb(p,'photo')).join('')}${ph(Math.max(0,6-pht.length),'📷')}</div>
-      <label class="jr-add-btn" style="display:block;text-align:center;cursor:pointer">+ add photos to database<input type="file" accept="image/*" multiple style="display:none" data-act="jrUploadAsset" data-type="photos"></label>
-    </div>`;
-  })()}
-  </aside></div></div>`;
-}
+
 /* the day view/editor — her words live HERE, behind a click, never on the grid */
 async function jrEntryModal(date){
   await jrFetchMonth(new Date(date+"T00:00"));
@@ -2879,54 +1576,9 @@ async function jrEntryModal(date){
   document.querySelectorAll("[data-jrscale]").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll(`[data-jrscale="${b.dataset.jrscale}"]`).forEach(x=>x.classList.remove("on")); b.classList.add("on"); }));
 }
+
 function tbStepText(s){ return typeof s==="string"?s:(s&&s.text)||""; }
-function viewToolbox(){
-  const tb=state.tb||(state.tb={spice:3,steps:null,task:"",fText:"",fTone:"professional",fOut:"",eTask:"",eOut:null,cText:"",groups:null,tText:"",tOut:null,busy:""});
-  const chili=n=>`<span class="spice">${[1,2,3,4,5].map(i=>`<button data-act="tbSpice" data-v="${i}" class="${i<=n?'on':''}" title="${i}/5 — higher = tinier steps">🌶️</button>`).join("")}</span>`;
-  const totalMin=(tb.steps||[]).reduce((a,s)=>a+(typeof s==="object"?Number(s.min||0):0),0);
-  return `<div class="page">
-  <section class="panel"><div class="card-head"><h2 style="font-size:18px">🧠 Brain Tools</h2><span class="pill pill-gray">focus helpers</span></div>
-    <p class="soft" style="font-size:12px;margin:0">ADHD helpers for the hard parts — break it down, estimate honestly, read the room, sort your brain. ${DEMO?"<b>(needs live mode)</b>":""}</p></section>
-  <div class="tb-grid">
-  <section class="panel">
-    <div class="card-head"><span class="label">✨ Magic breakdown</span>${chili(tb.spice)}</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Type the scary task; get tiny steps. More 🌶️ = smaller pieces.</p>
-    <div style="display:flex;gap:6px"><input class="inp" id="tbTask" placeholder="the task that won't start itself…" value="${esc(tb.task||'')}"><button class="btn btn-grad" data-act="tbBreak" ${tb.busy==='break'?'disabled':''}>${tb.busy==='break'?'…':'break it down'}</button></div>
-    ${tb.steps?`<div class="tb-steps" style="margin-top:10px">${totalMin?`<div class="label" style="margin-bottom:4px">~${totalMin} min total</div>`:""}${tb.steps.map((s,i)=>`<div class="listrow"><span class="soft" style="min-width:20px;font-size:11px">${i+1}.</span><span class="grow" style="font-size:12.5px">${esc(tbStepText(s))}</span>${typeof s==="object"&&s.min?`<span class="label num">~${Number(s.min)}m</span>`:""}<button class="x" data-act="tbBreakStep" data-i="${i}" title="break this smaller">🪓</button></div>`).join("")}
-      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-grad" data-act="tbStepsToPlanner">🗒️ add to planner</button><button class="btn" data-act="tbClear">clear</button></div></div>`:""}
-  </section>
-  <section class="panel">
-    <div class="label" style="margin-bottom:6px">⏱️ Time estimator</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Honest ranges — includes setup, transitions, and decision pauses.</p>
-    <div style="display:flex;gap:6px"><input class="inp" id="tbETask" placeholder="how long will … actually take?" value="${esc(tb.eTask||'')}"><button class="btn btn-grad" data-act="tbEstimate" ${tb.busy==='est'?'disabled':''}>${tb.busy==='est'?'…':'estimate'}</button></div>
-    ${tb.eOut?(tb.eOut.likely?`<div class="soft-card" style="margin-top:8px;font-size:12.5px">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline"><span><b style="font-size:15px">${esc(tb.eOut.likely)}</b> <span class="label">realistic</span></span>${tb.eOut.bestCase?`<span class="soft">${esc(tb.eOut.bestCase)} <span class="label">if everything cooperates</span></span>`:""}</div>
-        ${tb.eOut.why?`<div class="soft" style="margin-top:6px;line-height:1.5">${esc(tb.eOut.why)}</div>`:""}
-        ${(tb.eOut.parts||[]).length?`<div style="margin-top:8px">${tb.eOut.parts.map(p2=>`<div style="display:flex;gap:8px;padding:2px 0;font-size:12px"><span class="grow">• ${esc(p2.text)}</span><span class="label num">~${Number(p2.min)||"?"}m</span></div>`).join("")}</div>`:""}
-      </div>`:`<div class="soft-card" style="margin-top:8px;font-size:12.5px"><b>${esc(tb.eOut.estimate||"")}</b> · <span class="soft">${esc(tb.eOut.note||"")}</span></div>`):""}
-  </section>
-  <section class="panel">
-    <div class="label" style="margin-bottom:6px">⚖️ Tone judge <span class="muted">· how does it actually read?</span></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Paste a message you're spiralling about — RSD first-aid. 💗</p>
-    <textarea class="inp" id="tbTText" rows="2" placeholder="paste the message here…">${esc(tb.tText||'')}</textarea>
-    <button class="btn btn-grad" data-act="tbTone" style="margin-top:8px" ${tb.busy==='tone'?'disabled':''}>${tb.busy==='tone'?'reading the room…':'⚖️ read it for me'}</button>
-    ${tb.tOut?`<div class="soft-card" style="margin-top:10px">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${(tb.tOut.vibe||[]).map(v=>`<span class="pill pill-lav">${esc(v)}</span>`).join("")}</div>
-      <div style="font-size:13px;line-height:1.6">${esc(tb.tOut.read||"")}</div>
-      ${tb.tOut.notSaying?`<div style="margin-top:8px;font-size:12.5px;line-height:1.55"><b class="sak">what it's NOT saying:</b> ${esc(tb.tOut.notSaying)}</div>`:""}
-      ${tb.tOut.respond?`<div class="label" style="margin-top:8px">easiest healthy reply</div><div class="soft" style="font-size:12.5px">${esc(tb.tOut.respond)}</div>`:""}
-    </div>`:""}
-  </section>
-  <section class="panel tb-span2">
-    <div class="label" style="margin-bottom:6px">🧠 Brain-dump compiler</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Pour everything out unsorted — comes back as tidy groups.</p>
-    <textarea class="inp" id="tbCText" rows="2" placeholder="everything in your head, in any order…">${esc(tb.cText||'')}</textarea>
-    <button class="btn btn-grad" data-act="tbCompile" style="margin-top:8px" ${tb.busy==='compile'?'disabled':''}>${tb.busy==='compile'?'…':'sort my brain'}</button>
-    ${tb.groups?`<div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">${tb.groups.map((g,gi)=>`<div class="soft-card"><div class="card-head" style="margin-bottom:6px"><span class="label">${esc(g.title)}</span><button class="btn" data-act="tbGroupToPlanner" data-i="${gi}" style="padding:3px 9px;font-size:11px">🗒️ → planner</button></div>${(g.items||[]).map(it=>`<div style="font-size:12.5px;padding:2px 0">• ${esc(it)}</div>`).join("")}</div>`).join("")}</div>`:""}
-  </section>
-  </div>
-  </div>`;
-}
+
 /* ===================== PCOS / HEALTH ===================== */
 function cycleStats(cyc){
   const h=(cyc.history||[]).filter(x=>x&&x.start).slice().sort((a,b)=>a.start<b.start?-1:1);
@@ -2936,142 +1588,11 @@ function cycleStats(cyc){
   const withGap=h.map((x,i)=>({...x, gap:i>0?daysBetween(h[i-1].start,x.start):null}));
   return { h:withGap, count:h.length, gaps, avgGap:avg(gaps), minGap:gaps.length?Math.min(...gaps):null, maxGap:gaps.length?Math.max(...gaps):null, avgLen:avg(lens) };
 }
-/* combined Health tab — PCOS on the left, Mounjaro on the right (stacks on narrow screens) */
-function viewDailyCheckin(){
-  const m=state.today.mind||{}, mj=state.today.mounjaro||{}, p=state.today.pcos||{};
-  const w40=water40();
-  return `
-  <section class="panel">
-    <div class="card-head"><div class="label">📊 How's today?</div><button class="btn" data-act="healthReport" title="30-day summary for your doctor">📋 Doctor report</button></div>
-    <p class="soft" style="font-size:11px;margin:0 0 12px">Everything in one place — fill this once. &nbsp;0 = rough / bad · 5 = great / none 💗</p>
 
-    <div class="label" style="margin-bottom:6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Wellbeing</div>
-    ${scaleRow("Energy","mindSet","energy",m.energy,"depleted","full")}
-    ${scaleRow("Mood","mindSet","mood",m.mood,"low","bright")}
-    ${scaleRow("Anxiety / calm","mindSet","anxiety",m.anxiety,"stressed","calm")}
-
-    <div class="label" style="margin:14px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Symptoms</div>
-    ${scaleRow("Nausea","mjSet","nausea",mj.nausea,"rough","fine")}
-    ${scaleRow("Bloating","mjSet","belly",mj.belly,"severe","none")}
-    ${scaleRow("Fatigue / heaviness","mjSet","fatigue",mj.fatigue,"heavy","none")}
-    ${scaleRow("Food noise / cravings","mjSet","foodnoise",mj.foodnoise,"loud","quiet")}
-    ${scaleRow("Constipation","mjSet","constipation",mj.constipation,"severe","none")}
-    ${scaleRow("Diarrhea","mjSet","diarrhea",mj.diarrhea,"severe","none")}
-    ${scaleRow("Reflux / heartburn","mjSet","reflux",mj.reflux,"severe","none")}
-    ${scaleRow("Acne flare","pcosSet","acne",p.acne,"severe","clear")}
-    ${scaleRow("Scalp hair shedding","pcosSet","shedding",p.shedding,"heavy","none")}
-
-    <div class="label" style="margin:14px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Basics</div>
-    <div class="field"><div class="label">Water today <span class="soft" style="text-transform:none;letter-spacing:0;font-weight:500">· goal 2–3 × 40oz</span></div>
-      <div class="hcount"><button class="step" data-act="waterCup" data-v="-1">−</button><span>${w40%1?w40.toFixed(1):w40}</span><button class="step" data-act="waterCup" data-v="1">＋</button><span class="soft" style="font-size:12px;font-family:var(--sans)">× 40oz 🥤</span></div></div>
-    <div class="field"><div class="label">Sleep last night</div>
-      <div class="hcount"><button class="step" data-act="sleepStep" data-v="-1">−</button><span>${(state.today.sleep!=null?state.today.sleep:0)}</span><button class="step" data-act="sleepStep" data-v="1">＋</button><span class="soft" style="font-size:12px;font-family:var(--sans)">hrs 🌙</span></div></div>
-
-    <div class="label" style="margin:14px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Gentle habits</div>
-    <p class="soft" style="font-size:11px;margin:0 0 8px">No targets to fail — just a soft tally. 🌱</p>
-    <div class="chiprow">
-      ${chiptog("Moved my body","pcosToggle","moved",p.moved)}
-      ${chiptog("Balanced meals","pcosToggle","balanced",p.balanced)}
-      ${chiptog("Protein with meals","pcosToggle","protein",p.protein)}
-      ${chiptog("Eased sugar spikes","pcosToggle","lowsugar",p.lowsugar)}
-      ${chiptog("Smaller meals","mjToggle","smallerMeals",mj.smallerMeals)}
-      ${chiptog("Fiber / veggies","mjToggle","fiber",mj.fiber)}
-    </div>
-  </section>`;
-}
-function viewHealth(){
-  const p=state.today.pcos||{}, cyc=state.sentinel.cycle||{};
-  const cur=currentDose();
-  const log=(state.sentinel.injectionLog||[]).slice().reverse();
-  const doses=CONFIG.mounjaro.doses, sites=CONFIG.mounjaro.sites;
-  const unit=CONFIG.weightUnit||"kg";
-  const wl=(state.sentinel.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate);
-  const firstShot=(state.sentinel.injectionLog||[]).slice().sort(cmpDate)[0];
-  const journeyStart=firstShot?firstShot.date:(wl[0]?wl[0].date:null);
-  const weeksOnMj=journeyStart?Math.floor(daysBetween(journeyStart,TODAY)/7):0;
-  let startW=null; if(wl.length){ const after=wl.find(x=>!journeyStart||x.date>=journeyStart); startW=(after||wl[0]).w; }
-  const nowW=wl.length?wl[wl.length-1].w:null;
-  const lost=(startW!=null&&nowW!=null)?-(nowW-startW):null;
-  const lostStr=lost==null?"—":(Math.abs(lost)<0.05?"±0":(lost>0?"↓ ":"↑ ")+Math.abs(lost).toFixed(1)+" "+unit);
-  const lostColor=lost==null?"var(--ink)":(lost>0?"#3a9d83":(lost<-0.05?"var(--sakura-deep)":"var(--ink))"));
-  const trendNote=lost==null?`Log a weight or two and your progress since starting will show here. ⚖️`:`Since starting${journeyStart?` ~${weeksOnMj} week${weeksOnMj===1?'':'s'} ago`:''}: ${startW} → ${nowW} ${unit}. Every direction is data, not a verdict — be kind to yourself. ❄️`;
-  const st=cycleStats(cyc);
-  const dx=cyc.lastStart?daysBetween(cyc.lastStart,TODAY):null;
-  const months=dx!=null?dx/30.44:null;
-  const longGap=dx!=null&&dx>=45;
-  return `<div class="page">
-  ${viewDailyCheckin()}
-
-  <details class="acc"><summary>💉 Mounjaro journey</summary><div class="acc-body">
-    <div class="soft-card" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
-      <div><div class="label">Current dose</div><div class="bignum">${cur?cur.dose:'—'} mg</div></div>
-      <div><div class="label">Weight so far</div><div class="bignum" style="color:${lostColor}">${lostStr}</div></div>
-      <div class="grow" style="min-width:160px"><p class="soft" style="font-size:11.5px;margin:0">${trendNote}</p></div>
-    </div>
-    <div class="label" style="margin-bottom:6px">💉 Log this week's shot</div>
-    <p class="soft" style="font-size:12px;margin:0 0 10px">${siteHint()}</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="field"><div class="label">Date</div><input class="inp" type="date" id="shotDate" value="${TODAY}"></div>
-      <div class="field"><div class="label">Time</div><input class="inp" type="time" id="shotTime" value="20:00"></div>
-    </div>
-    <div class="field"><div class="label">Dose (mg)</div><select class="inp" id="shotDose">${doses.map(d=>`<option value="${d}" ${cur&&cur.dose===d?'selected':''}>${d} mg</option>`).join("")}</select></div>
-    <div class="field"><div class="label">Injection site (rotate!)</div><div class="chiprow" id="siteRow">
-      ${sites.map(s2=>`<button class="sitebtn" data-act="pickSite" data-v="${esc(s2)}">${esc(s2)}</button>`).join("")}</div>
-      <input type="hidden" id="shotSite" value=""></div>
-    <div class="field" id="afterField"><div class="label">~30 min after — how do you feel?</div>
-      <div class="scale">${[0,1,2,3,4,5].map(i=>`<button data-act="mjAfter" data-v="${i}">${i}</button>`).join("")}</div>
-      <div class="scale-ends"><span>rough</span><span>fine</span></div></div>
-    <div class="field"><div class="label">Note (optional)</div><input class="inp" type="text" id="shotNote" placeholder="how it went…"></div>
-    <button class="btn btn-grad" data-act="logShot">Log shot ❄️</button>
-    <div class="label" style="margin:14px 0 6px">📜 Injection history</div>
-    ${log.length?log.map(s2=>`<div class="listrow"><div><b>${fmtDate(s2.date)}</b> ${s2.time?`<span class="soft">· ${esc(s2.time)}</span>`:''}
-      <div class="soft" style="font-size:11.5px">${s2.dose} mg · ${esc(s2.site||'—')}${s2.after!=null?` · after ${s2.after}/5`:''}${s2.note?` · ${esc(s2.note)}`:''}</div></div>
-      <span class="grow"></span><button class="x" data-act="delShot" data-v="${s2.id}">✕</button></div>`).join("")
-      :`<p class="soft" style="font-size:12.5px">No shots logged yet — your first one starts the rotation helper. 🦊</p>`}
-    <details style="margin-top:14px"><summary class="soft" style="font-size:12px;cursor:pointer">🩺 When to check in with your doctor</summary>
-      <p class="soft" style="font-size:12px;margin:8px 0 4px">Most tummy stuff settles. Gentle reasons to call your care team — a reminder, never a diagnosis:</p>
-      <ul style="font-size:12px;color:var(--ink-soft);padding-left:18px">
-        <li>Severe stomach pain radiating to your back</li><li>Relentless vomiting or signs of dehydration</li>
-        <li>Gallbladder-type pain (upper-right belly), fever, or yellowing skin/eyes</li><li>Anything that simply feels wrong</li>
-      </ul>
-    </details>
-  </div></details>
-
-  <details class="acc"><summary>🌙 Cycle tracker</summary><div class="acc-body">
-    <div class="soft-card">
-      ${cyc.lastStart
-        ?`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="bignum">Day ${dx}</span><span class="soft" style="font-size:12px">since your last period started (${fmtDate(cyc.lastStart)})${months>=1.5?` · ~${months.toFixed(1)} months`:''}</span></div>`
-        :`<p class="soft" style="font-size:12.5px;margin:0">No period logged yet — log a start whenever you need to. ❄️</p>`}
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn btn-grad" data-act="cycleStart">Log period start</button>
-        <button class="btn" data-act="cycleEnd">Log period end</button>
-      </div>
-      <div class="field"><div class="label">Flow today (optional)</div><div class="chiprow">
-        ${["light","med","heavy"].map(f=>`<button class="sitebtn ${state.today.flow===f?'on':''}" data-act="pcosSet" data-f="flow" data-v="${f}">${f}</button>`).join("")}</div></div>
-      ${st.count?`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
-          <div><div class="label">Logged</div><div style="font-weight:700">${st.count} period${st.count===1?'':'s'}</div></div>
-          ${st.avgGap?`<div><div class="label">Avg cycle</div><div style="font-weight:700">~${st.avgGap}d</div></div>`:''}
-          ${st.gaps&&st.gaps.length>1?`<div><div class="label">Range</div><div style="font-weight:700">${st.minGap}–${st.maxGap}d</div></div>`:''}
-          ${st.avgLen?`<div><div class="label">Avg length</div><div style="font-weight:700">~${st.avgLen}d</div></div>`:''}
-        </div>`:''}
-      <p class="soft" style="font-size:11px;margin-top:8px">Cycles vary a lot with PCOS — long or skipped months are common, and that's okay. 🦊</p>
-      ${longGap?`<div class="disc" style="margin-top:8px">${CONFIG.creator.snow}<span>It's been ${months>=2?`about ${Math.round(months)} months`:'a longer stretch'} since your last period — worth a gentle mention to your doctor next time. No alarm, just a note. 🦊</span></div>`:''}
-      ${st.count?`<details style="margin-top:8px;border:none;background:transparent;padding:0;box-shadow:none"><summary style="font-size:12px">📜 Period history (${st.count}) · tap ✕ to remove a mistaken log</summary>
-        <div style="margin-top:6px">${st.h.slice().reverse().map(x=>`<div class="listrow"><span class="grow" style="font-size:12px">${fmtDate(x.start)}${x.end?` – ${fmtDate(x.end)}`:''} ${x.flow?`<span class="soft">· ${esc(x.flow)}</span>`:''}</span>${x.gap!=null?`<span class="soft" style="font-size:11px">+${x.gap}d</span>`:''}<button class="x" data-act="delPeriod" data-start="${esc(x.start)}" data-end="${esc(x.end||'')}" title="remove">✕</button></div>`).join("")}</div></details>`:''}
-    </div>
-  </div></details>
-
-  <details class="acc"><summary>💗 Notes &amp; extras</summary><div class="acc-body">
-    <div class="label" style="margin-bottom:6px">What helps me feel better</div>
-    <textarea class="inp" id="helpsNote" placeholder="things that make a rough health day softer…" style="min-height:80px">${esc(state.sentinel.helps||"")}</textarea>
-    <div style="margin-top:8px;margin-bottom:14px"><button class="btn btn-grad" data-act="saveHelps">Save</button></div>
-    ${scaleRow("Unwanted hair / hirsutism (check in weekly)","pcosSet","hirsutism",p.hirsutism,"none","heavy")}
-  </div></details>
-
-  ${DISCLAIMER}</div>`;
-}
 function waterCups(){ return (state.today&&state.today.mounjaro&&state.today.mounjaro.water)||0; }
-function water40(){ return waterCups()/CUPS_PER_40OZ; }            // her unit: full 40oz cups
+
+function water40(){ return waterCups()/CUPS_PER_40OZ; }
+            // her unit: full 40oz cups
 /* ===== doctor-ready health report (compiled from her own data; tracking, not advice) ===== */
 function buildHealthReport(){
   const s=state.sentinel||{}, u=CONFIG.weightUnit||"kg"; const R=[];
@@ -3133,6 +1654,7 @@ function buildHealthReport(){
   R.push("Generated by Mifuyu OS · self-tracked data · not a diagnosis.");
   return R.join("\n");
 }
+
 function showHealthReport(){
   const txt=buildHealthReport();
   $("#modal").innerHTML=`<div class="modal-bg" data-act="closeModal"><div class="modal" data-act="noop" style="max-width:560px">
@@ -3142,6 +1664,7 @@ function showHealthReport(){
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-grad" data-act="copyHealthReport">📋 copy</button><button class="btn" data-act="printHealthReport">🖨️ print / save PDF</button></div>
   </div></div>`;
 }
+
 function viewPcos(){
   const p=state.today.pcos||{}, cyc=state.sentinel.cycle||{};
   const st=cycleStats(cyc);
@@ -3203,14 +1726,10 @@ function viewPcos(){
   ${DISCLAIMER}`;
 }
 
+
 /* ===================== MOUNJARO ===================== */
 function currentDose(){ const h=(state.sentinel.doseHistory||[]).slice().sort((a,b)=>a.started<b.started?-1:1); return h.length?h[h.length-1]:null; }
-function siteHint(){
-  const last=(state.sentinel.injectionLog||[]).slice(-1)[0]; if(!last) return "Pick any site to start your rotation.";
-  const sites=CONFIG.mounjaro.sites; const i=sites.indexOf(last.site);
-  const sug=sites[(i+1+Math.floor(sites.length/2))%sites.length];
-  return `Last site: <b>${esc(last.site)}</b> → maybe try <b>${esc(sug)}</b> this week (rotating spots helps absorption &amp; avoids lumps).`;
-}
+
 function viewMj(){
   const mj=state.today.mounjaro||{}, cur=currentDose();
   const log=(state.sentinel.injectionLog||[]).slice().reverse();
@@ -3298,265 +1817,35 @@ function viewMj(){
   ${DISCLAIMER}`;
 }
 
+
 /* ===================== WEIGHT ===================== */
 function rollingAvg(arr){ if(!arr.length)return null; const l=arr.filter(x=>x.w!=null).slice(-4); return l.length?l.reduce((a,b)=>a+b.w,0)/l.length:null; }
+
 // everything the Withings Body Smart can report (manual entry + sync both use these keys)
 const BODYCOMP=[["w","Weight",CONFIG.weightUnit,"⚖️"],["bmi","BMI","","📐"],["fat","Body fat","%","🫧"],["muscle","Muscle","kg","💪"],["bone","Bone","kg","🦴"],["water","Body water","%","💧"],["visceral","Visceral fat","","🎯"]];
+
 function bcLatest(wl,k){ const ent=wl.filter(x=>x[k]!=null); if(!ent.length)return null; const last=ent[ent.length-1], prev=ent.length>1?ent[ent.length-2]:null; return {v:last[k], date:last.date, d:prev?Math.round((last[k]-prev[k])*10)/10:null}; }
+
 function withBMI(wl){ // attach a derived bmi to entries that have weight + we know height
   const h=state.sentinel.heightCm; if(!h) return wl;
   return wl.map(x=> (x.w!=null && x.bmi==null) ? {...x, bmi: Math.round((x.w/Math.pow(h/100,2))*10)/10} : x);
 }
-const WT_COLORS={w:"#ef9ccb",bmi:"#9b8cf0",fat:"#f0869b",muscle:"#5fc59a",bone:"#c8a8ca",water:"#5ba6e8",visceral:"#f0b057"};
-function wtYRange(vs){ if(!vs.length)return null; let mn=Math.min(...vs),mx=Math.max(...vs); if(mn===mx){mn-=1;mx+=1;} const p=(mx-mn)*0.12||1; return {mn:mn-p,mx:mx+p}; }
-function buildWeightChartSVG(keys,type){
-  let wl=withBMI((state.sentinel.weightLog||[]).slice().sort(cmpDate));
-  const r=state.wtRange||"all";
-  if(r!=="all"){ const days=r==="30d"?30:r==="90d"?90:365; const cut=dayAgo(-days); wl=wl.filter(x=>x.date>=cut); }
-  keys=(keys||["w"]).filter(k=>BODYCOMP.some(b=>b[0]===k)); if(!keys.length)keys=["w"];
-  const single=keys.length===1;
-  const W=600,H=230,padX=42,padT=18,padB=32,plotW=W-padX*2,plotH=H-padT-padB,base=padT+plotH;
-  const ts=wl.map(x=>Date.parse(x.date+"T00:00")); const t0=ts.length?Math.min(...ts):0,t1=ts.length?Math.max(...ts):1; const tspan=Math.max(1,t1-t0);
-  const xi=iso=> padX + (ts.length>1 ? (Date.parse(iso+"T00:00")-t0)/tspan*plotW : plotW/2);
-  let grid=""; for(let g=0;g<=2;g++){ const yy=padT+g*(plotH/2); grid+=`<line x1="${padX}" y1="${yy.toFixed(0)}" x2="${W-padX}" y2="${yy.toFixed(0)}" stroke="#e7e2f2" stroke-width="1"/>`; }
-  // y-axis labels: real numbers when one metric, low/high when several
-  let ylab="", r0=null;
-  if(single){ r0=wtYRange(wl.filter(x=>x[keys[0]]!=null).map(x=>x[keys[0]]));
-    if(r0){ [[padT,r0.mx],[padT+plotH/2,(r0.mn+r0.mx)/2],[base,r0.mn]].forEach(([yy,val])=>{ ylab+=`<text x="${padX-8}" y="${(yy+4).toFixed(0)}" text-anchor="end" font-size="11" fill="#9b96b6">${Math.round(val*10)/10}</text>`; }); } }
-  else { ylab=`<text x="${padX-8}" y="${(padT+9).toFixed(0)}" text-anchor="end" font-size="10.5" fill="#9b96b6">high</text><text x="${padX-8}" y="${base.toFixed(0)}" text-anchor="end" font-size="10.5" fill="#9b96b6">low</text>`; }
-  let ticks=""; if(wl.length){ [...new Set([0,Math.floor(wl.length/2),wl.length-1])].forEach(i=>{ ticks+=`<text x="${xi(wl[i].date).toFixed(0)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#9b96b6">${fmtDate(wl[i].date)}</text>`; }); }
-  let defs="", body="";
-  keys.forEach((k,ki)=>{
-    const col=WT_COLORS[k]||"#9b8cf0"; const raw=wl.filter(x=>x[k]!=null); if(!raw.length)return;
-    const rng = single ? r0 : wtYRange(raw.map(x=>x[k])); if(!rng)return;
-    const yv=v=> padT + (1-((v-rng.mn)/(rng.mx-rng.mn)))*plotH;
-    const pts=raw.map(x=>({x:xi(x.date),y:yv(x[k])}));
-    if(single && type==="bars"){ const gid="wbg"+ki; defs+=`<linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}"/><stop offset="1" stop-color="${col}" stop-opacity=".5"/></linearGradient>`;
-      const bw=Math.min(22,plotW/Math.max(1,pts.length)*0.6);
-      pts.forEach(p=>{ const h=Math.max(2,base-p.y); body+=`<rect x="${(p.x-bw/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="url(#${gid})"/>`; });
-    } else if(single && type==="dots"){
-      pts.forEach(p=>{ body+=`<line x1="${p.x.toFixed(1)}" y1="${base}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="${col}" stroke-width="2" opacity=".3"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5.5" fill="${col}"/>`; });
-    } else {
-      const fid="wfg"+ki; if(single)defs+=`<linearGradient id="${fid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".4"/><stop offset="1" stop-color="${col}" stop-opacity=".03"/></linearGradient>`;
-      const path=pts.map(p=>`${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" L");
-      if(single && pts.length) body+=`<path d="M${pts[0].x.toFixed(1)} ${base} L${path} L${pts[pts.length-1].x.toFixed(1)} ${base} Z" fill="url(#${fid})"/>`;
-      if(pts.length>1) body+=`<path d="M${path}" fill="none" stroke="${col}" stroke-width="${single?3:2.4}" stroke-linecap="round" stroke-linejoin="round"/>`;
-      pts.forEach(p=>{ body+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${single?3.5:3}" fill="#fff" stroke="${col}" stroke-width="2.2"/>`; });
-    }
-  });
-  if(!wl.length) body=`<text x="${W/2}" y="${(base-plotH/2).toFixed(0)}" text-anchor="middle" font-size="12" fill="#b9b3cf">no entries in this range yet ❄️</text>`;
-  return `<svg class="trchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><defs>${defs}</defs>${grid}${ylab}${body}${ticks}</svg>`;
-}
-function viewWeight(){
-  const wl=(state.sentinel.weightLog||[]).slice().sort(cmpDate);
-  const vals=wl.map(x=>x.w), avg=rollingAvg(wl);
-  const last=wl.slice(-1)[0], dueWeekly=!last||daysBetween(last.date,TODAY)>=7;
-  const disp=CONFIG.weightDisplay, showNum=disp!=="hidden";
-  const nsv=(state.sentinel.nsv||[]).slice().reverse();
-  const meas=(state.sentinel.measurements||[]).slice().sort(cmpDate);
-  const wtKeys=(state.wtMetrics&&state.wtMetrics.length)?state.wtMetrics:["w"];
-  const wtType=state.wtType||"area";
-  const availKeys=BODYCOMP.filter(([k])=> k==="w" || (k==="bmi"&&state.sentinel.heightCm) || (state.sentinel.weightLog||[]).some(x=>x[k]!=null));
-  return `
-  <section class="panel">
-    <div class="card-head"><h2 style="font-size:18px">⚖️ The gentle journey</h2><span class="pill pill-gray">trend-first</span></div>
-    <p class="soft" style="font-size:12px;margin:0 0 10px">The <b>trend</b> is the story — bodies fluctuate day to day, especially with PCOS and a GLP-1. We lean on the weekly average, not any single morning.</p>
-    <div class="soft-card">
-      ${showNum?`<div class="label">Rolling weekly avg</div><div class="bignum" id="numSlot">${avg!=null?avg.toFixed(1):'—'} <span class="soft" style="font-size:12px;font-family:var(--sans)">${CONFIG.weightUnit}</span></div>`
-        :`<div id="numSlot"><button class="btn" data-act="revealNum">Tap to peek at the number</button></div>`}
-      <p class="soft" style="font-size:11.5px;text-align:center;margin:6px 0 0">A calm line over time — no good days or bad days here. ❄️</p>
-    </div>
-    <div class="tr-frame" style="margin-top:10px">
-      <div class="chiprow" style="margin-bottom:10px">
-        ${availKeys.map(([k,l,u,e])=>`<button class="chiptog ${wtKeys.includes(k)?'on':''}" data-act="wtMetric" data-v="${k}"><span>${wtKeys.includes(k)?'✓':e}</span>${l}</button>`).join("")}
-      </div>
-      <div id="wtChart">${buildWeightChartSVG(wtKeys,wtType)}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <span class="tr-range">${[["30d","30d"],["90d","90d"],["all","all"]].map(([v,l])=>`<button class="${(state.wtRange||'all')===v?'on':''}" data-act="wtRange" data-v="${v}">${l}</button>`).join("")}</span>
-        <span style="display:flex;gap:6px">${["area","bars","dots"].map(t=>`<button class="btn ${wtType===t?'btn-grad':''}" data-act="wtType" data-v="${t}" style="padding:5px 11px;font-size:14px" title="${({area:'soft line',bars:'bars',dots:'dots'})[t]}">${({area:'∿',bars:'▮',dots:'•'})[t]}</button>`).join("")}</span>
-      </div>
-      ${wtKeys.length>1?'<p class="soft" style="font-size:10.5px;text-align:center;margin-top:8px">Comparing several — each line is scaled to its own range.</p>':''}
-    </div>
-    <div class="field"><div class="label" style="margin-bottom:6px">${dueWeekly?'🗓️ Time for a gentle weekly weigh-in':'✅ Weighed in recently — no rush'}</div>
-      <div style="display:flex;gap:8px"><input class="inp" type="number" step="0.1" id="wInput" placeholder="${CONFIG.weightUnit}" style="max-width:140px" value="${esc(state.wDraft||'')}"><button class="btn btn-grad" data-act="logWeight">Log it</button></div>
-      <p class="soft" style="font-size:11px;margin-top:6px">Tip: same day &amp; time each week makes the trend cleaner — but a missed week is totally fine.</p></div>
-  </section>
 
-  ${(function(){
-    const wlb=withBMI(wl);
-    const wcon=!!(state.sentinel.withings && state.sentinel.withings.refresh_token);
-    const lastSync=state.sentinel.withings && state.sentinel.withings.lastSync;
-    const tiles=BODYCOMP.map(([k,l,u,e])=>{ const m=bcLatest(wlb,k); if(!m)return "";
-      const ds=m.d!=null&&m.d!==0?` <span class="soft" style="font-size:10.5px">(${m.d>0?'+':''}${m.d})</span>`:'';
-      return `<div class="soft-card" style="padding:10px 12px"><div class="label">${e} ${l}</div><div style="font-size:18px;font-weight:700">${m.v}${u?`<span class="soft" style="font-size:11px;font-weight:500"> ${u}</span>`:''}${ds}</div></div>`;
-    }).filter(Boolean).join("");
-    return `<section class="panel">
-      <div class="card-head"><h2 style="font-size:17px">📊 Body Smart metrics</h2>${wcon?'<span class="pill pill-mint">Withings linked ❄️</span>':''}</div>
-      <p class="soft" style="font-size:12px;margin:0 0 10px">Everything your Withings Body Smart tracks. Sync straight from the scale, or pop any value in by hand.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-        ${wcon?`<button class="btn btn-grad" data-act="withingsSync">↻ Sync from scale</button>${lastSync?`<span class="soft" style="font-size:11px">last sync ${esc(new Date(lastSync*1000).toLocaleDateString())}</span>`:''}<button class="btn" data-act="withingsConnect" title="re-link your scale if syncing stopped working">🔗 Reconnect</button>`
-          :`<button class="btn btn-grad" data-act="withingsConnect">🔗 Connect Withings</button><span class="soft" style="font-size:11px">links your scale so weigh-ins sync automatically</span>`}
-        <button class="btn" data-act="withingsDebug" title="check exactly where syncing is breaking">🔍 Diagnose</button>
-      </div>
-      <div id="withingsDiag"></div>
-      ${tiles?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">${tiles}</div>`:'<p class="soft" style="font-size:12.5px">No body-comp data yet — connect your scale or log some below. ❄️</p>'}
-      <details class="acc" style="margin-top:12px"><summary>📝 Log metrics by hand</summary><div class="acc-body">
-        <p class="soft" style="font-size:11.5px;margin:0 0 8px">Fill in any you like and save — they update today's entry, no need to fill them all.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          ${BODYCOMP.filter(([k])=>k!=="bmi").map(([k,l,u])=>`<div class="field" style="margin:4px 0"><div class="label">${l}${u?` (${u})`:''}</div><input class="inp" type="number" step="0.1" id="bc_${k}" placeholder="${u||'value'}"></div>`).join("")}
-          <div class="field" style="margin:4px 0"><div class="label">Height (cm) · for BMI</div><input class="inp" type="number" step="0.1" id="bc_height" value="${state.sentinel.heightCm||''}" placeholder="cm"></div>
-        </div>
-        <button class="btn btn-grad" data-act="setBodyComp" style="margin-top:6px">Save metrics</button>
-      </div></details>
-    </section>`;
-  })()}
-
-  <section class="panel">
-    <div class="card-head"><span class="label">🌟 Non-scale victories</span></div>
-    <p class="soft" style="font-size:12px;margin:0 0 8px">The wins the scale can't see. Celebrate these <b>loudly</b>. ❄️</p>
-    ${nsv.length?nsv.map(v=>`<div class="listrow"><span class="grow">${esc(v.t)} <span class="soft" style="font-size:11px">· ${fmtDate(v.date)}</span></span><button class="x" data-act="delNSV" data-v="${v.id}">✕</button></div>`).join("")
-      :`<p class="soft" style="font-size:12.5px">Add one whenever you notice it — "clothes fit better", "more energy", "cravings quieter"…</p>`}
-    <div style="display:flex;gap:8px;margin-top:10px"><input class="inp" id="nsvInput" placeholder="a little win…"><button class="btn btn-grad" data-act="addNSV">Add 🌸</button></div>
-  </section>
-
-  <details class="acc"><summary>📏 Optional measurements</summary><div class="acc-body">
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Fill in any you like (cm) and save — they don't all need a value.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      ${[["bust","Bust"],["waist","Waist"],["hips","Hips"],["thighs","Thighs"],["arms","Arms"]].map(([k,l])=>`<div class="field" style="margin:4px 0"><div class="label">${l}</div><input class="inp" type="number" step="0.1" id="meas_${k}" placeholder="cm"></div>`).join("")}
-    </div>
-    <button class="btn btn-grad" data-act="setMeasure">Save measurements</button>
-    ${(function(){
-      const keys=[["bust","Bust"],["waist","Waist"],["hips","Hips"],["thighs","Thighs"],["arms","Arms"]];
-      const rows=keys.map(([k,l])=>{ const ent=meas.filter(m=>m[k]!=null); if(!ent.length) return "";
-        const last=ent[ent.length-1], prev=ent.length>1?ent[ent.length-2]:null;
-        const d=prev?(last[k]-prev[k]):null; const ds=d!=null?` <span class="soft" style="font-size:11px">(${d>0?'+':''}${d.toFixed(1)})</span>`:'';
-        return `<div class="listrow"><span class="grow" style="font-size:12.5px">${l} <span class="soft" style="font-size:10.5px">· ${fmtDate(last.date)}</span></span><span style="font-weight:700">${last[k]} cm${ds}</span></div>`; }).join("");
-      return rows?`<div style="margin-top:12px">${rows}</div>`:'';
-    })()}
-  </div></details>
-  ${DISCLAIMER}`;
-}
 
 /* ===================== FOOD (photo → macros, protein & fibre forward) ===================== */
 function foodTargets(){ const t=state.sentinel.foodTargets||{}; return { kcal:t.kcal||1500, protein:t.protein||110, fiber:t.fiber||28 }; }
+
 function foodToday(){ return (state.today&&state.today.food)||[]; }
+
 function foodTotals(){ return foodToday().reduce((a,x)=>({kcal:a.kcal+(+x.kcal||0),protein:a.protein+(+x.protein||0),carbs:a.carbs+(+x.carbs||0),fiber:a.fiber+(+x.fiber||0),fat:a.fat+(+x.fat||0)}),{kcal:0,protein:0,carbs:0,fiber:0,fat:0}); }
-function foodEstCard(e){
-  return `<div class="soft-card" style="margin-top:12px">
-    <div class="label">estimate${e.confidence?` <span class="soft">· ${esc(e.confidence)} confidence</span>`:''}</div>
-    <div style="display:flex;gap:8px;margin:6px 0;flex-wrap:wrap"><input class="inp" id="fe_name" value="${esc(e.name||'')}" style="flex:1;min-width:120px"><input class="inp" id="fe_serving" value="${esc(e.serving||'')}" placeholder="serving" style="flex:1;min-width:120px"></div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
-      ${[["kcal","kcal",e.kcal],["protein","protein",e.protein],["carbs","carbs",e.carbs],["fiber","fiber",e.fiber],["fat","fat",e.fat]].map(([k,l,v])=>`<div class="field" style="margin:0"><div class="label" style="font-size:10px">${l}</div><input class="inp" type="number" step="0.1" id="fe_${k}" value="${v}"></div>`).join("")}
-    </div>
-    ${e.note?`<p class="soft" style="font-size:11.5px;margin:8px 0 0">${esc(e.note)}</p>`:''}
-    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-grad" data-act="foodLog">🍽️ Log it</button><button class="btn" data-act="foodClear">discard</button></div>
-  </div>`;
-}
+
 function foodHistory(days){
   const byDate={}; (state.range||[]).forEach(r=>byDate[r.date]=r.notes); byDate[TODAY]=state.today;
   const out=[]; for(let i=days-1;i>=0;i--){ const dd=dayAgo(-i); const f=(byDate[dd]&&byDate[dd].food)||[];
     const tot=f.reduce((a,x)=>({protein:a.protein+(+x.protein||0),fiber:a.fiber+(+x.fiber||0),kcal:a.kcal+(+x.kcal||0)}),{protein:0,fiber:0,kcal:0});
     out.push({date:dd, meals:f, ...tot}); } return out;
 }
-function cardFoodCheckoffs(){
-  const meds=(state.today&&state.today.meds)||{}; const w40=water40();
-  const medBtn=(part,lbl)=>`<button class="chiptog ${meds[part]?'on':''}" data-act="medToggle" data-v="${part}"><span>${meds[part]?'✓':'＋'}</span>${lbl}</button>`;
-  const list=(state.sentinel.medsList||[]); const taken=(state.today&&state.today.medsTaken)||{};
-  const perMed=list.length?`<details id="foodMedsDetails" class="acc" style="margin:0 0 10px" ${state.foodMedsOpen?'open':''}><summary style="font-size:12px">by medication (${list.filter(m=>taken[m.id]).length}/${list.length} taken)</summary><div style="margin-top:6px">${list.map(m=>{ const refillSoon=m.refill&&daysBetween(TODAY,m.refill)<=7&&daysBetween(TODAY,m.refill)>=0;
-      return `<div class="listrow"><button class="x" data-act="medTake" data-v="${m.id}" style="font-size:16px;color:${taken[m.id]?'var(--mint,#2f9d79)':'var(--muted)'}">${taken[m.id]?'●':'○'}</button><span class="grow" style="font-size:12.5px;${taken[m.id]?'text-decoration:line-through;opacity:.6':''}">${esc(m.name)} <span class="soft" style="font-size:11px">${esc(m.dose||'')}${m.time?' · '+esc(m.time):''}</span></span>${refillSoon?`<span class="pill" style="background:#fdebd9;color:#b4764a;font-size:9px">refill ${fmtDate(m.refill)}</span>`:''}</div>`; }).join("")}</div></details>`:'';
-  return `<section class="panel">
-    <div class="card-head"><span class="label">✅ Daily check-offs</span></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Meds links with your Home daily habits — both AM &amp; PM ticked marks meds done there too. 💗</p>
-    <div class="label" style="margin-bottom:4px">💊 Meds</div>
-    <div class="chiprow" style="margin-bottom:10px">${medBtn("am","Meds AM")}${medBtn("pm","Meds PM")}</div>
-    ${perMed}
-    <div class="field" style="margin:0"><div class="label">💧 Water today <span class="soft" style="text-transform:none;letter-spacing:0;font-weight:500">· goal 2–3 × 40oz</span></div>
-      <div class="hcount"><button class="step" data-act="waterCup" data-v="-1">−</button><span>${w40%1?w40.toFixed(1):w40}</span><button class="step" data-act="waterCup" data-v="1">＋</button><span class="soft" style="font-size:12px;font-family:var(--sans)">× 40oz 🥤</span></div></div>
-  </section>`;
-}
-function cardFoodWeek(){
-  const hist=foodHistory(7), T=foodTargets();
-  const maxP=Math.max(T.protein,...hist.map(h=>h.protein),1), maxF=Math.max(T.fiber,...hist.map(h=>h.fiber),1);
-  const dayName=iso=>new Date(iso+"T00:00").toLocaleDateString(undefined,{weekday:"short"});
-  const rows=hist.map(h=>{ const isToday=h.date===TODAY;
-    return `<div style="margin:7px 0">
-      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span class="${isToday?'':'soft'}">${dayName(h.date)}${isToday?' · today':''}</span><span class="soft">P ${Math.round(h.protein)}g · Fb ${Math.round(h.fiber)}g${h.meals.length?` · ${h.meals.length} meal${h.meals.length>1?'s':''}`:''}</span></div>
-      <div style="display:flex;gap:4px;align-items:center"><div class="bar" style="flex:1"><span style="width:${Math.round(h.protein/maxP*100)}%;background:linear-gradient(90deg,var(--peri),var(--sakura))"></span></div></div>
-      <div style="display:flex;gap:4px;align-items:center;margin-top:2px"><div class="bar" style="flex:1"><span style="width:${Math.round(h.fiber/maxF*100)}%;background:linear-gradient(90deg,#7fc8a9,#9fc7f0)"></span></div></div>
-      ${h.meals.length?`<details style="border:none;background:transparent;padding:0;box-shadow:none;margin-top:3px"><summary style="font-size:10.5px;color:var(--muted)">see meals</summary><div style="margin-top:3px">${h.meals.map(x=>`<div class="soft" style="font-size:11px;padding:1px 0">${esc(x.name)}${x.serving?` · ${esc(x.serving)}`:''} <span style="opacity:.7">(${Math.round(x.kcal)}kcal · P${x.protein} · Fb${x.fiber})</span></div>`).join("")}</div></details>`:''}
-    </div>`; }).join("");
-  const wkP=hist.reduce((a,h)=>a+h.protein,0), wkF=hist.reduce((a,h)=>a+h.fiber,0), nd=hist.filter(h=>h.meals.length).length||1;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">📅 This week's meals &amp; nutrition</span></div>
-    <p class="soft" style="font-size:11px;margin:0 0 6px"><span style="color:var(--sakura-deep)">▮</span> protein · <span style="color:#7fc8a9">▮</span> fibre — daily, vs your targets (P ${T.protein}g · Fb ${T.fiber}g). Avg/logged-day: <b>${Math.round(wkP/nd)}g</b> protein · <b>${Math.round(wkF/nd)}g</b> fibre.</p>
-    ${rows}
-  </section>`;
-}
-/* ============================================================================
-   KIKO FOOD ASSISTANT (slice 1) — learns Mifu's habits from her own logs, reduces mental
-   load. Deterministic, no extra server calls. Meal memory + one-tap re-log, an actionable
-   "Kiko says", food↔health insights, a food profile, and lazy-day ideas. (Photo/voice
-   logging already exists above; smart-pantry inference + fridge-mode "what can I make" +
-   auto shopping list = staged for slice 2, where fridge-mode reuses the food agent.)
-   ============================================================================ */
-function foodAllItems(days){ try{ const out=[]; foodHistory(days||120).forEach(h=>{ (h.meals||[]).forEach(it=>{ if(it&&it.name) out.push({...it,date:h.date}); }); }); return out; }catch(e){ return []; } }
-function foodMealMemory(){
-  const items=foodAllItems(120), norm=s=>String(s||"").toLowerCase().trim();
-  const bucketOf=it=>{ try{ const h=it.time?new Date(it.time).getHours():13; return h<11?"breakfast":h<16?"lunch":h<21?"dinner":"snack"; }catch(e){ return "lunch"; } };
-  const B={breakfast:{},lunch:{},dinner:{},snack:{}};
-  items.forEach(it=>{ const b=bucketOf(it), k=norm(it.name); if(!k)return; const e=B[b][k]||(B[b][k]={name:it.name,n:0,kcal:0,protein:0,fiber:0,carbs:0,fat:0,serving:it.serving||""});
-    e.n++; e.kcal=it.kcal||e.kcal; e.protein=it.protein||e.protein; e.fiber=it.fiber||e.fiber; e.carbs=it.carbs||e.carbs; e.fat=it.fat||e.fat; });
-  const top=o=>Object.values(o).filter(e=>e.n>=2).sort((a,b)=>b.n-a.n).slice(0,4);
-  return { breakfast:top(B.breakfast), lunch:top(B.lunch), dinner:top(B.dinner), snack:top(B.snack) };
-}
-function foodKikoSays(){ const T=foodTargets(), tot=foodTotals(), bits=[];
-  if(!foodToday().length) return "Nothing logged yet — when you eat, snap a photo or tap a usual and Kiko handles the macros.";
-  bits.push(tot.protein>=T.protein?`Protein goal hit (${Math.round(tot.protein)}/${T.protein}g) — lovely. 💪`:`Protein's at ${Math.round(tot.protein)}/${T.protein}g — about ${Math.round(T.protein-tot.protein)}g to go. A shake or yogurt would close it.`);
-  if(tot.fiber<T.fiber) bits.push(`Fibre's a little behind (${Math.round(tot.fiber)}/${T.fiber}g) — fruit or veg with dinner would likely finish it.`);
-  return bits.join(" "); }
-function foodInsights(){
-  const out=[], fh=foodHistory(14).filter(h=>h.meals&&h.meals.length), T=foodTargets();
-  let streak=0; for(let i=0;i<fh.length;i++){ const h=fh[fh.length-1-i]; if(h&&h.protein>=T.protein)streak++; else break; }
-  if(streak>=3) out.push(`You've hit your protein goal ${streak} days running — strong week.`);
-  try{ const items=foodAllItems(30), hiDays=new Set(fh.filter(h=>h.protein>=T.protein).map(h=>h.date)), eggDays=new Set(items.filter(it=>/egg|yogurt|yoghurt|protein/i.test(it.name)).map(it=>it.date));
-    const overlap=[...hiDays].filter(d=>eggDays.has(d)).length; if(hiDays.size>=3&&overlap>=Math.ceil(hiDays.size*0.6)) out.push(`Your highest-protein days almost always include eggs or yogurt.`); }catch(e){}
-  try{ if(foodAllItems(7).filter(it=>/kiwi|apple|berr|strawberr|banana|fruit|orange|grape|mango|melon/i.test(it.name)).length===0 && fh.length>=2) out.push(`Not much fruit logged this week compared to usual — a kiwi or apple is an easy fibre win.`); }catch(e){}
-  return out;
-}
-function foodProfile(){
-  const items=foodAllItems(120); if(items.length<4) return null; const norm=s=>String(s||"").toLowerCase().trim(); const freq={};
-  items.forEach(it=>{ const k=norm(it.name); if(!k)return; (freq[k]=freq[k]||{name:it.name,n:0}).n++; });
-  const top=Object.values(freq).sort((a,b)=>b.n-a.n), find=re=>{ const m=top.find(t=>re.test(t.name)); return m?m.name:null; };
-  return { mostEaten:top[0]&&top[0].name, fruit:find(/kiwi|apple|berr|strawberr|banana|orange|grape|mango|melon/i), protein:find(/chicken|egg|protein|steak|fish|salmon|tofu|beef|yogurt/i), snack:find(/yogurt|yoghurt|pudding|bar|crisp|chip|chocolate|cookie|nut/i) };
-}
-function kikoFoodCard(){
-  const ins=foodInsights(), prof=foodProfile();
-  return `<section class="panel"><div class="card-head"><h2 style="font-size:17px">💗 Kiko &amp; your food</h2></div>
-    <div class="soft-card" style="font-size:12.5px;line-height:1.55"><b class="peri">Kiko says</b><br>${esc(foodKikoSays())}</div>
-    ${ins.length?`<div style="margin-top:10px">${ins.map(t=>`<div class="kn-row"><span class="kn-dot"></span><span style="font-size:12px">${esc(t)}</span></div>`).join("")}</div>`:""}
-    ${prof?`<div class="sec-label" style="margin-top:12px">🍱 Your food profile</div><div class="chiprow">${[["Most eaten",prof.mostEaten],["Fruit",prof.fruit],["Protein",prof.protein],["Snack",prof.snack]].filter(x=>x[1]).map(x=>`<span class="pill pill-gray">${x[0]}: ${esc(x[1])}</span>`).join("")}</div>`:""}
-  </section>`;
-}
-function mealMemoryCard(){
-  const mm=foodMealMemory();
-  if(!(mm.breakfast.length||mm.lunch.length||mm.dinner.length||mm.snack.length))
-    return `<section class="panel"><div class="card-head"><span class="label">🍽️ Kiko's meal memory</span></div><p class="soft" style="font-size:12.5px;margin:0">As you log meals, Kiko learns your go-tos here for one-tap re-logging. ❄️</p></section>`;
-  const reBtn=e=>`<button class="chiptog" data-act="foodRelog" data-name="${esc(e.name)}" data-serving="${esc(e.serving||'')}" data-kcal="${Math.round(e.kcal||0)}" data-protein="${e.protein||0}" data-fiber="${e.fiber||0}" data-carbs="${e.carbs||0}" data-fat="${e.fat||0}" title="${e.n}× · ${Math.round(e.kcal||0)} kcal · P${Math.round(e.protein||0)}"><span>＋</span>${esc(e.name)} <span class="soft" style="font-size:10px">${e.n}×</span></button>`;
-  const sec=(emoji,label,arr)=>arr.length?`<div style="margin-top:10px"><div class="label">${emoji} ${label}</div><div class="chiprow" style="margin-top:4px">${arr.map(reBtn).join("")}</div></div>`:"";
-  return `<section class="panel"><div class="card-head"><span class="label">🍽️ Kiko's meal memory</span><span class="soft" style="font-size:11px">tap to log the usual</span></div>
-    <p class="soft" style="font-size:12px;margin:0">Your go-to meals, learned from what you log.</p>
-    ${sec("🥣","Breakfasts",mm.breakfast)}${sec("🥗","Lunches",mm.lunch)}${sec("🍲","Dinners",mm.dinner)}${sec("🍓","Snacks",mm.snack)}
-  </section>`;
-}
-function lazyMealsCard(){
-  const T=foodTargets(), tot=foodTotals(), lowP=tot.protein<T.protein, lowF=tot.fiber<T.fiber;
-  return `<section class="panel"><div class="card-head"><span class="label">😌 Lazy-day meals</span></div>
-    <p class="soft" style="font-size:12px;margin:0 0 6px">When cooking feels like too much — quick wins for what you need today.</p>
-    ${lowP?`<div class="label">💪 Need protein</div><div class="chiprow" style="margin:4px 0 8px"><span class="pill pill-peri">🥤 Protein shake ~25g</span><span class="pill pill-peri">🥚 4 eggs ~24g</span><span class="pill pill-peri">🥛 Protein yogurt ~20g</span><span class="pill pill-peri">🥣 Protein cereal ~22g</span></div>`:""}
-    ${lowF?`<div class="label">🌿 Need fibre</div><div class="chiprow" style="margin:4px 0 8px"><span class="pill pill-mint">🥝 Kiwi</span><span class="pill pill-mint">🍎 Apple</span><span class="pill pill-mint">🥣 Oats</span><span class="pill pill-mint">🥦 Broccoli</span></div>`:""}
-    <div class="label">⚡ Just something easy</div><div class="chiprow" style="margin-top:4px"><span class="pill pill-lav">🥤 Shake</span><span class="pill pill-lav">🥛 Yogurt</span><span class="pill pill-lav">🥣 Cereal</span><span class="pill pill-lav">🍳 Eggs</span></div>
-  </section>`;
-}
+
 function viewFood(){
   if(!state.foodDraft) state.foodDraft={image:null,desc:"",est:null};
   const d=state.foodDraft, T=foodTargets(), tot=foodTotals(), list=foodToday();
@@ -3607,6 +1896,7 @@ function viewFood(){
   return `${modularGrid("food",items)}${DISCLAIMER}`;
 }
 
+
 /* ===================== CARE ===================== */
 const FIRSTAID=[
   {e:"🖐️",t:"5-4-3-2-1 grounding",tint:"#e6ecfb",b:["Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste.","It pulls you out of the spiral and back into right now.","Slow down on each one — no rushing."]},
@@ -3616,12 +1906,14 @@ const FIRSTAID=[
   {e:"🚪",t:"Step outside",tint:"#ece2fb",b:["Even 2 minutes of fresh air and a wider view can reset an overwhelm spike.","A change of room counts too."]},
   {e:"💬",t:"Text a friend",tint:"#fdeadb",b:["You don't have to carry it alone.","A small \"hey, rough moment\" is enough."]},
 ];
+
 const REFRAMES=[
   {e:"🦋",t:"Feelings are visitors",tint:"#e6ecfb",b:["…not residents. This one is passing through, even if it knocked loudly."]},
   {e:"🌊",t:"This is a wave",tint:"#dcf3eb",b:["It will crest and pass. You've ridden every one so far.","Ride ~10 minutes; most urges soften if you don't feed them."]},
   {e:"🫂",t:"Talk to yourself like a friend",tint:"#fde2f2",b:["What would you say to someone you love feeling this? Say that to you."]},
   {e:"🌱",t:"Good enough is enough",tint:"#fdeadb",b:["You don't have to do it perfectly. Showing up softly counts.","A low-demand day is care, not falling behind."]},
 ];
+
 // gentle daily journaling — feelings + the day's events. Used live (AI follows her) and as the offline arc.
 const KIKO_JOURNAL_ARC=[
   "First, let's just arrive. How are you feeling right now, in this moment? ☁️",
@@ -3633,13 +1925,16 @@ const KIKO_JOURNAL_ARC=[
   "What do you need a little more of right now — rest, comfort, fun, softness? 🍵",
   "Last one: what's a kind word you'd leave for tomorrow-you? 🌙",
 ];
+
 const KIKO_JOURNAL_ACKS=["mm, thank you for telling me 💗","I hear you ❄️","that makes sense 🦊","I'm glad you noticed that 🌸","ooh, that's worth holding onto ✨","sitting with that with you for a sec 🍵","noted with care 📓"];
+
 // context Kiko has while journalling — her check-in + today's events
 function journalContext(){
   const m=(state.today&&state.today.mind)||{};
   const ev=(state.sentinel.calendarEvents||[]).filter(e=> e.date<=TODAY && TODAY<=(e.endDate||e.date)).map(e=>e.title).slice(0,8);
   return { mood:m.mood, anxiety:m.anxiety, weather:m.weather, events:ev };
 }
+
 async function saveJournalEntry(J){
   const log=(J.log||[]).filter(x=>x&&x.text);
   if(!log.length) return;
@@ -3647,6 +1942,7 @@ async function saveJournalEntry(J){
   try{ await setSent(n=>({...n,journalEntries:[...(n.journalEntries||[]),entry]})); }catch(e){ console.error(e); }
   try{ memPush("journal", log.filter(x=>x.who==="Mifu").map(x=>x.text).join(" "), 6); }catch(e){}
 }
+
 // gather Mifu's real data so the write-up can ground itself (never invents numbers)
 function journalWriteContext(){
   const sent=state.sentinel||{};
@@ -3669,11 +1965,13 @@ function journalWriteContext(){
     measLatest: meas.length?meas[meas.length-1]:null, comp,
     mood:m.mood, anxiety:m.anxiety, weather:m.weather, events:ev };
 }
+
 function composeJournalFallback(log){
   const h=new Date().getHours(); const greet=(h<12?"Good morning":h<18?"Good afternoon":"Good evening")+"!! ♡";
   const answers=(log||[]).filter(x=>x.who==='Mifu'&&x.text).map(x=>x.text);
   return greet+"\n\n"+(answers.length?answers.join("\n\n"):"a quiet one today.")+"\n\nGoodnight!! 🌙💕";
 }
+
 // end the session: write today up as a diary entry in her voice, show it, and save it
 async function finishJournal(J){
   J.active=false;
@@ -3690,7 +1988,9 @@ async function finishJournal(J){
   try{ await setSent(n=>({...n,journalEntries:[...(n.journalEntries||[]),entry]})); }catch(e){ console.error(e); }
   if(state.tab==='care'){ try{ await render(); }catch(_){} }
 }
+
 function journalId(e){ return e&&(e.id||e.ts||e.date)||""; }
+
 function renderJournalEntry(e){
   let html=""; const eid=journalId(e);
   if(e&&e.text){ html+=`<div style="white-space:pre-wrap;font-size:13px;line-height:1.65">${esc(e.text)}</div>
@@ -3699,6 +1999,7 @@ function renderJournalEntry(e){
   else if(e&&e.qa&&e.qa.length){ html+=e.qa.map(x=>`<div style="margin:6px 0"><div class="label">${esc(x.q)}</div><div style="font-size:13px">${esc(x.a)}</div></div>`).join(""); }
   return html||`<p class="soft" style="font-size:12px">(empty)</p>`;
 }
+
 function journalArchive(){
   const all=(state.sentinel.journalEntries||[]).slice().sort((a,b)=>((a.ts||a.date)<(b.ts||b.date)?1:-1));   // newest first
   if(!all.length) return `<section class="panel"><div class="label">📖 Your journals</div>
@@ -3711,6 +2012,7 @@ function journalArchive(){
     <div>${all.map(e=>`<details class="acc" style="margin-bottom:6px"><summary><b style="font-size:13px">${esc(dlabel(e))}</b> <span class="soft" style="font-size:11px">— ${snippet(e)}</span></summary><div class="acc-body">${renderJournalEntry(e)}<div style="margin-top:10px"><button class="x" data-act="delJournal" data-id="${esc(journalId(e))}" style="color:var(--sakura-deep);font-size:12px;background:none;border:none;cursor:pointer">🗑 delete this entry</button></div></div></details>`).join("")}</div>
   </section>`;
 }
+
 function flipCard(c){
   return `<div class="flip" data-act="flip"><div class="flip-inner">
     <div class="flip-face" style="background:${c.tint}">
@@ -3721,120 +2023,46 @@ function flipCard(c){
     <div class="flip-face flip-back"><ul style="padding-left:16px;margin:2px 0">${c.b.map(x=>`<li>${x}</li>`).join("")}</ul></div>
   </div></div>`;
 }
+
 /* ============================================================================
    CARE — redesigned around comfort, memories & the bunnies (not clinical widgets; breathing/
    grounding live in the floating 🫧 button + Kiko). Leans on the media/memories foundation.
    ============================================================================ */
 const BUNNIES=[{id:"kieran",name:"Kieran",sex:"♂ male",col:"🖤 black rabbit",born:"2021-01-03"},{id:"myla",name:"Myla",sex:"♀ female",col:"🩶 grey rabbit",born:"2021-12-28"}];
-/* ===== Bunny Health Trends (Idea #13) — daily check-ins → gentle trend analysis ===== */
-const BUNNY_STATUS=[["great","😊 great"],["normal","🙂 normal"],["concern","⚠️ concern"],["vet","🏥 vet"]];
-const BUNNY_FLAGS=[
-  {field:"ate",    label:"Appetite", on:["yes","🥬 ate well"], off:["less","⚠️ ate less"]},
-  {field:"poop",   label:"Poops",    on:["normal","💩 normal"], off:["off","⚠️ off"]},
-  {field:"energy", label:"Energy",   on:["good","⚡ good"],      off:["low","😴 low"]},
-];
+
 /* merge a patch into TODAY's log entry for a bunny (so status + appetite/poop/energy coexist); null clears a field */
 function upsertBunnyDay(n,bunny,patch){ const log=(n.bunnyLog||[]).map(x=>({...x})); let e=log.find(x=>x.bunny===bunny&&x.date===TODAY); if(!e){ e={date:TODAY,bunny}; log.push(e); } Object.entries(patch).forEach(([k,v])=>{ if(v==null) delete e[k]; else e[k]=v; }); return {...n,bunnyLog:log.slice(-400)}; }
-const COMFORT_CATS=[["music","🎵 Comfort music"],["asmr","🎧 Favourite ASMR"],["videos","📺 Favourite videos"],["games","🎮 Comfort games"],["foods","🍜 Comfort foods"],["reads","📖 Comfort reads"]];
+
 function bunnyAge(b){ try{ const bd=new Date(b+"T00:00"), now=new Date(); let y=now.getFullYear()-bd.getFullYear(), m=now.getMonth()-bd.getMonth(); if(now.getDate()<bd.getDate())m--; if(m<0){y--;m+=12;} return y+"y"+(m?" "+m+"m":""); }catch(e){ return ""; } }
+
 function bunnyNextBday(b){ try{ const bd=new Date(b+"T00:00"), now=new Date(), t0=new Date(now.getFullYear(),now.getMonth(),now.getDate()); let nx=new Date(now.getFullYear(),bd.getMonth(),bd.getDate()); if(nx<t0)nx=new Date(now.getFullYear()+1,bd.getMonth(),bd.getDate()); return Math.round((nx-t0)/86400000); }catch(e){ return null; } }
-function careGentlePlan(){ const out=[]; try{ const sl=Number((state.today||{}).sleep); if(sl&&sl<7)out.push("Go gently — last night was short 🌙"); }catch(e){}
-  out.push("Drink some water 💧"); try{ const tot=foodTotals(),T=foodTargets(); if(foodToday().length&&tot.protein<T.protein)out.push("A little protein when you can 🍳"); }catch(e){}
-  out.push("Spend a little time with Myla & Kieran 🐰"); out.push("Step outside for a moment 🌿"); out.push("Do one thing you enjoy ✨"); out.push("Be kind to yourself today 💗");
-  return out.slice(0,6); }
-function careThingsThatHelp(){ const text=[];
-  try{ (state.sentinel.journalEntries||[]).forEach(e=>{ text.push(e.text||(Array.isArray(e.log)?e.log.filter(x=>x&&x.who==="Mifu").map(x=>x.text).join(" "):"")); }); }catch(e){}
-  try{ (state.range||[]).forEach(r=>{ if(r&&r.notes&&r.notes.journal)text.push(r.notes.journal); }); if(state.today&&state.today.journal)text.push(state.today.journal); }catch(e){}
-  const blob=" "+text.join(" ").toLowerCase()+" ";
-  const cands=[["🎨 Drawing","draw|art|sketch|paint"],["🐰 Bunny time","myla|kieran|bunny|bunnies|rabbit"],["🎵 Music","music|song|playlist"],["💗 Talking with Manfu","manfu"],["🎮 Cozy games","gaming|cozy game|videogame|playing a game"],["☕ Tea","\\btea\\b"],["✨ Streaming","stream"],["📖 Journaling","journal"],["🚶 Walks","walk|fresh air|outside"]];
-  return cands.map(([l,re])=>({l,n:(blob.match(new RegExp(re,"g"))||[]).length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,6); }
-function careMemoryPull(){ try{ const idx=buildMemoryIndex().filter(m=>["milestone","quote","event"].includes(m.kind)||m.fav||(m.kind==="journal"&&(m.preview||"").length>20)); if(!idx.length)return null; return idx[(state._carePull||0)%idx.length]; }catch(e){ return null; } }
-function careTinyWins(){ try{ return buildMemoryIndex().filter(m=>["milestone","event"].includes(m.kind)||m.fav).slice(0,8); }catch(e){ return []; } }
+
 function bunnyStatusToday(id){ try{ return (state.sentinel.bunnyLog||[]).filter(x=>x.bunny===id&&x.date===TODAY).slice(-1)[0]; }catch(e){ return null; } }
-/* gentle, non-alarmist patterns + rabbit-aware alerts from the bunny log */
-function bunnyTrends(id){
-  const name=(BUNNIES.find(b=>b.id===id)||{}).name||id;
-  const log=(state.sentinel.bunnyLog||[]).filter(x=>x&&x.bunny===id).slice().sort(cmpDate);   // oldest→newest
-  const lines=[], alerts=[];
-  if(!log.length) return {lines,alerts,logged:0};
-  const rev=log.slice().reverse(), today=log.find(x=>x.date===TODAY);
-  let good=0; for(const e of rev){ const logged=e.status||e.ate||e.poop||e.energy; const ok=e.status==="great"||e.status==="normal"||(!e.status&&e.ate!=="less"&&e.poop!=="off"&&e.energy!=="low"); if(logged&&ok) good++; else break; }
-  if(good>=3) lines.push(`${name} has been doing well ${good} days running 🌿`);
-  let ate=0; for(const e of rev){ if(e.ate==="yes") ate++; else break; } if(ate>=5) lines.push(`${name}'s appetite has been good for ${ate} days.`);
-  const concerns=rev.filter(e=>daysBetween(e.date,TODAY)<=14&&(e.status==="concern"||e.status==="vet")).length;
-  if(concerns>=2) alerts.push(`${name} was marked concern/vet ${concerns}× in the last two weeks — worth a closer eye.`);
-  const poopOff=rev.filter(e=>daysBetween(e.date,TODAY)<=7&&e.poop==="off").length;
-  if(poopOff>=2) alerts.push(`${name}'s poops were marked off ${poopOff}× this week — monitor; lasting changes deserve a vet note.`);
-  if(today){
-    if(today.ate==="less") alerts.push(`${name} is eating less today. If a rabbit stops eating or pooping it can turn urgent fast — please watch closely. 💛`);
-    if(today.energy==="low") lines.push(`${name}'s energy is marked low today.`);
-  }
-  const ago=daysBetween(rev[0].date,TODAY); if(ago>=3) lines.push(`No check-in for ${name} in ${ago} days — a quick tap keeps the trend honest.`);
-  return {lines,alerts,logged:log.length};
-}
-/* per-bunny memory timeline: milestones + photos that mention this bunny by name */
-function bunnyMemories(id){
-  const name=(BUNNIES.find(b=>b.id===id)||{}).name||id; let re; try{ re=new RegExp("\\b"+name+"\\b","i"); }catch(e){ re=null; }
-  const out=[];
-  (state.sentinel.bunnyMilestones||[]).forEach(mi=>{ if(mi&&(mi.bunny===id||mi.bunny==="both")&&mi.date) out.push({date:mi.date,kind:"milestone",text:mi.text||""}); });
-  (state.media||[]).forEach(m=>{ if(!m)return; const hay=(m.people||[]).join(" ")+" "+(m.caption||"")+" "+(m.title||""); if(re&&re.test(hay)) out.push({date:m.date||TODAY,kind:"photo",url:m.url,text:m.caption||"",id:m.id}); });
-  return out.sort(cmpDate).reverse().slice(0,12);
-}
-function bunnyFlagChips(b){
-  const day=bunnyStatusToday(b.id)||{};
-  return BUNNY_FLAGS.map(f=>{ const cur=day[f.field];
-    const btn=pair=>`<button class="chiptog ${cur===pair[0]?'on':''}" data-act="bunnyFlag" data-bunny="${b.id}" data-field="${f.field}" data-val="${pair[0]}">${pair[1]}</button>`;
-    return `<div style="margin-top:6px"><div class="label" style="font-size:10px;margin-bottom:3px">${f.label}</div><div class="chiprow">${btn(f.on)}${btn(f.off)}</div></div>`;
-  }).join("");
-}
-function viewBunny(){
-  const allAlerts=BUNNIES.flatMap(b=>bunnyTrends(b.id).alerts);
-  const intro=`<section class="panel"><div class="card-head"><h2 style="font-size:18px">🐰 Bunny hub</h2><button class="btn" data-act="tab" data-tab="memories">📸 Photos</button></div>
-    <p class="soft" style="font-size:11.5px;margin:0">Myla &amp; Kieran's daily check-ins, gentle health trends, and your favourite moments — all in one place. One tap a day is plenty. 💗</p></section>`;
-  const alertCard=allAlerts.length?`<section class="panel" style="border:1px solid var(--peach);background:rgba(243,169,120,.10)"><div class="label" style="margin-bottom:4px">💛 Gentle watch</div>${allAlerts.map(a=>`<p style="font-size:12.5px;margin:2px 0">${esc(a)}</p>`).join("")}</section>`:"";
-  const cards=BUNNIES.map(b=>{ const st=bunnyStatusToday(b.id), nb=bunnyNextBday(b.born), tr=bunnyTrends(b.id);
-    return `<div class="soft-card">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:16px;font-family:var(--display)">${b.name}</b><span class="soft" style="font-size:11px">${esc(b.sex)}</span></div>
-      <div class="soft" style="font-size:12px">${esc(b.col)} · ${bunnyAge(b.born)} old</div>
-      <div class="soft" style="font-size:11px;margin-top:2px">🎂 ${nb===0?"birthday today! 🎉":nb!=null?`birthday in ${nb} day${nb>1?"s":""}`:""}</div>
-      <div class="label" style="margin:8px 0 4px">how is ${b.name} today?</div>
-      <div class="chiprow">${BUNNY_STATUS.map(([v,l])=>`<button class="chiptog ${st&&st.status===v?'on':''}" data-act="bunnyStatus" data-bunny="${b.id}" data-status="${v}">${l}</button>`).join("")}</div>
-      ${bunnyFlagChips(b)}
-      ${tr.lines.length?`<div style="margin-top:8px">${tr.lines.map(l=>`<div class="kn-row"><span class="kn-dot"></span><span style="font-size:12px">${esc(l)}</span></div>`).join("")}</div>`:`<p class="soft" style="font-size:11px;margin:8px 0 0">Log a few days and Kiko will start noticing ${b.name}'s patterns. ❄️</p>`}
-    </div>`; }).join("");
-  const grid=`<section class="panel"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">${cards}</div></section>`;
-  const photos=`<section class="panel"><div class="card-head"><span class="label">📸 Recent bunny photos</span></div>${state.media===undefined?UI.spinner({label:"loading photos…"}):(function(){ const pics=(state.media||[]).filter(memIsBunny).slice().reverse().slice(0,8); return pics.length?`<div class="md-grid">${pics.map(m=>`<div class="md-tile"><img src="${esc(m.url)}" alt="${esc(m.caption||'bunny')}" loading="lazy" data-act="mediaView" data-id="${esc(m.id)}"></div>`).join("")}</div>`:`<p class="soft" style="font-size:12.5px;margin:0">No bunny photos yet — upload some in ✨ Memories and tag them Myla / Kieran. 🐰</p>`; })()}</section>`;
-  const memBlocks=BUNNIES.map(b=>{ const mem=bunnyMemories(b.id); if(!mem.length) return "";
-    return `<div style="margin-bottom:10px"><div class="label" style="margin-bottom:4px">${b.name}</div>${mem.map(x=>x.kind==="photo"
-      ? `<div class="listrow"><span style="flex:0 0 auto" aria-hidden="true">📸</span><span class="grow" style="min-width:0"><span class="soft" style="font-size:11px">${esc(fmtDate(x.date))}</span><div style="font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.text||"photo")}</div></span><button class="btn" data-act="mediaView" data-id="${esc(x.id||"")}">view</button></div>`
-      : `<div class="listrow"><span style="flex:0 0 auto" aria-hidden="true">🐰</span><span class="grow"><span class="soft" style="font-size:11px">${esc(fmtDate(x.date))}</span><div style="font-size:12.5px">${esc(x.text)}</div></span></div>`).join("")}</div>`; }).join("");
-  const timelines=`<section class="panel"><div class="card-head"><span class="label">📖 Bunny memories</span></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><select class="inp" id="mileBunny" style="max-width:130px">${BUNNIES.map(b=>`<option value="${b.id}">${b.name}</option>`).join("")}<option value="both">Both 💕</option></select><input class="inp" id="mileText" placeholder="a bunny memory or milestone…" style="flex:1;min-width:150px"><button class="btn btn-grad" data-act="bunnyMilestone">add</button></div>
-    ${memBlocks||`<p class="soft" style="font-size:12.5px;margin:0">🖤 Kieran born 3 Jan 2021 · 🩶 Myla born 28 Dec 2021 — add your favourite moments, and tag bunny photos in ✨ Memories to see them here.</p>`}
-  </section>`;
-  return `<div class="page">${alertCard}${intro}${grid}${photos}${timelines}</div>${DISCLAIMER}`;
-}
+
 /* ===== Tab hubs — group related extras under one tab to keep the nav tidy.
    The hub reuses each feature's existing view function unchanged; it just adds a
    sub-nav and stitches them together (stripping the duplicate disclaimer). ===== */
 function stripDisc(html){ return String(html).split(DISCLAIMER).join(""); }
+
 const STUDIO_SUBS=[["wins","🏆 Wins"],["streamlore","📜 Lore"],["sponsors","🤝 Sponsors"],["ideas","💡 Ideas"]];
-const LIFE_SUBS=[["people","💗 People"],["house","🏡 Home"],["mifulore","📔 About Me"]];
+
 function subNav(subs,active,act){ return `<div class="chiprow" style="max-width:1100px;margin:0 auto 2px" role="tablist">${subs.map(([k,l])=>`<button class="chiptog ${active===k?'on':''}" role="tab" aria-selected="${active===k?'true':'false'}" data-act="${act}" data-sub="${k}">${l}</button>`).join("")}</div>`; }
+
 function viewStudio(){ const map={wins:viewWins,streamlore:viewStreamLore,sponsors:viewSponsors,ideas:viewIdeas};
   const sub=map[state.studioSub]?state.studioSub:"wins";
   return subNav(STUDIO_SUBS,sub,"studioSub")+stripDisc(map[sub]())+DISCLAIMER; }
-function viewLife(){ const map={people:viewPeople,house:viewHouse,mifulore:viewMifuLore};
-  const sub=map[state.lifeSub]?state.lifeSub:"people";
-  return subNav(LIFE_SUBS,sub,"lifeSub")+stripDisc(map[sub]())+DISCLAIMER; }
+
 /* ===== Creator Wins (Idea #9) — evidence of progress, not vibes ===== */
 const WIN_CATS=["Stream","Community","Sponsor","YouTube","Music","Merch","Project","Milestone","Personal"];
+
 function winWeekEvidence(){
   const items=[["streamed","stream"],["ytVideo","YouTube video"],["ytShort","Short"],["madeArt","art day"],["coverSong","cover-song session"],["emails","email-reply day"],["sponsors","sponsor-work day"]];
   const out=[]; items.forEach(([k,l])=>{ let c=0; try{c=ciWeek(k);}catch(e){} if(c>0) out.push({l,c}); });
   return out;
 }
+
 function autoWins(){ try{ return buildMemoryIndex().filter(m=>(m.kind==="milestone"||m.kind==="event")&&!/🎂|birthday/i.test(m.title||"")&&daysBetween(m.date,TODAY)<=30).slice(0,6); }catch(e){ return []; } }
+
 function viewWins(){
   const wins=(state.sentinel.wins||[]).slice().sort(cmpDate).reverse();
   const ev=winWeekEvidence(), evTotal=ev.reduce((a,x)=>a+x.c,0);
@@ -3854,6 +2082,7 @@ function viewWins(){
     ${wins.length?wins.map(w=>`<div class="listrow"><span style="flex:0 0 auto" aria-hidden="true">🏆</span><span class="grow" style="min-width:0"><b style="font-size:12.5px">${esc(w.title)}</b> <span class="soft" style="font-size:11px">· ${esc(fmtDate(w.date))}${w.cat?` · ${esc(w.cat)}`:""}</span>${w.why?`<div class="soft" style="font-size:11.5px">${esc(w.why)}</div>`:""}</span><button class="x" data-act="winDel" data-id="${esc(w.id)}" aria-label="delete">✕</button></div>`).join(""):UI.empty({emoji:"🏆",title:"No wins logged yet",msg:"Big or small — a finished video, a kind comment, a sponsor reply. They all count."})}</section>`;
   return `<div class="page">${evCard}${addCard}${autoCard}${listCard}</div>${DISCLAIMER}`;
 }
+
 /* ===== Stream Lore (Idea #6) ===== */
 function viewStreamLore(){
   const lore=(state.sentinel.streamLore||[]).slice().sort(cmpDate).reverse();
@@ -3870,84 +2099,15 @@ function viewStreamLore(){
       ${(L.tags&&L.tags.length)?`<div class="chiprow" style="margin-top:6px">${L.tags.map(t=>`<span class="pill pill-lav">${esc(t)}</span>`).join("")}</div>`:""}</div>`).join(""):UI.empty({emoji:"📜",title:"No lore yet",msg:"Your first hype train, that legendary pull, the day chat made you cry-laugh — they belong here."})}</section>`;
   return `<div class="page">${add}${list}</div>${DISCLAIMER}`;
 }
+
 /* ===== Sponsor Relationship Tracker (Idea #7) ===== */
 const SPONSOR_STATUS=["lead","waiting","negotiating","accepted","scheduled","completed","invoiced","paid","declined","ghosted"];
-function sponsorInsights(s){
-  const out=[];
-  if(s.lastContact){ const d=daysBetween(s.lastContact,TODAY); if(d>=5&&["waiting","negotiating","lead"].includes(s.status)) out.push(`No reply in ${d} days`); }
-  const dl=s.deadline||s.due; if(dl&&!["completed","paid","declined","ghosted","done"].includes(s.status)){ const d=daysBetween(TODAY,dl); if(d<0) out.push("Deadline passed"); else if(d<=3) out.push(`Deadline in ${d} day${d===1?"":"s"}`); }
-  if(["completed","invoiced"].includes(s.status)) out.push("Awaiting payment");
-  return out;
-}
-function viewSponsors(){
-  const sp=(state.sentinel.sponsors||[]).slice().sort((a,b)=>String(b.lastContact||b.date||"").localeCompare(String(a.lastContact||a.date||"")));
-  const add=`<section class="panel"><div class="card-head"><h2 style="font-size:18px">🤝 Sponsors</h2></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Track brand conversations, deadlines, rates and how each one felt — so nothing slips and you never undercharge.</p>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><input class="inp" id="spName" placeholder="company / brand" style="flex:1;min-width:140px"><input class="inp" id="spGame" placeholder="game / product" style="flex:1;min-width:120px"></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><input class="inp" id="spRate" placeholder="rate (e.g. €800)" style="flex:1;min-width:100px"><input class="inp" id="spDeadline" type="date" style="flex:1;min-width:120px"></div>
-    <input class="inp" id="spNote" placeholder="contact / note (optional)" style="margin-top:6px"><button class="btn btn-grad" data-act="sponsorAdd" style="margin-top:6px">Add sponsor 🤝</button></section>`;
-  const list=`<section class="panel"><div class="card-head"><span class="label">📇 Pipeline</span><span class="pill pill-gray">${sp.length}</span></div>
-    ${sp.length?sp.map(s=>{ const ins=sponsorInsights(s);
-      return `<div class="soft-card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b style="font-size:13.5px">${esc(s.name)}</b><button class="x" data-act="sponsorDel" data-id="${esc(s.id)}" aria-label="delete">✕</button></div>
-      <div class="soft" style="font-size:11px">${s.game?esc(s.game)+" · ":""}${s.rate?esc(s.rate)+" · ":""}${(s.deadline||s.due)?"due "+esc(fmtDate(s.deadline||s.due)):""}</div>
-      <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap"><button class="chiptog on" data-act="sponsorStatus" data-id="${esc(s.id)}" title="tap to advance status">${esc(s.status||"lead")} ▸</button>${ins.map(i=>`<span class="pill ${/passed|payment|No reply/.test(i)?'pill-sak':'pill-peri'}">${esc(i)}</span>`).join("")}</div>
-      ${s.notes?`<div class="soft" style="font-size:11.5px;margin-top:6px">${esc(s.notes)}</div>`:""}</div>`; }).join(""):UI.empty({emoji:"🤝",title:"No sponsors yet",msg:"Add a brand when the first email lands — then Kiko watches deadlines and unpaid invoices for you."})}</section>`;
-  return `<div class="page">${add}${list}</div>${DISCLAIMER}`;
-}
-/* ===== Content Graveyard (Idea #8) ===== */
-const IDEA_CATS=["Stream","Video","Short","Song","Cover","Merch","Outfit","Model","Art","Collab","Event","Other"];
+
 const IDEA_STATUS=["graveyard","maybe later","ready soon","active","done","dropped"];
-function viewIdeas(){
-  const ideas=(state.sentinel.ideas||[]).slice().reverse();
-  const add=`<section class="panel"><div class="card-head"><h2 style="font-size:18px">💡 Idea graveyard</h2></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">A calm place for "ooh, someday" ideas — <i>not</i> a to-do list. They rest here until they're useful, so none ever turn into pressure. 🌱</p>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><input class="inp" id="ideaTitle" placeholder="the idea…" style="flex:1;min-width:160px"><select class="inp" id="ideaCat" style="max-width:120px">${IDEA_CATS.map(c=>`<option>${c}</option>`).join("")}</select></div>
-    <button class="btn btn-grad" data-act="ideaAdd" style="margin-top:6px">Bury it gently 🌱</button></section>`;
-  const list=`<section class="panel"><div class="card-head"><span class="label">🪦 Resting ideas</span><span class="pill pill-gray">${ideas.length}</span></div>
-    ${ideas.length?ideas.map(i=>`<div class="listrow"><span style="flex:0 0 auto" aria-hidden="true">💡</span><span class="grow" style="min-width:0"><b style="font-size:12.5px">${esc(i.title)}</b> ${i.cat?`<span class="soft" style="font-size:11px">· ${esc(i.cat)}</span>`:""}</span><button class="chiptog on" data-act="ideaStatus" data-id="${esc(i.id)}" title="tap to change">${esc(i.status||"graveyard")}</button><button class="x" data-act="ideaDel" data-id="${esc(i.id)}" aria-label="delete">✕</button></div>`).join(""):UI.empty({emoji:"💡",title:"No ideas resting yet",msg:"Every cool thought you can't act on right now — drop it here so it's safe."})}</section>`;
-  return `<div class="page">${add}${list}</div>${DISCLAIMER}`;
-}
+
 /* ===== Relationship Garden (Idea #12) ===== */
 function personNextBday(b){ if(!b)return null; try{ const bd=new Date(b+"T00:00"); if(isNaN(bd))return null; const now=new Date(TODAY+"T00:00"); let nx=new Date(now.getFullYear(),bd.getMonth(),bd.getDate()); if(nx<now)nx=new Date(now.getFullYear()+1,bd.getMonth(),bd.getDate()); return Math.round((nx-now)/86400000); }catch(e){ return null; } }
-function viewPeople(){
-  const ppl=(state.sentinel.people||[]).slice();
-  const add=`<section class="panel"><div class="card-head"><h2 style="font-size:18px">💗 Relationship garden</h2></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">The people who matter — birthdays, gift ideas, the moments you treasure. Kiko keeps the dates so you don't have to. 🌷</p>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><input class="inp" id="pName" placeholder="name" style="flex:1;min-width:120px"><input class="inp" id="pRel" placeholder="who they are" style="flex:1;min-width:120px"><input class="inp" id="pBday" type="date" style="flex:1;min-width:120px"></div>
-    <button class="btn btn-grad" data-act="personAdd" style="margin-top:6px">Plant 🌱</button></section>`;
-  const cards=ppl.length?`<section class="panel"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px">${ppl.map(p=>{ const nb=personNextBday(p.birthday);
-    return `<div class="soft-card"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:15px;font-family:var(--display)">${esc(p.name)}</b><button class="x" data-act="personDel" data-id="${esc(p.id)}" aria-label="delete">✕</button></div>
-    ${p.rel?`<div class="soft" style="font-size:12px">${esc(p.rel)}</div>`:""}
-    ${nb!=null?`<div class="soft" style="font-size:11px;margin-top:3px">🎂 ${nb===0?"birthday today! 🎉":`in ${nb} day${nb===1?"":"s"}`}</div>`:""}
-    ${p.gifts?`<div style="font-size:11.5px;margin-top:6px">🎁 ${esc(p.gifts)}</div>`:""}
-    <div style="display:flex;gap:6px;margin-top:8px"><input class="inp" id="giftFor_${esc(p.id)}" placeholder="gift idea…" style="font-size:12px"><button class="btn" data-act="personGift" data-id="${esc(p.id)}" aria-label="add gift idea">＋</button></div></div>`; }).join("")}</div></section>`:`<section class="panel">${UI.empty({emoji:"💗",title:"Your garden is empty",msg:"Add Horia, Eggie, your mods and friends — birthdays, gift ideas, and the memories you want to keep."})}</section>`;
-  return `<div class="page">${add}${cards}</div>${DISCLAIMER}`;
-}
-/* ===== Mifu Lore Database (Idea #11) ===== */
-const MIFU_LORE_CATS=["Favorite","Dislike","Personality","Comfort","Aesthetic","Other"];
-function viewMifuLore(){
-  const lore=(state.sentinel.mifuLore||[]).slice().reverse();
-  const add=`<section class="panel"><div class="card-head"><h2 style="font-size:18px">📔 About Me</h2></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">A little encyclopedia of you — favorites, dislikes, the patterns that make you <i>you</i>. The more Kiko knows, the less generic she feels. 💗</p>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><input class="inp" id="mlTitle" placeholder="something true about you…" style="flex:1;min-width:160px"><select class="inp" id="mlCat" style="max-width:120px">${MIFU_LORE_CATS.map(c=>`<option>${c}</option>`).join("")}</select></div>
-    <button class="btn btn-grad" data-act="mifuLoreAdd" style="margin-top:6px">Add 📔</button></section>`;
-  const byCat={}; lore.forEach(l=>{ (byCat[l.cat||"Other"]=byCat[l.cat||"Other"]||[]).push(l); });
-  const body=lore.length?Object.entries(byCat).map(([c,arr])=>`<div style="margin-bottom:10px"><div class="label" style="margin-bottom:4px">${esc(c)}</div>${arr.map(l=>`<div class="listrow"><span style="flex:0 0 auto" aria-hidden="true">📔</span><span class="grow">${esc(l.title)}</span><button class="x" data-act="mifuLoreDel" data-id="${esc(l.id)}" aria-label="delete">✕</button></div>`).join("")}</div>`).join(""):UI.empty({emoji:"📔",title:"Nothing here yet",msg:"Add the small things — your comfort game, your ick, your hydrangea-and-stationery soul."});
-  return `<div class="page">${add}<section class="panel">${body}</section></div>${DISCLAIMER}`;
-}
-/* ===== House Journey Timeline (Idea #10) ===== */
-const HOUSE_TYPES=["viewing","application","rejection","acceptance","moving","decorating","bunny setup","memory"];
-function viewHouse(){
-  const log=(state.sentinel.houseLog||[]).slice().sort(cmpDate).reverse();
-  const add=`<section class="panel"><div class="card-head"><h2 style="font-size:18px">🏡 Home journey</h2></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Viewings, applications, the move, first bunny zoomies in the new place — the story of building a home with Horia. 🏡</p>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><input class="inp" id="hsPlace" placeholder="place / nickname" style="flex:1;min-width:130px"><select class="inp" id="hsType" style="max-width:130px">${HOUSE_TYPES.map(t=>`<option>${t}</option>`).join("")}</select></div>
-    <textarea class="inp" id="hsSummary" rows="2" placeholder="what happened / how it felt…" style="margin-top:6px"></textarea>
-    <button class="btn btn-grad" data-act="houseAdd" style="margin-top:6px">Add to the journey 🏡</button></section>`;
-  const list=`<section class="panel"><div class="card-head"><span class="label">🗺️ The journey</span><span class="pill pill-gray">${log.length}</span></div>
-    ${log.length?log.map(h=>`<div class="listrow"><span style="flex:0 0 auto" aria-hidden="true">🏡</span><span class="grow" style="min-width:0"><b style="font-size:12.5px">${esc(h.place||"Home")}</b> <span class="soft" style="font-size:11px">· ${esc(fmtDate(h.date))}${h.type?` · ${esc(h.type)}`:""}</span>${h.summary?`<div style="font-size:12px">${esc(h.summary)}</div>`:""}</span><button class="x" data-act="houseDel" data-id="${esc(h.id)}" aria-label="delete">✕</button></div>`).join(""):UI.empty({emoji:"🏡",title:"The journey starts here",msg:"Save viewings, the dream house, the day you got the keys — the whole story of home."})}</section>`;
-  return `<div class="page">${add}${list}</div>${DISCLAIMER}`;
-}
+
 function viewCare(){
   const jar=state.sentinel.joyJar||[]; const journaledToday=(state.sentinel.journalEntries||[]).some(e=>e.date===TODAY);
   const plan=careGentlePlan(); const helps=careThingsThatHelp(); const pull=careMemoryPull(); const wins=careTinyWins();
@@ -4010,109 +2170,12 @@ function viewCare(){
   ${DISCLAIMER}</div>`;
 }
 
-/* ===================== ASK KIKO (home base) ===================== */
-function viewKiko(){
-  const creator=OS_MODE==="creator";
-  const creatorSkills=[
-    ["💌","Note for Eggie","seed","note for Eggie: "],
-    ["📅","Add event","seed","add an event: "],
-    ["🗒️","Add task","seed","add a task: "],
-    ["🌷","Add goal","seed","add a goal: "],
-    ["⏰","Remind me","seed","remind me to "],
-    ["🎰","Gacha dailies","seed","did my dailies for "],
-    ["🎯","Title ideas","seed","give me stream title ideas for "],
-    ["🎮","Refresh games","send","refresh my game calendar now"],
-    ["🧠","Remember this","seed","remember that "],
-    ["📥","Park a thought","seed","park this: "],
-    ["📓","Daily journal","act","startKikoJournal"],
-    ["🍅","Work with me","seed","work with me on "],
-    ["🔎","What's coming up","send","what's on my schedule and calendar coming up?"],
-    ["🌐","Search the web","seed","search the web for "],
-    ["↩️","Undo last","send","undo that"],
-  ];
-  const healthSkills=[
-    ["⚖️","Log weight","seed","log my weight "],
-    ["🍱","Log food","seed","I ate "],
-    ["📅","Add event","seed","add an event: "],
-    ["🗒️","Add task","seed","add a task: "],
-    ["🌷","Add goal","seed","add a goal: "],
-    ["⏰","Remind me","seed","remind me to "],
-    ["🧠","Remember this","seed","remember that "],
-    ["📥","Park a thought","seed","park this: "],
-    ["📓","Daily journal","act","startKikoJournal"],
-    ["🍅","Work with me","seed","work with me on "],
-    ["🔎","What's coming up","send","what's on my schedule and calendar coming up?"],
-    ["🌐","Search the web","seed","search the web for "],
-    ["↩️","Undo last","send","undo that"],
-  ];
-  const skills=creator?creatorSkills:healthSkills;
-  const chip=(e,l,kind,val)=> kind==="act"
-    ? `<button class="kiko-skill" data-act="${val}">${e} ${l}</button>`
-    : `<button class="kiko-skill" data-act="kikoSkill" data-${kind}="${esc(val)}">${e} ${l}</button>`;
-  return `<div class="page">
-    <div class="card-head"><h2 style="font-size:19px">🦊 Ask Kiko</h2><button class="btn" data-act="kikoMinimize" title="back to what you were doing">－ minimize</button></div>
-    <section class="panel" style="padding:8px 10px;margin-bottom:10px">
-      <div class="label" style="margin-bottom:6px">✨ Quick skills — tap one</div>
-      <div class="kiko-skills">${skills.map(s=>chip(s[0],s[1],s[2],s[3])).join("")}</div>
-    </section>
-    ${creator?`<section class="panel" style="padding:8px 10px;margin-bottom:10px">
-      <div class="label" style="margin-bottom:6px">🎮 Community pulse — research a game</div>
-      <div class="kiko-skills">${gachaList().map(g=>`<button class="kiko-skill" data-act="kikoSeedAsk" data-gameid="${esc(g.id)}" data-seed="${esc(`Search Reddit (r/${g.name.replace(/\s/g,'')}, r/gachagaming), Twitter/X, and YouTube comments RIGHT NOW for what the ${g.name} community is actually saying this week. Be SPECIFIC — name real things, real dates, real people. Reply in EXACTLY this format — no intro, no extra text:
-HYPE: [one sentence naming the SPECIFIC character/event/update people are excited about RIGHT NOW — include their name/title + a source link]
-DRAMA: [one sentence on the REAL frustration or controversy in the community RIGHT NOW — dig into marketing decisions, communication failures, content droughts, gacha rates, broken promises, dev behaviour, anything — NEVER say "no drama", there is ALWAYS something people are unhappy about, even if it's small — include a source link]
-IDEA: [one punchy stream or video title reacting to the REAL current mood — short, catchy, YouTube-title style]
-DETAIL: [your full breakdown: what exactly happened, when, community reaction with receipts, sources, why it matters for a streamer covering this game]`)}">${g.emoji||'🎮'} ${esc(g.name)}</button>`).join("")}
-      <button class="kiko-skill" data-act="kikoSkill" data-send="${esc(`I'm a VTuber and gacha content creator. Please search the internet (Reddit, YouTube, Twitter/X) and find what each of these game communities is currently buzzing about right now. For each game tell me: 1) what positive topics/moments are trending this week, 2) any drama, controversy, frustration or discontent in the community right now, and 3) one specific actionable stream or video idea I could make this week that taps into the current community mood. Games: ${gachaList().map(g=>g.name).join(", ")}. Keep each point short and punchy — one sentence max.`)}">🦊 Research all games</button>
-    </section>`:""}
-    <section class="panel" style="padding:6px"><div id="kikoTabChat" class="kiko-tabchat"></div></section>
-    <section class="panel" style="margin-top:14px">
-      <div class="label" style="margin-bottom:8px">⚙️ Kiko settings</div>
-      <div class="chiprow">
-        <button class="chiptog ${localStorage.getItem('kiko-voice')==='1'?'on':''}" data-act="kikoVoiceToggle"><span>${localStorage.getItem('kiko-voice')==='1'?'✓':''}</span>🔊 Speak replies</button>
-        <button class="chiptog ${localStorage.getItem('kiko-smart')==='1'?'on':''}" data-act="kikoSmartToggle" title="use the big Opus brain for every reply in this conversation"><span>${localStorage.getItem('kiko-smart')==='1'?'✓':''}</span>💪 Smart brain for this convo</button>
-        <button class="chiptog" data-act="kikoClearChat"><span>🧹</span>New conversation</button>
-      </div>
-      ${(function(){ const lvl=localStorage.getItem('kiko-prolevel')||(localStorage.getItem('kiko-proactive')==='0'?'quiet':'gentle');
-        return `<div class="label" style="margin:12px 0 4px">🌅 How proactive should Kiko be?</div>
-        <div class="seg">${[["quiet","🤫 Quiet"],["gentle","🌸 Gentle"],["active","✨ Active"]].map(([v,l])=>`<button data-act="kikoProLevel" data-v="${v}" class="${lvl===v?'on':''}">${l}</button>`).join("")}</div>
-        <p class="soft" style="font-size:10.5px;margin:4px 0 0">Quiet = only when you ask · Gentle = a morning greeting + the occasional gentle nudge · Active = also notices things midday (correlations, streaks, dose days). Kiko also <b>learns your preferences as you chat</b> and acts on safe things itself, telling you after — deletes always ask first.</p>`; })()}
-      <p class="soft" style="font-size:11px;margin:8px 0 0">Tip: say "use your smart brain" for the big model on hard questions, or "quick:" for snappy ones — Kiko picks automatically otherwise. He can read your <b>whole history</b> ("how was my sleep in March?") and find links between things ("does my water affect my nausea?"). 🎙️ in the chat bar lets you talk instead of type.</p>
-      <details class="acc" style="margin-top:10px"><summary>🧠 Kiko's memory (${(state.sentinel.kikoMemory||[]).length})</summary><div class="acc-body">
-        <p class="soft" style="font-size:11.5px;margin:0 0 6px">Say "remember that…" in chat and it lands here — he weaves these into everything he does for you. ✨ = he picked it up on his own.</p>
-        ${(state.sentinel.kikoMemory||[]).length?(state.sentinel.kikoMemory||[]).slice().reverse().map(m=>`<div class="listrow"><span class="grow" style="font-size:12.5px">${m.auto?'✨ ':''}${esc(m.text)}</span><button class="x" data-act="delMemory" data-v="${m.id}">✕</button></div>`).join(""):'<p class="soft" style="font-size:12px">Nothing yet — tell him something worth keeping. 💗</p>'}
-      </div></details>
-      <details class="acc" style="margin-top:8px"><summary>🦊 What Kiko's learned about you</summary><div class="acc-body">
-        <p class="soft" style="font-size:11.5px;margin:0 0 6px">Kiko quietly builds this picture of your rhythms &amp; preferences from your chats, so you never have to repeat yourself. Edit-free — just have a look, or wipe it to start fresh.</p>
-        ${(state.sentinel.kikoUserModel||"").trim()
-          ? `<div class="soft-card" style="font-size:12px;white-space:pre-wrap;line-height:1.5">${esc(state.sentinel.kikoUserModel)}</div><div style="margin-top:8px"><button class="btn" data-act="clearUserModel">↺ start fresh</button></div>`
-          : '<p class="soft" style="font-size:12px">Nothing yet — chat with him a bit and he\'ll start to get you. 💗</p>'}
-      </div></details>
-    </section>
-    <details class="acc" style="margin-top:14px"><summary>💬 Everything Kiko can do — the full guide</summary><div class="acc-body" style="font-size:12.5px;line-height:1.7">
-      <div class="label" style="margin-top:4px">📅 Calendar, events &amp; reminders</div>
-      <p style="margin:2px 0 8px">Add events ("add a collab stream on the 20th at 7pm"), <b>reschedule or rename</b> them ("move the collab to the 22nd"), delete them, and add multi-day ones. Add friends' <b>birthdays</b> ("add Eggie's birthday, March 3") — give him a public creator's handle and he'll look the date up. Birthdays auto-remind a month ahead. Set <b>reminders</b> for anything — "remind me to take my meds at 9pm every day", "remind me Thursday to email the accountant" — once or repeating, delivered as browser pop-ups, 📱 phone push, and the daily email. Mark them done or remove them by chat too. Ask "what's coming up?" anytime.</p>
-      <div class="label">🔴 Stream life</div>
-      <p style="margin:2px 0 8px">Manage your weekly <b>stream schedule</b> ("I stream Warframe on Saturdays at 5pm", "I'm not streaming Thursdays anymore"). Track <b>games</b> for the calendar ("track Genshin", "stop tracking Arknights") and say "refresh my game calendar now" for fresh update/event/livestream dates. Manage <b>sponsors</b> ("add a sponsor: GamerSupps, code MIFUYU", "mark GamerSupps active"). Brainstorm <b>stream titles</b> and start <b>scripts</b> ("help me script a short about…"). On the Script writer, tap <b>🎓 teach my voice</b> and paste a sample of your own writing — Kiko studies your style so the scripts it shapes sound like you, not generic AI.</p>
-      <div class="label">💗 Health</div>
-      <p style="margin:2px 0 8px">Log your <b>check-in</b> ("log my mood as 4, anxiety 2"), <b>energy/spoons</b>, <b>sleep</b> ("I slept 7 hours"), <b>PCOS</b> symptoms &amp; helpers ("fatigue is a 3", "I moved my body today"), <b>period</b> start/end and flow — and <b>remove a mistaken period or shot log</b>. Log <b>Mounjaro</b> shots ("log my shot, 7.5 in left thigh"), side-effects ("nausea is a 2"), daily helpers, and <b>water</b>. Log <b>weight</b>, full <b>body-comp</b> from the scale ("body fat 38, muscle 46"), <b>measurements</b>, and non-scale victories. Manage <b>meds</b> ("add Metformin 500mg with dinner").</p>
-      <div class="label">🍱 Food</div>
-      <p style="margin:2px 0 8px">Say what you ate ("log lunch: chicken, rice and kimchi") and he estimates calories, protein &amp; fibre — or tap <b>📷</b> and send one or several photos and he logs each dish. Remove a mislogged item ("remove the ramen"), or change your daily <b>targets</b> ("set my protein target to 120").</p>
-      <div class="label">💶 Money</div>
-      <p style="margin:2px 0 8px">Log business income &amp; expenses ("log €240 Twitch payout", "I spent €89 on a mic"). At tax time, say "start tax prep" and he walks you through exactly what to gather for your accountant, step by step.</p>
-      <div class="label">📓 Reflect &amp; remember</div>
-      <p style="margin:2px 0 8px">Say "let's journal" for the gentle <b>daily journal</b> he walks you through and writes up in your voice. Quick-set today's one-line journal note. Park thoughts in the <b>brain-dump</b>, make <b>stickies</b>, add joys to the <b>joy jar</b>, and manage <b>tasks &amp; goals</b> — add, complete ("done with the clinic call"), rename, delete, give them <b>due dates</b> ("I need to email the accountant by Friday"), and attach a <b>linked reminder</b> ("remind me about the PT exercises tomorrow at 9") — finishing the task finishes its reminder and vice-versa, so one thing only ever pings once. Tell him <b>"remember that…"</b> and he keeps it forever (see Kiko's memory above). Tick off <b>daily habits</b> ("I did my steps and the dishes") and <b>gacha dailies</b> ("did my WUWA and HSR dailies") — he can also add or remove habits and games from the lists, and tell you what's still left today. And when you wish your OS <b>itself</b> did something new or different — say <b>"note for Eggie: I'd love a sleep chart"</b> — Kiko files it on the 💌 wishlist (Settings) for Eggie to pick up and build. No screenshots, no forgetting.</p>
-      <div class="label">🧩 Your space</div>
-      <p style="margin:2px 0 8px">Kiko can also drive the hub itself: <b>"turn on calm mode"</b> / focus mode / larger text, <b>"lock my layout"</b>, <b>"hide the goals card"</b> / "show the journal card" (Home, Care or Food), <b>"start a 25/5 focus timer"</b> or a rest timer, change your name/greeting/weight unit, tidy mistaken logs (money entries, non-scale wins, joys, measurements, goals), and <b>"download my backup"</b>.</p>
-      <div class="label">✨ And the clever stuff</div>
-      <p style="margin:2px 0 8px">He <b>searches the web</b> when useful (game dates, facts, nutrition, prices). He reads your <b>entire hub</b> — every weigh-in and full Withings body composition (fat, muscle, body water, visceral, BMI, heart rate), your mood/energy/anxiety/nausea/cravings/sleep/water trends, PCOS &amp; Mounjaro symptoms, food, money, tasks, schedule — so ask him anything ("how's my protein today?", "what's my weight trend?", "is my muscle going up?") and even ask him to <b>find links between things</b> ("does my hydration affect my nausea?", "do I feel lower energy on low-water days?", "how's my mood the week after a dose increase?"). He remembers the <b>conversation</b>, so "actually make it 8pm" just works. Say <b>"undo that"</b> to roll back his last change (Ctrl+Z works too). He picks a fast brain for quick commands and a deeper one for hard questions — say <b>"use your smart brain"</b> or <b>"quick:"</b> to choose yourself. Talk instead of type with <b>🎙️</b>, hear him with <b>🔊 Speak replies</b>, and he'll greet you with a <b>morning briefing</b> and a soft evening journal nudge (toggleable above). He can also hop you to any tab — "take me to the calendar".</p>
-      <p class="soft" style="font-size:11.5px;margin-top:6px">Every single thing he does is undoable — Ctrl+Z, or just tell him. 💗❄️</p>
-    </div></details>
-  </div>`;
-}
 
 /* ===================== MONEY (Netherlands sole-proprietor content creator) ===================== */
 const MONEY_IN=["Twitch","YouTube","Sponsorship","Donations/Tips","Merch","Affiliate","Other"];
+
 const MONEY_OUT=["Equipment","Software & subs","Internet & phone","Home office","Travel","Games/content","Marketing","Accountant","Bank & fees","Other"];
+
 const TAX_STEPS=[
   "Let's gather your year together 🦊 First — do you have your total earnings for each income source? Twitch payouts, YouTube/AdSense, sponsorships & brand deals (including anything paid in product), donations/tips, merch, and affiliate. 💰",
   "Now expenses — have you collected the receipts/invoices for your business costs? Gear, software & subscriptions, the business share of internet & phone, home-office, work travel, games bought as content, marketing, and bank & accountant fees. 🧾",
@@ -4124,11 +2187,17 @@ const TAX_STEPS=[
   "Your business details for the accountant: KVK number, business start date, BSN, and DigiD if you file yourself. 🪪",
   "Last one — anything unusual to flag this year? A big new sponsor, a move, new gear, a quiet stretch… anything worth a note. ✨",
 ];
+
 function eur(n){ return "€"+(Math.round((+n||0)*100)/100).toFixed(2); }
+
 function moneyYear(){ return state.moneyYear||String(new Date().getFullYear()); }
+
 function moneyEntries(year){ return (state.sentinel.money||[]).filter(t=>String(t.date||"").slice(0,4)===year); }
+
 function csvCell(s){ s=String(s==null?"":s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+
 function downloadFile(name,content,mime){ try{ const b=new Blob([content],{type:mime||"text/plain"}); const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),1500); }catch(e){ toast("couldn't export — try again"); } }
+
 function moneySummaryText(year){
   const tx=moneyEntries(year); const inc=tx.filter(t=>t.dir==="in").reduce((a,t)=>a+(+t.amount||0),0); const exp=tx.filter(t=>t.dir==="out").reduce((a,t)=>a+(+t.amount||0),0);
   const catLines=(dir,cats)=>cats.map(c=>{ const s=tx.filter(t=>t.dir===dir&&t.cat===c).reduce((a,t)=>a+(+t.amount||0),0); return s>0?`   ${c}: ${eur(s)}`:""; }).filter(Boolean).join("\n");
@@ -4140,67 +2209,9 @@ function moneySummaryText(year){
     +(tp&&tp.items&&tp.items.length?`TAX-PREP CHECKLIST:\n${tp.items.map(x=>`• ${x.q}\n   → ${x.a}`).join("\n\n")}\n\n`:"")
     +`Note: figures from Mifuyu OS; please verify against bank/platform statements with your accountant.\n`;
 }
+
 async function saveTaxPrep(J){ const items=(J.items||[]).filter(x=>x&&x.a); await setSent(n=>{ const tp={...(n.taxPrep||{})}; tp[J.year]={ts:new Date().toISOString(), items}; return {...n,taxPrep:tp}; }); }
-function viewMoney(){
-  const year=moneyYear(); const dir=state.moneyDir||"in";
-  const all=(state.sentinel.money||[]); const years=[...new Set(all.map(t=>String(t.date||"").slice(0,4)).filter(Boolean))]; const curY=String(new Date().getFullYear()); if(!years.includes(curY))years.push(curY); years.sort().reverse();
-  const tx=moneyEntries(year).slice().sort((a,b)=>a.date<b.date?1:-1);
-  const inc=tx.filter(t=>t.dir==="in").reduce((a,t)=>a+(+t.amount||0),0), exp=tx.filter(t=>t.dir==="out").reduce((a,t)=>a+(+t.amount||0),0);
-  const tp=(state.sentinel.taxPrep||{})[year];
-  return `<div class="page">
-    <div class="card-head"><h2 style="font-size:19px">💶 Money</h2>
-      <select class="inp" id="moneyYear" style="max-width:110px">${years.map(y=>`<option ${y===year?'selected':''}>${y}</option>`).join("")}</select></div>
-    <p class="soft" style="font-size:12px;margin:0 0 12px">Your business books — for a sole-proprietor (eenmanszaak) creator in the Netherlands. 🇳🇱❄️</p>
 
-    <section class="panel">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
-        <div class="soft-card"><div class="label">Income</div><div class="bignum" style="color:#3a9d83;font-size:22px">${eur(inc)}</div></div>
-        <div class="soft-card"><div class="label">Expenses</div><div class="bignum" style="color:var(--sakura-deep);font-size:22px">${eur(exp)}</div></div>
-        <div class="soft-card"><div class="label">Net profit</div><div class="bignum" style="font-size:22px">${eur(inc-exp)}</div></div>
-      </div>
-      <p class="soft" style="font-size:11px;text-align:center;margin-top:8px">A common rule of thumb is to set aside roughly a third of profit for income tax + Zvw — confirm the real number with your accountant. 💗</p>
-    </section>
-
-    <section class="panel">
-      <div class="label" style="margin-bottom:6px">➕ Add a transaction</div>
-      <div class="seg" style="margin-bottom:8px"><button data-act="moneyDir" data-v="in" class="${dir==='in'?'on':''}">＋ Income</button><button data-act="moneyDir" data-v="out" class="${dir==='out'?'on':''}">－ Expense</button></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="field"><div class="label">Date</div><input class="inp" type="date" id="mn_date" value="${esc((state.moneyDraft||{}).date||TODAY)}"></div>
-        <div class="field"><div class="label">Amount (€)</div><input class="inp" type="number" step="0.01" id="mn_amount" placeholder="0.00" value="${esc((state.moneyDraft||{}).amount||'')}"></div>
-      </div>
-      <div class="field" style="margin-top:8px"><div class="label">Category</div><select class="inp" id="mn_cat">${(dir==='in'?MONEY_IN:MONEY_OUT).map(c=>`<option>${c}</option>`).join("")}</select></div>
-      <input class="inp" id="mn_desc" placeholder="description (e.g. Twitch payout July · new microphone)" style="margin-top:8px" value="${esc((state.moneyDraft||{}).desc||'')}">
-      <button class="btn btn-grad" data-act="addMoney" style="margin-top:8px">Add</button>
-    </section>
-
-    <section class="panel">
-      <div class="card-head"><span class="label">${year} transactions</span><span class="pill pill-gray">${tx.length}</span></div>
-      ${tx.length?tx.map(t=>`<div class="listrow"><span class="grow"><b style="font-size:13px;color:${t.dir==='in'?'#3a9d83':'var(--sakura-deep)'}">${t.dir==='in'?'+':'−'}${eur(t.amount).slice(1)}</b> <span class="soft" style="font-size:11.5px">${esc(t.cat||'')} · ${fmtDate(t.date)}${t.desc?' · '+esc(t.desc):''}</span></span><button class="x" data-act="delMoney" data-v="${t.id}">✕</button></div>`).join(""):`<p class="soft" style="font-size:12.5px">No transactions yet for ${year}. Add your payouts and expenses above. ❄️</p>`}
-      ${tx.length?`<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn" data-act="exportMoneyCSV">⬇ Transactions (CSV)</button><button class="btn" data-act="exportMoneySummary">⬇ Accountant summary</button></div>`:''}
-    </section>
-
-    <section class="panel">
-      <div class="card-head"><span class="label">🧾 Tax season</span></div>
-      <p class="soft" style="font-size:12.5px;margin:0 0 8px">When it's time to file, Kiko walks you through exactly what to gather for your accountant — then you export it. You don't file yourself; you just hand this over.</p>
-      <button class="btn btn-grad" data-act="startTaxPrep">Start tax-prep with Kiko 🦊</button>
-      ${tp&&tp.items&&tp.items.length?`<details class="acc" style="margin-top:12px"><summary>📋 ${year} prep checklist (saved)</summary><div class="acc-body">${tp.items.map(x=>`<div style="margin:6px 0"><div class="label">${esc(x.q)}</div><div style="font-size:13px">${esc(x.a)}</div></div>`).join("")}<button class="btn" data-act="exportTaxPrep" style="margin-top:8px">⬇ Export checklist</button></div></details>`:''}
-    </section>
-
-    <details class="acc"><summary>📖 Netherlands tax guide — sole-proprietor creator</summary><div class="acc-body">
-      <p style="font-size:13px;line-height:1.65">You run an <b>eenmanszaak</b> (sole proprietorship), so your business profit is taxed as your personal income in <b>Box 1</b> (inkomstenbelasting). Nothing is withheld for you, so put money aside through the year.</p>
-      <p style="font-size:13px;line-height:1.65"><b>BTW (VAT):</b> the standard rate is 21%, and you normally file a BTW return <b>each quarter</b>. If your turnover stays under the KOR threshold (around €20,000/yr) you can join the <b>kleineondernemersregeling</b> and stop charging/filing VAT — your accountant can say which is better for you.</p>
-      <p style="font-size:13px;line-height:1.65"><b>Self-employed deductions:</b> if you spend about <b>1,225 hours</b>/year on the business (the urencriterium), you may qualify for the <b>zelfstandigenaftrek</b>, plus the <b>startersaftrek</b> in your first years; the <b>MKB-winstvrijstelling</b> then exempts a slice of the remaining profit. Keep an hours log to prove it.</p>
-      <p style="font-size:13px;line-height:1.65"><b>Costs you can usually deduct:</b> gear, software & subscriptions, a business share of internet/phone, marketing, work travel, games/props bought specifically as content, and bank/accountant fees. Personal use isn't deductible — split mixed use. Bigger purchases may qualify for the investment deduction (KIA) or are depreciated over several years.</p>
-      <p style="font-size:13px;line-height:1.65"><b>Also budget for</b> the income-dependent <b>Zvw</b> health contribution on top of income tax.</p>
-      <p style="font-size:13px;line-height:1.65"><b>Records:</b> keep your full administration — invoices, receipts, bank statements — for <b>7 years</b>.</p>
-      <p class="soft" style="font-size:11.5px">Amounts and rules change every year and depend on your situation — treat this as a friendly overview and let your accountant and the Belastingdienst be the authority. 💗</p>
-    </div></details>
-    <details class="acc"><summary>🗂️ What to collect for tax season</summary><div class="acc-body">
-      <ol style="padding-left:18px;font-size:13px;line-height:1.7">${TAX_STEPS.map(s=>`<li style="margin:5px 0">${s}</li>`).join("")}</ol>
-    </div></details>
-    <div class="disc" style="margin-top:14px">🧾<span>General information for a Dutch eenmanszaak — not tax or financial advice. Rules and amounts change yearly and depend on your situation; your accountant and the Belastingdienst are the final word. ❄️</span></div>
-  </div>`;
-}
 
 /* ===================== TRENDS ===================== */
 function buildSeries(){
@@ -4215,6 +2226,7 @@ function buildSeries(){
     water:days.map(d=>pick(d,["mounjaro","water"])),
     sleep:days.map(d=>pick(d,["sleep"])) } };
 }
+
 function patternSpotter(byDate){
   const rows=Object.entries(byDate).filter(([d])=>d!==SENTINEL).map(([,n])=>n).filter(Boolean);
   if(rows.length<5) return `<p class="soft" style="font-size:12.5px">A few more tracked days (about 5) and gentle patterns will start to appear here. No rush — gaps are fine. ❄️</p>`;
@@ -4238,6 +2250,7 @@ function patternSpotter(byDate){
   return `<ul style="padding-left:18px;font-size:13px">${obs.map(o=>`<li style="margin:6px 0">${o}</li>`).join("")}</ul>
     <p class="soft" style="font-size:11px;margin-top:6px">Gentle observations from your own logs — patterns, not proof, and never a diagnosis. Worth a mention to your care team if something rings true. ❄️🦊</p>`;
 }
+
 /* ----- animated visual trends chart ----- */
 const TREND_METRICS=[
   ["mood","🌤️","Mood",5,"up",["🌧️","🌞"]],
@@ -4248,10 +2261,12 @@ const TREND_METRICS=[
   ["water","🥤","Water",15,"up",["low","lots"]],
   ["sleep","🌙","Sleep",12,"up",["short","long"]],
 ];
-const TREND_TYPES=["area","bars","dots"];
+
 // a fixed, distinct colour per metric so the legend + overlaid lines stay readable
 const TREND_COLORS={ mood:"#ef9ccb", anxiety:"#9b8cf0", energy:"#f0b057", nausea:"#5fc59a", cravings:"#f0869b", water:"#5ba6e8", sleep:"#7d83e6" };
+
 function trendRuns(vals){ const r=[]; let cur=null; vals.forEach((v,i)=>{ if(v==null){ if(cur){r.push(cur);cur=null;} } else { if(!cur)cur=[]; cur.push({i,v}); } }); if(cur)r.push(cur); return r; }
+
 function buildChartSVG(metricKeys,type){
   const {series}=buildSeries();
   let keys=(Array.isArray(metricKeys)?metricKeys:[metricKeys]).filter(k=>TREND_METRICS.some(m=>m[0]===k));
@@ -4294,10 +2309,13 @@ function buildChartSVG(metricKeys,type){
   });
   return `<svg class="trchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><defs>${defs}</defs>${grid}${ylab}${body}${ticks}</svg>`;
 }
+
 function trendStat(k){ const {series}=buildSeries(); const vals=(series[k]||[]).filter(v=>v!=null);
   if(!vals.length) return {n:0}; const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
   return {n:vals.length, avg:Math.round(avg*10)/10, min:Math.min(...vals), max:Math.max(...vals)}; }
+
 function metricName(k){ const m=TREND_METRICS.find(x=>x[0]===k); return m?m[2]:k; }
+
 function trendWord(metricKey){
   const {series}=buildSeries(); const vals=(series[metricKey]||[]).filter(v=>v!=null);
   const meta=TREND_METRICS.find(x=>x[0]===metricKey)||TREND_METRICS[0]; const name=meta[2];
@@ -4316,6 +2334,7 @@ function trendWord(metricKey){
   };
   const m=W[metricKey]||W.mood; return rising?m.up:falling?m.down:m.flat;
 }
+
 function paintTrendChart(){
   const host=document.getElementById("trendChartHost"); if(!host)return;
   const keys=(state.trendMetrics&&state.trendMetrics.length)?state.trendMetrics:["mood"];
@@ -4330,286 +2349,26 @@ function paintTrendChart(){
     else { stat.textContent = "each line scaled to its own range, so you can compare shapes"; } }
   const w=document.getElementById("trendWord"); if(w) w.textContent = keys.length===1 ? trendWord(keys[0]) : "";
 }
-/* ============================================================================
-   KIKO INTELLIGENCE LAYER (deterministic, grounded — no server call, no hallucination).
-   #1 Health Interpreter: per-metric trend reads with a likely cause + one action.
-   #2 Insights: the client correlation engine (kikoCorrelations) already shipped.
-   #3 Perspective: an occasional reframe from real counts. Rendered on the Trends page.
-   ============================================================================ */
-function kikoTrendReads(){
-  const s=state.sentinel||{}, u=CONFIG.weightUnit||"kg", reads=[];
-  const add=(emoji,label,value,kiko)=>{ if(kiko) reads.push({emoji,label,value,kiko}); };
-  try{ const wl=(s.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate);
-    if(wl.length>=3){ const last=wl[wl.length-1].w, ref=wl[Math.max(0,wl.length-5)].w, d=Math.round((last-ref)*10)/10;
-      add("⚖️","Weight",(d<0?"↓ ":d>0?"↑ ":"→ ")+(d===0?"steady":Math.abs(d)+" "+u),
-        d<=-0.2?`Trending down about ${Math.abs(d)} ${u} over your last ${Math.min(5,wl.length)} weigh-ins. Day-to-day wobble is normal — the bigger trend is what counts, and it's heading the right way.`
-        : d>=0.4?`Up ${d} ${u} recently. A short rise is usually water or eating patterns rather than fat — worth leaning into protein + veg for a few days and watching it settle.`
-        : `Holding steady. If muscle is up or fat is down underneath, that's still real progress even when the scale is quiet.`); } }catch(e){}
-  try{ const mu=(s.weightLog||[]).filter(x=>x&&x.muscle!=null).slice().sort(cmpDate);
-    if(mu.length>=2){ const d=Math.round((mu[mu.length-1].muscle-mu[0].muscle)*10)/10;
-      add("💪","Muscle",(d>0?"+":"")+d+"%",
-        d>=0.3?`Up ${d}% since ${fmtDate(mu[0].date)}. Whatever you're doing — protein + training — is working; keep it steady.`
-        : d<=-0.3?`Down ${Math.abs(d)}% since ${fmtDate(mu[0].date)}. Protein is the main lever; aim to hit your protein goal consistently this week.`
-        : `Roughly holding — keeping muscle while losing weight is exactly the goal.`); } }catch(e){}
-  try{ const fa=(s.weightLog||[]).filter(x=>x&&x.fat!=null).slice().sort(cmpDate);
-    if(fa.length>=2){ const d=Math.round((fa[fa.length-1].fat-fa[0].fat)*10)/10;
-      add("🫧","Body fat",(d>0?"+":"")+d+"%",
-        d<=-0.3?`Down ${Math.abs(d)}% since ${fmtDate(fa[0].date)} — the work is showing.`
-        : d>=0.4?`Up ${d}% lately. This can ride on water retention or a few higher days; prioritise protein + vegetables for a few days and see if it reverses.`
-        : `Fairly flat — normal week to week.`); } }catch(e){}
-  try{ const fh=foodHistory(7).filter(h=>h.meals&&h.meals.length), tg=foodTargets().protein;
-    if(fh.length>=3){ const avg=Math.round(fh.reduce((a,h)=>a+h.protein,0)/fh.length), hit=fh.filter(h=>h.protein>=tg).length;
-      add("🍳","Protein",`~${avg}g avg`,
-        hit>=Math.ceil(fh.length*0.6)?`You hit your protein goal on ${hit} of ${fh.length} logged days — strong, and it protects muscle while you lose.`
-        : `Averaging ~${avg}g/day vs your ${tg}g goal (hit on ${hit}/${fh.length} days). Easy win: a shake or yogurt on the days you fall short.`); } }catch(e){}
-  try{ const avg=waterWeekAvg(); if(avg!=null){ const goal=CUPS_PER_40OZ*2, L=c=>(c*0.2366).toFixed(1);
-    add("💧","Water",`~${L(avg)}L/day`,
-      avg<goal*0.7?`A little under your usual hydration. Water often tracks with how you feel — nausea and energy both tend to do better on well-hydrated days.`
-      : `Hydration's solid lately — that quietly helps energy and nausea.`); } }catch(e){}
-  try{ const vals=[]; for(let i=1;i<=7;i++){ const d=rangeRow(dayAgo(-i)); const sl=d&&Number(d.sleep); if(sl)vals.push(sl); }
-    if(vals.length>=3){ const avg=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10;
-      add("😴","Sleep",`~${avg}h avg`,
-        avg<7?`Averaging ~${avg}h over your last ${vals.length} nights — under 7h tends to show up as lower recovery and higher fatigue. An earlier wind-down a couple of nights could help.`
-        : `Averaging ~${avg}h — a recovery-friendly range. 🌙`); } }catch(e){}
-  return reads;
-}
-function kikoPerspective(){
-  const creator=OS_MODE!=="health", s=state.sentinel||{};
-  try{
-    if(creator){ const mStart=TODAY.slice(0,7)+"-01", cnt=k=>((s.checkinLog||{})[k]||[]).filter(d=>d>=mStart&&d<=TODAY).length;
-      const streams=cnt("streamed"), yt=cnt("ytVideo")+cnt("ytShort"), art=cnt("madeArt"); const bits=[];
-      if(streams)bits.push(`streamed ${streams} day${streams>1?"s":""}`); if(yt)bits.push(`${yt} upload${yt>1?"s":""}`); if(art)bits.push(`made art ${art} day${art>1?"s":""}`);
-      if(bits.length>=2) return `Even on a week that felt quiet, this month you've ${bits.join(", ")}. That's real, steady output — be fair to yourself about it.`;
-    } else {
-      const wlw=(s.weightLog||[]).filter(x=>x&&x.w!=null).slice().sort(cmpDate), mu=(s.weightLog||[]).filter(x=>x&&x.muscle!=null).slice().sort(cmpDate);
-      if(wlw.length>=3&&mu.length>=2){ const dW=wlw[wlw.length-1].w-wlw[0].w, dM=mu[mu.length-1].muscle-mu[0].muscle;
-        if(dW<=-0.3&&dM>=-0.1) return `Worth zooming out: you've lost weight while keeping (or building) muscle. That's the healthy, sustainable kind of progress — not just a smaller number.`; }
-      const byd={}; (state.range||[]).forEach(r=>{ if(r&&r.date)byd[r.date]=r.notes||{}; });
-      let streak=0; for(let i=0;i<30;i++){ const n=i===0?(state.today||{}):byd[dayAgo(-i)]; const h=n&&n.habits; if(h&&h.h_meds)streak++; else if(i>0)break; }
-      if(streak>=14) return `You've stayed on your meds ${streak} days running — that kind of consistency is one of the biggest quiet contributors to long-term results.`;
-    }
-  }catch(e){}
-  return "";
-}
-function kikoDataReadCard(){
-  const reads=kikoTrendReads(); let corr=[]; try{ corr=kikoCorrelations("health"); }catch(e){} const persp=kikoPerspective();
-  if(!reads.length&&!corr.length&&!persp) return "";
-  return `<section class="panel">
-    <div class="card-head"><h2 style="font-size:17px">💗 Kiko reads your data</h2></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 10px">Not just numbers — what the trends actually mean, grounded in your own logs.</p>
-    ${reads.map(r=>`<div class="listrow"><span style="font-size:16px;flex:0 0 auto">${r.emoji}</span><span class="grow" style="min-width:0"><b style="font-size:12.5px">${esc(r.label)}</b> <span class="soft num" style="font-size:12px">${esc(r.value)}</span><div class="soft" style="font-size:12px;line-height:1.5">${esc(r.kiko)}</div></span></div>`).join("")}
-    ${corr.length?`<div class="sec-label" style="margin-top:12px">🔗 Connections Kiko spotted</div>${corr.map(c=>`<div class="kn-row"><span class="kn-dot"></span><span style="font-size:12px">${esc(c.t)}</span></div>`).join("")}`:""}
-    ${persp?`<div class="soft-card" style="margin-top:12px;font-size:12.5px;line-height:1.55"><b class="peri">💭 Perspective</b><br>${esc(persp)}</div>`:""}
-  </section>`;
-}
-function viewTrends(){
-  const {byDate}=buildSeries();
-  const sel=(state.trendMetrics&&state.trendMetrics.length)?state.trendMetrics:["mood"];
-  const days=state.trendDays===30?30:14;
-  return `<div class="page">
-  <section class="panel">
-    <div class="card-head"><h2 style="font-size:18px">📈 Your last ${days} days</h2>
-      <span class="tr-range">
-        <button class="${days===14?'on':''}" data-act="trendDays" data-v="14">14d</button>
-        <button class="${days===30?'on':''}" data-act="trendDays" data-v="30">30d</button>
-      </span></div>
-    <div class="chiprow" style="margin-bottom:12px">
-      ${TREND_METRICS.map(([k,e,l])=>`<button class="chiptog ${sel.includes(k)?'on':''}" data-act="trendMetric" data-v="${k}"><span>${e}</span>${l}</button>`).join("")}
-    </div>
-    <div class="tr-frame">
-      <div class="tr-frame-head">
-        <span class="tr-title" id="trendTitle"></span>
-        <span class="tr-legend" id="trendLegend"></span>
-      </div>
-      <div id="trendChartHost"></div>
-      <div class="tr-stat" id="trendStat"></div>
-    </div>
-    <p id="trendWord" style="text-align:center;font-family:var(--display);font-size:15px;color:var(--ink);margin:10px 0 0"></p>
-    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap">
-      <span class="label">view:</span>
-      ${TREND_TYPES.map(t=>`<button class="btn ${(state.trendType||'area')===t?'btn-grad':''}" data-act="trendType" data-v="${t}" style="padding:5px 11px;font-size:14px" title="${({area:'soft line',bars:'bars',dots:'dots'})[t]} ${sel.length>1?'(applies when one metric is shown)':''}">${({area:'∿',bars:'▮',dots:'•'})[t]}</button>`).join("")}
-    </div>
-    <p class="soft" style="font-size:11px;text-align:center;margin-top:8px">Tap chips to layer metrics and watch them in tandem. Gaps just mean a rest day — that's allowed. 💗</p>
-  </section>
-  ${kikoDataReadCard()}
-  <section class="panel">
-    <div class="label" style="margin-bottom:6px">🔎 Gentle pattern-spotter</div>
-    ${patternSpotter(byDate)}
-  </section>
-  <div style="text-align:center;margin:18px 0 4px"><span class="label" style="letter-spacing:.08em">⚖️ &nbsp;weight &amp; body&nbsp;⚖️</span></div>
-  ${viewWeight().split(DISCLAIMER)[0]}
-  ${DISCLAIMER}</div>`;
-}
 
-/* ===================== SETTINGS ===================== */
-function viewSettings(){
-  const meds=state.sentinel.medsList||[];
-  return `<div class="page">
-  <section class="panel">
-    <div class="card-head"><div class="label">🗄️ Backup &amp; restore</div></div>
-    <p class="soft" style="font-size:12.5px;margin:0 0 12px">Export downloads a full copy of all your data as a JSON file. Restore imports it back — useful if data is ever lost or you switch devices. <b>Export regularly and keep it somewhere safe.</b></p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <button id="exportBtn" class="btn btn-grad" data-act="exportBackup">⬇️ Export all data</button>
-      <label class="btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px">📂 Restore from file<input type="file" accept=".json" style="display:none" data-act-change="restoreFromBackupInput"></label>
-    </div>
-    <p id="backupMsg" style="font-size:12px;margin:8px 0 0;min-height:16px;color:var(--lav-deep)"></p>
-    <p id="restoreMsg" style="font-size:12px;margin:4px 0 0;min-height:16px;color:var(--lav-deep)"></p>
-  </section>
-  <section class="panel">
-    <div class="card-head"><div class="label">⚙️ Comfort &amp; display</div><span class="chip" title="if something seems broken, check this matches the newest build first">build ${APP_BUILD}</span></div>
-    <p class="soft" style="font-size:12px;margin:0 0 10px">However today needs to feel. Saved on this device.</p>
-    <div class="chiprow">
-      ${chiptog("Calm mode (less motion, softer colours)","pref","calm",PREF.calm)}
-      ${chiptog("Focus mode (Home shows only today)","pref","focus",PREF.focus)}
-    </div>
-    <div class="field" style="margin-top:14px">
-      <div class="label" style="display:flex;justify-content:space-between;align-items:center">🔠 Text size <span class="soft" id="textSizeVal" style="font-size:12px">${PREF.textSize}px</span></div>
-      <input type="range" id="textSizeSlider" min="${TEXT_MIN}" max="${TEXT_MAX}" step="1" value="${PREF.textSize}" data-act-input="setTextSize" style="width:100%;margin-top:6px;accent-color:var(--sakura)">
-      <p class="soft" style="font-size:11px;margin:6px 0 0">Slide to taste — bigger or smaller. Saved on this device, stays put every time you open the app. 💗</p>
-    </div>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">💊 Meds &amp; supplements</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Tick these off daily on the Food tab. Add a refill date and Kiko will gently remind you before you run low.</p>
-    ${meds.length?meds.map(m=>{ const days=m.refill?daysBetween(TODAY,m.refill):null;
-      return `<div class="listrow"><span class="grow"><b>${esc(m.name)}</b> <span class="soft" style="font-size:11.5px">${esc(m.dose||'')} ${m.time?'· '+esc(m.time):''}</span>${m.refill?` <span class="pill ${days!=null&&days<=7?'':'pill-gray'}" style="font-size:9px;${days!=null&&days<=7?'background:#fdebd9;color:#b4764a':''}">refill ${fmtDate(m.refill)}</span>`:''}</span><label class="btn" style="padding:3px 8px;cursor:pointer" title="set refill date">📅<input type="date" data-medrefill="${m.id}" value="${m.refill||''}" style="display:none"></label><button class="x" data-act="delMed" data-v="${m.id}">✕</button></div>`; }).join("")
-      :`<p class="soft" style="font-size:12.5px">No meds added yet.</p>`}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-      <input class="inp" id="medName" placeholder="name (e.g. Metformin)">
-      <input class="inp" id="medDose" placeholder="dose (e.g. 500 mg)"></div>
-    <div style="display:flex;gap:8px;margin-top:8px"><input class="inp" id="medTime" placeholder="when (e.g. morning)" style="max-width:200px"><button class="btn btn-grad" data-act="addMed">Add med</button></div>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">📝 Your details</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="field"><div class="label">Name</div><input class="inp" id="cfgName" value="${esc(CONFIG.creator.name)}"></div>
-      <div class="field"><div class="label">Greeting</div><input class="inp" id="cfgGreet" value="${esc(CONFIG.creator.greeting)}"></div>
-    </div>
-    <div class="field"><div class="label">Weight unit</div><select class="inp" id="cfgUnit"><option ${CONFIG.weightUnit==='kg'?'selected':''}>kg</option><option ${CONFIG.weightUnit==='lb'?'selected':''}>lb</option></select></div>
-    <div class="field"><div class="label">Weight display</div><select class="inp" id="cfgWdisp">
-      <option value="soft" ${CONFIG.weightDisplay==='soft'?'selected':''}>Soft / trend-first</option>
-      <option value="numbers" ${CONFIG.weightDisplay==='numbers'?'selected':''}>Numbers visible</option>
-      <option value="hidden" ${CONFIG.weightDisplay==='hidden'?'selected':''}>Hide numbers by default</option></select></div>
-    <button class="btn btn-grad" data-act="saveCfg">Save details</button>
-    <p class="soft" style="font-size:11px;margin-top:8px">Saved to your database — these stick across reloads and devices. ❄️</p>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">🎨 Palette</div>
-    <div class="chiprow">${Object.entries(CONFIG.palette).map(([k,v])=>`<div title="${k}: ${v}" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:${v}"></div>`).join("")}</div>
-    <p class="soft" style="font-size:11px;margin-top:8px">Snowfox winter: periwinkle → sakura, with lavender &amp; ice. ❄️🌸</p>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">💾 Your data</div>
-    <p class="soft" style="font-size:12px;margin:0 0 8px">It's yours. Back it up anytime.</p>
-    <button class="btn btn-grad" data-act="export">Export all my data (JSON)</button>
-    <button class="btn" data-act="logout" style="margin-top:8px">🔒 Log out</button>
-    <details class="acc" style="margin-top:12px"><summary>🔒 Privacy upgrade (optional)</summary><div class="acc-body">
-      <p class="soft" style="font-size:12px">Right now this is a private, single-user app. When you're ready, you can lock it behind Supabase Auth so only you can open it — an option, never a requirement. The included <b>setup.sql</b> notes where to tighten the row-level security policy. ❄️</p></div></details>
-    <p class="soft" style="font-size:11px;margin-top:10px">${DEMO?'Running in <b>demo mode</b> — seeded sample data; changes preview this session but are not saved to a backend.':(SB?'Connected to Supabase ✓ — your entries are saving.':'Connecting to Supabase…')}</p>
-  </section>
-
-  <section class="panel">
-    <div class="card-head"><div class="label">💌 Wishlist for Eggie</div><span class="pill pill-gray">${(state.sentinel.eggieRequests||[]).filter(r=>r.status!=="done").length} open</span></div>
-    <p class="soft" style="font-size:12px;margin:0 0 8px">Want something new or different in your OS? Just tell Kiko — <b>"note for Eggie: …"</b> — and it lands here for Eggie to pick up and build. 💗</p>
-    ${(state.sentinel.eggieRequests||[]).slice().reverse().map(r=>`<div class="listrow"><span class="grow" style="font-size:12.5px">${esc(r.text)} <span class="soft" style="font-size:10.5px">· ${fmtDate(r.date)}${r.tab?" · from "+esc(r.tab):""}</span></span><span class="pill ${r.status==="done"?"pill-mint":"pill-lav"}">${r.status==="done"?"done ✓":"noted"}</span><button class="x" data-act="delEggieReq" data-v="${r.id}">✕</button></div>`).join("")||'<p class="soft" style="font-size:12px">Nothing yet — wish away ✨</p>'}
-    ${(state.sentinel.eggieRequests||[]).length?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" data-act="copyEggieReqs">📋 copy the list for Eggie</button><button class="btn" data-act="clearEggieReqs" title="Eggie's actioned these — clear the list to start fresh">🧹 clear actioned notes</button></div>`:''}
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">📅 Calendar</div>
-    <p class="soft" style="font-size:12px;margin:0 0 8px">Colour for the auto game-update events (refreshed every Friday).</p>
-    <div class="chiprow">${["#f6cba9","#9fc7f0","#c9b8f0","#a9e0cb","#ff9ed8","#b8d4f0","#d8c7a0"].map(c=>`<button class="cal-swatch" data-act="setGameColor" data-v="${c}" style="background:${c};border:2px solid ${(state.sentinel.gameColor||'#f6cba9')===c?'var(--ink)':'transparent'}"></button>`).join("")}</div>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">🦊 Mifu's links</div>
-    <div class="chiprow">${(CONFIG.socials||[]).map(([n,u])=>`<a class="chiptog" href="${u}" target="_blank" rel="noopener" style="text-decoration:none">${esc(n)}</a>`).join("")}</div>
-  </section>
-
-  <section class="panel">
-    <div class="card-head"><h2 style="font-size:17px">💟 About Mifuyu OS</h2><span class="pill pill-sak">made with love by Eggie</span></div>
-    <p style="font-size:13px;line-height:1.7;margin:0 0 8px">Konfuyu, Mifu! This is <b>your own little operating system</b> — one private page, your own database, nobody else's anything. It runs your day, looks after your health gently, keeps your creator business tidy, and comes with <b>Kiko</b>, your snowfox assistant who can actually <i>do</i> things when you ask. Everything below is the honest tl;dr of what's inside and how it works. 💗</p>
-    <div style="font-size:12.5px;line-height:1.8">
-      <b>🏠 Home</b> — your dashboard; drag ⠿, resize ⤡, minimize, hide &amp; restore cards however you like.<br>
-      <b>🦊 Ask Kiko</b> — Kiko's home base: chat, one-tap skills, his memory &amp; settings, and the full "everything he can do" guide.<br>
-      <b>🗒️ Planner</b> — tasks by spoons, weekly &amp; monthly goals, brain-dump.<br>
-      <b>📅 Calendar</b> — your events &amp; birthdays, stream days, and auto game updates / event days / livestream days (refreshed every Friday). Toggles for each.<br>
-      <b>📝 Script</b> — talk your ideas out loud, it types for you, then shapes them into a short or long-form script in your voice.<br>
-      <b>🔴 Stream</b> — title/tag/description optimizer tuned to your channel, thumbnail check, sponsors &amp; deals.<br>
-      <b>💶 Money</b> — your business books (eenmanszaak-friendly), the NL tax guide, Kiko's tax-prep walkthrough, and accountant exports.<br>
-      <b>❄️ Health · 💉 Mounjaro · ⚖️ Weight · 🍱 Food</b> — gentle tracking: cycle &amp; PCOS, shots &amp; side-effects, weight &amp; body-comp (Withings-ready), and food with photo macro-logging (protein &amp; fibre first).<br>
-      <b>🫂 Care</b> — breathing bubble, check-in, joy jar, the daily journal with Kiko, and your journal archive.<br>
-      <b>📈 Trends</b> — your last weeks as gentle pictures; layer metrics to compare.<br>
-      <b>⚙️ Settings</b> — comfort modes, meds, data export, and this page.
-    </div>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">❓ FAQ — the honest answers</div>
-    <details class="acc"><summary>Is this private? Who can see my stuff?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">It's a single-user app made just for you. Your data lives in <b>your own database</b> (a private Supabase project Eggie set up) — no accounts, no analytics, no tracking, no one else on it. The page itself is just an unlisted link. If you ever want a password on top, there's an optional auth lock we can switch on.</p></div></details>
-    <details class="acc"><summary>Where exactly is my data, and can I take it out?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">Everything — logs, journals, money, calendar, Kiko's memory — sits in one table in your database. <b>Settings → Your data → Export</b> downloads all of it as JSON anytime, and the Money tab has its own accountant-friendly exports. Nothing is held hostage. 💗</p></div></details>
-    <details class="acc"><summary>Does anything ever leave the app?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">Only when you use the features that need it, and only the minimum: AI things (Kiko's chat, food photos, scripts, the journal <i>write-up</i>) send that text/photo to Claude through our own server function — the API key never touches your browser. Kiko's web searches go through the same AI. Reminder emails &amp; Kiko's weekly letter go through the email service, only if you turned those on. The journal <i>questions</i> and the tax checklist run entirely on-page. That's the whole list.</p></div></details>
-    <details class="acc"><summary>I made a mistake — can I fix it?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">Always. <b>Ctrl+Z / ⌘Z</b> undoes your last data changes — even after you've closed the page and come back. You can also just tell Kiko "undo that." Most lists have a ✕ (including period history), every page layout has a reset, and the 🔒 chip freezes layouts so nothing moves by accident.</p></div></details>
-    <details class="acc"><summary>Is the health stuff medical advice? Is the tax stuff tax advice?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">No and no — and that's on purpose. The health tabs are gentle <i>tracking</i>; patterns, not diagnoses; your doctor is the authority. The Money tab's tax guide is a plain-language overview and a what-to-collect checklist; your accountant is the authority. Kiko is told to never invent health numbers and never play doctor.</p></div></details>
-    <details class="acc"><summary>How accurate is the food photo logging?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">It's a <i>friendly estimate</i> from the photo + your note — good for trends, not lab-grade. Every number is editable on the Food tab before or after logging. Protein 💪 and fibre 🌿 get the spotlight because they matter most for you.</p></div></details>
-    <details class="acc"><summary>Why is Kiko instant sometimes and thoughtful other times?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">He picks his brain to fit the job — a fast one for quick commands, a deeper one for research, writing, and tricky questions. Say <b>"use your smart brain"</b> to force the big one or <b>"quick:"</b> for the snappy one.</p></div></details>
-    <details class="acc"><summary>What works on which device?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">Everything works in <b>Chrome or Edge</b> on desktop — that's also where voice typing and Kiko's 🎙️ live. On <b>iPad</b> the whole layout system (drag, resize, lock) is tuned for touch and Apple Pencil. Phone is lovely for quick logging and chatting with Kiko.</p></div></details>
-    <details class="acc"><summary>What happens automatically, without me doing anything?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">Every <b>Friday</b> the game calendar refreshes (updates, event start/end days, livestream days for the games you track). Birthday reminders fire a month, a week, a day ahead and day-of. If <b>📱 phone push</b> is on (Calendar → 🔔 Reminders — on iPhone, add the app to your Home Screen first), your phone gets a morning digest plus on-time pings for timed reminders, even with the app closed. If email is set up: a <b>daily reminder mail</b> and <b>Kiko's Sunday letter</b>. While the app is open: browser pop-up reminders, Kiko's morning briefing and a soft evening journal nudge (both toggleable in Ask Kiko).</p></div></details>
-    <details class="acc"><summary>Something looks broken / weird?</summary><div class="acc-body"><p style="font-size:12.5px;line-height:1.65">Tell Eggie! 💗 Nothing is ever truly lost — undo, exports, and the database keep everything safe. A hard refresh (Ctrl+Shift+R) fixes most visual oddities after an update.</p></div></details>
-  </section>
-
-  <section class="panel">
-    <div class="label" style="margin-bottom:8px">📜 Changelog — how your OS grew</div>
-    <details class="acc"><summary>The whole journey (newest first)</summary><div class="acc-body" style="font-size:12.5px;line-height:1.7">
-      <p><b>v4.4 · June 2026 — A kinder glance &amp; a real memory</b> 🌸 Your <b>Today at a Glance</b> got smarter, and the two little cards now do clearly different jobs: <b>✨ Kiko noticed</b> is just the things Kiko spots in your own patterns — gentle connections like "your water and weight rise and fall together" or "you've streamed 3 days this week" — while <b>🌸 Suggested focus</b> is only the small things worth actually doing, and the two stay separate for your Creator side and your Health side · 🎮 game &amp; banner countdowns now live <b>only</b> in the Game Updates box, so your creator focus is real content again — draft a tweet, a short clip script, hunt a sponsor, peek at your Growth Playbook — with fresh picks each day · 🧠 Kiko now <b>learns what you tap</b>: the more you use Suggested focus, the more it leans toward the kinds of things you actually reach for · 💭 a brand-new <b>long-term memory</b> lets Kiko find your past journals, chats and notes by what they're <i>about</i>, not just the date — "have I felt this before?", "what did I say about that sponsor?" (ask Eggie to switch it on) · 🎯 tell Kiko a bigger goal ("finally finish the cover song") and he'll <b>hold onto it across days</b>, gently check in, and celebrate when you get there · ✅ Kiko double-checks himself now too — he won't claim a trend in your numbers unless it's really there, and prefers the specific ("your last 5 nights averaged 6.2h") over the vague · 🌙 and after two short nights, a soft heads-up that your energy often dips the next day, so today can be a gentle one · ⚖️ plus a fix so <b>linking your Withings scale works</b> even after a hiccup — and if anything ever goes wrong it now tells you what, with a 🔍 Diagnose button on the Body page.</p>
-      <p><b>v4.3 · June 2026 — Two homes, one glance</b> 🏠 Each side of the app got its own <b>Home</b> with a warm welcome, a big clock, and one-tap daily <b>check-ins</b> (Creator: streamed, uploads, art, cover song, emails, sponsors · Health: meds, weigh-in, journal, gym, walk, water, sleep) · ✨ and a <b>Today at a Glance</b> up top — your Creator side shows game updates, your Health side a little body snapshot, each with Kiko's noticings and a few suggested focuses — so you open the app and instantly see where today's headed.</p>
-      <p><b>v4.2 · June 2026 — The Art studio</b> 🎨 your <b>Art page</b> grew into a full cozy studio: daily &amp; weekly art challenges, a "draw this" idea prompt, an art-minutes tracker, a gentle gesture-practice timer (with a focus mode), a 100-of-anything ring, an ideas dump, your inspiration vault, an emote previewer at real Twitch/Discord sizes, a value checker, palette &amp; colour-ramp makers, drawing-guide overlays, and a Milanote-style mood board you can export · 🧰 plus a handier Toolbox (task breakdowns with a 🌶️ spiciness dial, a time estimator, a tone-check, and a brain-dump compiler).</p>
-      <p><b>v4.1 · June 2026 — The Journal</b> 📓 a new <b>Journal page</b> in Health OS — your private life archive: a soft month grid where each day shows only quick chips (mood ✨, weight, ⚡energy, 🌙sleep, 🩹symptoms, 🔴stream, 💜special) in gentle day-colours, and your <b>written words stay locked behind a click</b> · one cozy entry form per day (mood, energy, NEW stress &amp; sleep-quality, weight, food noise, cravings, tags, special-day, and your private journal — past days editable too; Kiko's guided journals from that day ride along) · 📊 month stats up top (averages, weight change, best &amp; hardest day) · 🔎 search your words, tags, moods, stream &amp; symptom days · 🗂 an archive timeline so no month is ever lost · 💊 <b>Monthly Memory Capsules</b> — Kiko folds each month into a tiny keepsake (best day, hardest day, wins, a line of yours worth keeping) · and Kiko can now read stress, sleep quality, tags and your day-notes across any date range, plus log them by chat ("stress was a 4", "tag today collab").</p>
-      <p><b>v4.0 · June 2026 — One app, two minds</b> 🎀❄️ <b>Tap the logo</b> to swap between <b>Creator OS</b> (Home · Kiko · Planner · Calendar · Script · Stream · Money · Art · Toolbox) and <b>Health OS</b> (Home · Kiko · Food · Care · Trends · Health) — your choice is remembered · 🦊 the Home greeting is now a real <b>daily briefing</b>: Kiko reads your whole hub each morning and tells you what's coming, what might help, and one kind health note — no buttons, no guilt · 🧳 <b>Event prep</b>, 🎂 <b>Birthday assistant</b> (with a guilt-free "skip this year") and 💡 <b>Content opportunities</b> cards keep the remembering off your plate · 🎨 a new <b>Art page</b>: inspiration vault, "pick something for me", and the gentlest art-rhythm nudges · 🧰 a new <b>Toolbox</b>: magic task breakdown with a 🌶️ spiciness dial (send steps straight to the Planner), a formalizer, a time estimator and a brain-dump compiler · 💬 Kiko's chat now leads his page, the quick skills slimmed down and moved below, his hello is a simple warm greeting, and 📷 images now <b>show in the chat and he sees exactly what they are</b> — designs, DMs, emails, food, anything · ↔️ drag the ⤡ to <b>resize his chat window</b> · 💪 a <b>smart-brain toggle</b> for whole conversations (plus a quick-skill) · 🍅 "<b>work with me</b>" starts a body-double focus session with a check-in when the timer rings · 🌉 a <b>pre-stream bridge</b> pings softly an hour and 15 minutes before stream time · 💉 an <b>evening-before shot forecast</b> from your own past shot days, a <b>step-up watch</b> for new doses, a 💪 <b>muscle guardrail</b>, a kinder <b>plateau audit</b>, and a 🍩 <b>food-noise wave</b> watcher · and underneath: care &amp; safety rules (Kiko never validates harsh self-talk, knows the 113 crisis line, and nudges you toward real people too 💗).</p>
-      <p><b>v3.1.1 · June 2026 — learning, polished</b> 🧠 Kiko's reflection no longer re-remembers what he already knows (✨ duplicates pruned for good, his auto-memory capped — yours is never touched) · his background learning can't slow the chat or overwrite itself anymore · venting isn't logging ("ugh, barely slept" gets warmth and an offer, not a silent 4-hour sleep entry) · per-med ticks now complete the Home meds habit when they're all done — and Kiko can see exactly which meds you've taken · "save that as my usual" now works by chat · the stream-week planner won't duplicate slots if you run it twice · and one journal nudge a day, never two.</p>
-      <p><b>v3.1 · June 2026 — Deeper everywhere</b> 📋 a <b>doctor-ready health report</b> (Health → 📋 Doctor report, or ask Kiko) — a tidy 30-day summary of weight/body-comp, Mounjaro, PCOS &amp; cycle, wellbeing trends, meds adherence &amp; nutrition you can copy or print for an appointment · 💊 tick off <b>each medication</b> on the Food tab, with <b>refill dates</b> + gentle low-supply nudges · 🥄 the Planner now reads today's energy and <b>suggests how to pace your list</b> · ⭐ save <b>favorite meals</b> and re-log "the usual" in a tap · 🔴 Stream tab gains a <b>one-tap stream planner</b> (drafts this week's game beats into your schedule), <b>sponsor deadline tracking</b> with reminders, and a quick <b>post-stream debrief</b> Kiko remembers · plus Kiko can drive all of it by chat.</p>
-      <p><b>v3.0 · June 2026 — Kiko learns &amp; anticipates</b> 🦊 Built on deep research into the best AI assistants. Kiko now <b>learns your preferences on its own</b> — it quietly reflects on your chats and remembers how you like things (no more repeating yourself), and you can see &amp; wipe "what Kiko's learned about you" in settings · 🗒️ it keeps an <b>episodic log</b> of what it did for you, so "what did you change?" and undo just work · 🤝 <b>act-then-tell</b>: it does the safe things itself and tells you after, but always asks before deleting anything · 🌅 a new <b>proactivity dial</b> (Quiet / Gentle / Active) and a noticing engine that surfaces <i>one</i> well-timed, data-grounded observation — a correlation ("nausea's higher on low-water days"), a slipping streak, a dose day, a game update worth streaming · ✅ and it's honest now — if an action didn't take, it says so instead of a fake ✓.</p>
-      <p><b>v2.9 · June 2026 — Kiko's bigger brain</b> 🧠 Kiko now shows you what he's doing while he works ("🔎 searched the web ✓ · 🗂 reading through your logs…") instead of a frozen "thinking" · 🗂 he can read your <b>entire history</b> on demand — any date range, any metric ("how was my sleep in March?", "compare nausea after each dose change") — not just the recent summary · 📓 he keeps his own organised notebook now (people, preferences, ideas) on top of quick facts · 📖 he can open and read actual web pages, not just search snippets · 💪 "use your smart brain" now genuinely switches him to Anthropic's Opus-class model with deeper reasoning · 🌙 a new optional <b>nightly spotter</b> can send one gentle push if a pattern in your last 3 weeks deserves a soft heads-up (high bar, never alarmist — see the setup doc) · under the hood: guaranteed-valid replies (no more "whiskers twitched" parse fumbles), prompt caching (~90% cheaper repeat context, snappier), and adaptive thinking.</p>
-      <p><b>v2.8 · June 2026 — Kiko, keeper of the wishlist</b> 💌 say <b>"note for Eggie: …"</b> and your idea lands in Settings → Wishlist for Eggie (Eggie reads it from there — changes without the back-and-forth) · 🧩 Kiko now drives the hub too: calm/focus/larger-text modes, layout lock, hiding &amp; showing dashboard cards, the focus &amp; rest timer, your name/greeting/units, backups — all by chat · 🧹 he can tidy every list now (money entries, non-scale wins, joys, measurements, goals) · 🧠 and he knows even more: birthdays, recent weigh-ins, dose &amp; period history, brain-dump, stickies, joy jar, script drafts, recent money, your latest journal and your app prefs.</p>
-      <p><b>v2.7 · June 2026 — Kiko sees everything</b> 🦊 Kiko now reads your <i>whole</i> hub — full Withings body composition (fat, muscle, body water, visceral, BMI, heart rate, with their changes), every trend over time, PCOS &amp; Mounjaro symptoms, sleep, water, measurements, money, sponsors, goals, schedule and more — so it answers from your real numbers and can spot links between them ("does my hydration affect my nausea?", "how's my muscle trending vs my fat?"). No more "I can't see that". 💗</p>
-      <p><b>v2.6 · June 2026 — Tidier Health, Trends + Food</b> 📈 Weight now lives under Trends (all your graphs in one place) · ❄️ Health reflows: your daily feelings check (Energy, Anxiety, Mood, Nausea, Cravings, Water, Sleep — all trackable here now) sits up top with the Mounjaro side-effect check beside it, dose &amp; weight tuck under it, and the cycle section is folded into a quiet dropdown at the bottom · 💧 water now lives on Food &amp; Health, counted in full 40oz cups (goal 2–3) · 🍱 Food gains Meds AM/PM check-offs (linked to your Home habits) and a This-Week view of meals + protein/fibre over time.</p>
-      <p><b>v2.5 · June 2026 — Weight line + week-by-week streams</b> 📈 the home weight trend is now a clean up-and-down line with your oldest &amp; newest weigh-in dates and clear low/now/high numbers · 🦊 a little health note links your hydration, muscle &amp; fat to how you feel and cheers you on · 🗓️ the stream schedule is now per-week — flip ‹ › to any week and plan it separately from your usual week, with fun per-day stream ideas (game updates, events, live streams) you can tap to add.</p>
-      <p><b>v2.4 · June 2026 — Kiko learns your voice</b> 🎓 a "teach my voice" button on the Script writer: paste your own real writing and Kiko studies your style, so the scripts it shapes sound like you instead of generic AI · longer, fuller answers from Kiko (bigger response budget, no more cut-off replies).</p>
-      <p><b>v2.3 · June 2026 — One Health tab</b> ❄️ PCOS and Mounjaro now live side by side under a single Health tab — cycle &amp; symptoms on the left, shots &amp; doses on the right (they stack on phones).</p>
-      <p><b>v2.2 · June 2026 — Planner, leveled up</b> 🗒️ List/Board toggle (To do · Doing · Done — drag with the mouse, ◀ ▶ on touch) · sort by category, due date or 🥄 spoons (gentle ones first) without ever losing your hand-made order · 📅 due dates with kind pills ("today", "tomorrow", "3d late" — done tasks go calm gray) · ⏰ one tap on a task sets its date &amp; reminder together, and finishing either one finishes both — one thing, one ping.</p>
-      <p><b>v2.1 · June 2026 — Habits, gacha &amp; phone pings</b> ✅ Daily habits checklist (grouped by 🌙/🌤/🌞 energy) and 🎮 gacha dailies on Home, both editable, with a little week-strip showing past days · Kiko ticks them by chat ("did my WUWA dailies") and knows what's left · ⏰ custom reminders everywhere — Kiko, Calendar, Planner — as browser pop-ups, 📱 phone push and email · reminders card on the Planner · smoother iPad: portrait &amp; landscape layouts adapt on rotate, Apple Pencil drags everything.</p>
-      <p><b>v2.0 · June 2026 — Kiko, personal assistant</b> 🧠 long-term memory ("remember that…") · real conversation context · 🎙️ voice in &amp; 🔊 voice out · morning briefings &amp; evening journal nudges · answers from your real numbers · edit &amp; "undo that" by chat · Kiko's weekly email letter · on-demand game refresh · adaptive fast/smart brains · full coverage of every single thing the app can do · the complete in-app guide + this About page.</p>
-      <p><b>v1.9 — Mifuyu OS</b> ✨ renamed from Health OS · Stream tab (was Optimize) with Sponsors &amp; deals · 💶 Money tab built for a Dutch eenmanszaak: books, NL tax guide, Kiko's tax-prep walkthrough, accountant exports · calendar toggles for events &amp; birthdays · game updates as single days + event start/end days + livestream days in purple · "games I track" list · birthdays remind a month ahead.</p>
-      <p><b>v1.8 — Your space, your rules</b> 🧩 every dashboard card draggable, resizable, minimizable, hideable (Home, Care, Food) · tab reordering · 🔒 layout lock · tuned for iPad + Apple Pencil · 🦊 Ask Kiko home-base tab with quick skills · Ctrl+Z undo for everything, surviving reloads.</p>
-      <p><b>v1.7 — Body &amp; food</b> ⚖️ full Body Smart metrics (fat, muscle, water, visceral, heart rate) with Withings sync ready · detailed weight charts with metric/type/range options · 🍱 Food tab: photo → macros with Kiko (multi-photo too), protein &amp; fibre bars, editable estimates.</p>
-      <p><b>v1.6 — Words &amp; feelings</b> 📝 Script writer with voice-to-text · 📓 the daily journal: Kiko walks you through it and writes it up as a real diary entry in your voice · journal archive in Care · Care tab redesigned (breathing · check-in · joy jar side by side).</p>
-      <p><b>v1.5 — Little delights</b> 🌸 sakura cursor petals · ☃️ interactive falling snow that piles up + the 💨 wind button · trends you can layer &amp; compare (14/30 days) · events &amp; birthdays agenda with browser + email reminders.</p>
-      <p><b>v1.4 — Kiko learns to help</b> 🦊 from pet to agent: add events, log anything, manage your stream schedule by chat · plain-text replies · smarter calendar (drag events, day markers).</p>
-      <p><b>v1.3 — Kiko arrives</b> 🦊 a pixel snowfox who walks your screen, gets picked up and thrown (sorry Kiko), and chats.</p>
-      <p><b>v1.2 — The calendar</b> 📅 CET-first calendar, stream schedule overlay, auto game updates every Friday with links.</p>
-      <p><b>v1.1 — Creator tools</b> 🎯 the optimizer in your voice (titles, tags, descriptions, thumbnail check) · pop-out rest &amp; focus timer · rich resizable stickies.</p>
-      <p><b>v1.0 — The beginning</b> ❄️ Health OS: gentle check-ins, PCOS &amp; cycle built for irregular cycles, Mounjaro tracking, trend-first weight, Care tab, trends, planner — all in your snowfox winter palette, on your own database.</p>
-    </div></details>
-    <p class="soft" style="font-size:11px;margin-top:8px">Built bit by bit with love, for the coziest snowfox. — Eggie 🐙💗</p>
-  </section>
-  ${DISCLAIMER}</div>`;
-}
 
 /* ===================== PLANNER ===================== */
 const TASK_BUCKETS=[["personal","💜","Personal"],["health","💊","Health & appts"],["content","🎬","Content"],["hobbies","🎨","Hobbies"],["someday","🌙","Someday / maybe"]];
+
 const TASK_ENERGY=[["low","🌙","Low"],["medium","🌤️","Medium"],["high","☀️","High"]];
+
 const TASK_PRIORITY=[["low","⬇️","Low"],["medium","→","Medium"],["high","⬆️","High"],["urgent","🔥","Urgent"]];
+
 function normEnergy(s){ return s==="some"?"medium":s==="full"?"high":(s||"medium"); }
-function energyMeta(s){ return TASK_ENERGY.find(x=>x[0]===normEnergy(s))||TASK_ENERGY[1]; }
+
 function spoonMeta(s){ return energyMeta(s); }
+
 /* ---- planner upgrades: status board, sorting lens, due dates, linked reminders ---- */
 const TASK_STATUSES=[["todo","🌱 To do"],["doing","🔆 Doing"],["done","✅ Done"]];
+
 function taskStatus(t){ return t.status||(t.done?"done":"todo"); }
+
 function remByTask(){ const m={}; (state.sentinel.customReminders||[]).forEach(r=>{ if(r.taskId&&!r.done) m[r.taskId]=r; }); return m; }
+
 function sortTasks(arr){
   const m=state.boardSort||"custom"; if(m==="custom")return arr;          // the lens never rearranges her saved order
   const bIdx=k=>{ const i=TASK_BUCKETS.findIndex(b=>b[0]===k); return i<0?99:i; };
@@ -4620,16 +2379,7 @@ function sortTasks(arr){
     if(m==="energy"){ const d=((sIdx[normEnergy(a.energy||a.spoon)]??1)-(sIdx[normEnergy(b.energy||b.spoon)]??1)); if(d)return d; return String(a.due||"9999").localeCompare(String(b.due||"9999")); }
     return 0; });
 }
-function duePill(t){
-  if(!t.due)return "";
-  const diff=Math.ceil((new Date(t.due+"T00:00")-new Date(TODAY+"T00:00"))/86400000);
-  if(t.done)return `<span class="pill pill-gray">📅 ${esc(t.due.slice(5))}</span>`;          // done = calm gray, no shaming
-  if(diff<0)return `<span class="pill" style="background:#fde4e4;color:#c0566a">📅 ${-diff}d late</span>`;
-  if(diff===0)return `<span class="pill" style="background:#fdebd9;color:#b4764a">📅 today</span>`;
-  if(diff<=3)return `<span class="pill" style="background:#fdebd9;color:#b4764a">📅 ${diff===1?"tomorrow":"in "+diff+"d"}</span>`;
-  return `<span class="pill pill-gray">📅 ${esc(t.due.slice(5))}</span>`;
-}
-function remBellBtn(t,R){ return `<button class="x" data-act="taskRem" data-v="${t.id}" title="due date & reminder" style="font-size:13px;${R?'color:var(--peri-deep)':'color:var(--muted)'}">⏰${R&&R.time?`<span style="font-size:9px">${fmt12(R.time)}</span>`:''}</button>`; }
+
 function taskRow(t){
   const sm=spoonMeta(t.spoon); const subs=t.sub||[]; const R=remByTask()[t.id];
   return `<div style="border-top:1px solid var(--line);padding:9px 0">
@@ -4642,6 +2392,7 @@ function taskRow(t){
       <button class="x" data-act="delTask" data-v="${t.id}">✕</button>
     </div></div>`;
 }
+
 /* adaptive spoon-budget — reads today's logged energy and gently suggests how to pace the day */
 function spoonBudgetBanner(){
   const e=(state.today&&state.today.mind&&state.today.mind.energy);
@@ -4657,6 +2408,7 @@ function spoonBudgetBanner(){
     🥄 Energy today is <b>${e}/5</b> — ${msg}. ${sug} <span class="soft" style="font-size:10.5px">(${counts})</span>
     ${tier!=='full'?`<button class="btn" data-act="plnFilter" data-v="${tier==='low'?'low':'some'}" style="margin-left:6px;padding:3px 9px;font-size:11px">show gentle ones</button>`:''}</div>`;
 }
+
 function taskCard(t){
   const sm=spoonMeta(t.spoon); const bm=TASK_BUCKETS.find(b=>b[0]===t.bucket)||TASK_BUCKETS[0]; const R=remByTask()[t.id];
   return `<div class="citem" draggable="true" data-drag-task="${t.id}">
@@ -4671,6 +2423,7 @@ function taskCard(t){
         <button class="x" data-act="taskMove" data-v="${t.id}" data-d="1" title="move right" style="font-size:12px">▶</button></span>
     </div></div>`;
 }
+
 function taskBoard(list){
   return `<div class="kanban">${TASK_STATUSES.map(([key,lbl])=>{
     const col=sortTasks(list.filter(t=>taskStatus(t)===key));
@@ -4679,124 +2432,12 @@ function taskBoard(list){
       ${col.map(taskCard).join("")||`<div class="label" style="padding:8px 6px;opacity:.55">—</div>`}</div>`;
   }).join("")}</div>`;
 }
+
 /* keep the add-a-task form alive across filter/sort/view re-renders */
 function capturePlnDraft(){ const g=id=>{const e=document.getElementById(id);return e?e.value:null;};
   const t=g("plnText"); if(t==null) return;
   state.plnDraft={text:t,bucket:g("plnBucket"),energy:g("plnEnergy"),priority:g("plnPriority"),emoji:g("plnEmoji"),due:g("plnDue")}; }
-function viewPlanner(){
-  const tasks=(state.sentinel.tasks||[]);
-  const today=TODAY;
-  const tomorrow=(()=>{ const d=new Date(today+"T00:00"); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
-  const wkEnd=(()=>{ const d=new Date(today+"T00:00"); d.setDate(d.getDate()+6); return d.toISOString().slice(0,10); })();
-  const el=state.energyLevel||"medium";
-  const showAll=!!state.plnShowAll;
-  const doneAll=tasks.filter(t=>t.done);
-  const doneToday=doneAll.filter(t=>t.completedAt===today);
-  const open=tasks.filter(t=>!t.done);
-  const seen=new Set();
-  const grab=(fn)=>{ const r=open.filter(t=>!seen.has(t.id)&&fn(t)); r.forEach(t=>seen.add(t.id)); return r; };
-  const priOrder={urgent:0,high:1,medium:2,low:3};
-  const urgencySort=(a,b)=>(priOrder[a.priority||"medium"]||2)-(priOrder[b.priority||"medium"]||2);
-  const overdue=grab(t=>t.due&&t.due<today).sort(urgencySort);
-  const dueToday=grab(t=>t.due===today).sort(urgencySort);
-  const dueWeek=grab(t=>t.due&&t.due>=tomorrow&&t.due<=wkEnd).sort(urgencySort);
-  const urgentRest=grab(t=>(t.priority||"medium")==="urgent");
-  const matchesEnergy=t=>{ const te=normEnergy(t.energy||t.spoon); if(showAll)return true; if(el==="low")return te==="low"; if(el==="medium")return te==="low"||te==="medium"; return true; };
-  const energyMatched=grab(t=>matchesEnergy(t));
-  const later=grab(()=>true);
-  const urgentCount=open.filter(t=>(t.priority||"medium")==="urgent").length;
-  const dueTodayCount=open.filter(t=>t.due===today).length;
-  const dueWeekCount=open.filter(t=>t.due&&t.due>=tomorrow&&t.due<=wkEnd).length;
 
-  function plnTaskRow(t){
-    const pri=t.priority||"medium"; const em2=energyMeta(t.energy||t.spoon);
-    const bm=TASK_BUCKETS.find(b=>b[0]===t.bucket)||TASK_BUCKETS[0]; const R=remByTask()[t.id];
-    const subLeft=(t.sub||[]).filter(s=>!s.done).length;
-    const priBadge=pri==="urgent"?`<span class="pln-badge pri-urgent">🔥 urgent</span>`:pri==="high"?`<span class="pln-badge pri-high">↑ high</span>`:pri==="low"?`<span class="pln-badge pri-low">↓ low</span>`:"";
-    return `<div class="pln-row">
-      <button class="x" data-act="toggleTask" data-v="${t.id}" style="color:${t.done?"var(--mint)":"var(--muted)"};font-size:16px;flex-shrink:0;padding-top:2px">${t.done?"●":"○"}</button>
-      <div class="pln-row-body">
-        <div class="pln-rt${t.done?" done-text":""}">${t.emoji?esc(t.emoji)+" ":""}${esc(t.text)}</div>
-        <div class="pln-rm">${priBadge}<span class="pln-badge en-${em2[0]}">${em2[1]}</span><span class="pln-badge cat-pill">${bm[1]}</span>${duePill(t)}${subLeft?`<span class="pln-badge cat-pill">▸${subLeft}</span>`:""}${R?remBellBtn(t,R):""}
-          <button class="x" data-act="taskEdit" data-v="${t.id}" style="font-size:11px;margin-left:auto;color:var(--muted)">✏️</button>
-          <button class="x" data-act="delTask" data-v="${t.id}" style="font-size:11px;color:var(--muted)">✕</button>
-        </div>
-      </div>
-    </div>`;
-  }
-  function mkSec(emoji,title,items,cls,emptyMsg){
-    const show=items.length>0||emptyMsg;
-    if(!show)return "";
-    return `<div class="pln-sec${cls?" "+cls:""}"><div class="pln-sh"><span class="pln-sh-ttl">${emoji} ${title}</span><span class="pln-cnt">${items.length}</span></div>${items.length?items.map(plnTaskRow).join(""):`<div class="pln-empty-sm">${emptyMsg}</div>`}</div>`;
-  }
-
-  // nearest birthday surfaces here as a "plan ahead" nudge (only when it's close)
-  const bdNext=(state.sentinel.birthdays||[]).map(b=>({...b,...nextBirthdayInfo(b)})).sort((a,b)=>a.days-b.days)[0];
-  const birthdayNudge=(bdNext&&bdNext.days<=30)?cardBirthdayPrep():"";
-
-  const draft=state.plnDraft||{};
-  const moreOpen=!!state.plnMoreOpen;
-  const energyNote=el==="low"?"🌙 Showing gentle tasks first.":el==="medium"?"🌤️ Low + medium tasks first.":"☀️ All tasks — full energy mode.";
-
-  const leftCol=[
-    mkSec("🚨","Overdue",overdue,"s-overdue","No overdue tasks. ✨"),
-    mkSec("📌","Due Today",dueToday,"s-today",""),
-    mkSec("📅","Due This Week",dueWeek,"",""),
-    doneAll.length?`<details class="acc"><summary style="font-size:12.5px">✅ Done (${doneAll.length}${doneToday.length?" · "+doneToday.length+" today":""})</summary><div class="acc-body">${doneAll.map(plnTaskRow).join("")}</div></details>`:""
-  ].filter(Boolean).join("");
-
-  const rightCol=[
-    urgentRest.length?mkSec("🔥","Urgent",urgentRest,"s-urgent",""):"",
-    `<div class="pln-sec s-energy"><div class="pln-sh"><span class="pln-sh-ttl">⚡ Energy Match</span><span class="pln-cnt">${energyMatched.length}</span></div><div style="font-size:10.5px;color:var(--ink-soft);margin-bottom:6px">${energyNote}</div>${energyMatched.length?energyMatched.map(plnTaskRow).join(""):`<div class="pln-empty-sm">No tasks matching your current energy.</div>`}${!showAll&&later.length?`<button class="btn" data-act="plnToggleAll" style="font-size:11px;margin-top:8px;width:100%">Show all tasks (${later.length} more)</button>`:""}</div>`,
-    showAll&&later.length?mkSec("🗂️","Backlog",later,"",""):""
-  ].filter(Boolean).join("");
-
-  return `
-  <section class="panel" style="padding-bottom:10px">
-    <div class="card-head" style="margin-bottom:6px"><h2 style="font-size:17px">🗒️ Planner</h2></div>
-    <div class="pln-stats">
-      ${overdue.length?`<div class="pln-stat has-alert"><div class="pln-stat-n">${overdue.length}</div><div class="pln-stat-l">Overdue</div></div>`:""}
-      <div class="pln-stat"><div class="pln-stat-n">${dueTodayCount}</div><div class="pln-stat-l">Today</div></div>
-      <div class="pln-stat"><div class="pln-stat-n">${dueWeekCount}</div><div class="pln-stat-l">This week</div></div>
-      ${urgentCount?`<div class="pln-stat has-alert"><div class="pln-stat-n">${urgentCount}</div><div class="pln-stat-l">Urgent</div></div>`:""}
-      <div class="pln-stat"><div class="pln-stat-n">${doneToday.length}</div><div class="pln-stat-l">Done today</div></div>
-    </div>
-    <div style="background:rgba(169,143,224,.06);border-radius:12px;padding:10px 12px">
-      <div class="pln-add-bar">
-        <input class="inp" id="plnText" placeholder="Add a task… (Enter)" value="${esc(draft.text||'')}">
-        <button class="btn btn-grad" data-act="addTask" style="white-space:nowrap;flex-shrink:0">＋ Add</button>
-        <button class="x" data-act="plnMoreToggle" title="more options" style="font-size:18px;padding:3px 7px;color:var(--muted)">⋯</button>
-      </div>
-      ${moreOpen?`<div class="pln-more">
-        <select class="inp" id="plnBucket" style="max-width:155px">${TASK_BUCKETS.map(([v,e,l])=>`<option value="${v}" ${draft.bucket===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
-        <select class="inp" id="plnEnergy" style="max-width:115px">${TASK_ENERGY.map(([v,e,l])=>`<option value="${v}" ${(draft.energy||"medium")===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
-        <select class="inp" id="plnPriority" style="max-width:115px">${TASK_PRIORITY.map(([v,e,l])=>`<option value="${v}" ${(draft.priority||"medium")===v?'selected':''}>${e} ${l}</option>`).join("")}</select>
-        <input class="inp" id="plnEmoji" placeholder="emoji" value="${esc(draft.emoji||'')}" style="max-width:60px">
-        <input class="inp" id="plnDue" type="date" value="${esc(draft.due||'')}" style="max-width:150px">
-      </div>`:""}
-    </div>
-  </section>
-  <div class="pln-grid">
-    <div class="pln-col">${leftCol||`<div class="pln-sec"><div class="pln-empty-sm">Nothing overdue or due soon. 🌸</div></div>`}</div>
-    <div class="pln-col">${rightCol}</div>
-  </div>
-  ${remindersCard()}
-  ${birthdayNudge}
-  ${DISCLAIMER}`;
-}
-/* board drag — native HTML5 for mouse; finger/Pencil use the ◀ ▶ buttons (iOS has no native drag) */
-function wireTaskDnD(){
-  document.querySelectorAll("[data-drag-task]").forEach(c=>{
-    c.addEventListener("dragstart",e=>{ if(window._lastPtr&&window._lastPtr!=="mouse"){ e.preventDefault(); return; }
-      e.dataTransfer.setData("text/task",c.dataset.dragTask); e.dataTransfer.effectAllowed="move"; });
-  });
-  document.querySelectorAll(".kcol").forEach(col=>{
-    col.addEventListener("dragover",e=>{ if([...(e.dataTransfer.types||[])].includes("text/task")){ e.preventDefault(); col.classList.add("kover"); } });
-    col.addEventListener("dragleave",()=>col.classList.remove("kover"));
-    col.addEventListener("drop",async e=>{ e.preventDefault(); col.classList.remove("kover");
-      const id=e.dataTransfer.getData("text/task"); if(id) await setTaskStatusById(id,col.dataset.kstatus); });
-  });
-}
 /* one move, everything follows: status + done flag + linked reminder, in a single save */
 async function setTaskStatusById(id,st){
   if(!TASK_STATUSES.some(s=>s[0]===st))return;
@@ -4808,10 +2449,8 @@ async function setTaskStatusById(id,st){
   render();
 }
 
-/* ===================== OPTIMIZE (calls the "ai" Edge Function brain) ===================== */
-const OPT_FORMATS=[["long","Long form"],["short","Short form"]];   /* X/Twitter posts moved to the 📝 Script tab */
-const OPT_PLATFORMS=[["youtube","YouTube"],["tiktok","TikTok"],["instagram","Instagram"],["twitter","X"],["twitch","Twitch"]];
 const oval=id=>{ const e=document.getElementById(id); return e?e.value.trim():""; };
+
 async function kikoSimpleCall(agentInput){
   const sys=`You are Kiko, a warm and playful snow fox AI companion living inside ${CONFIG.creator.name}'s (${CONFIG.creator.fullName}) personal OS. You're cozy, caring, and a little mischievous. Today is ${TODAY}. Help her with streaming, gacha games, creative work, and daily life. Be concise but warm. Use soft emojis occasionally (🦊❄️🌸) but don't overdo it.
 Current tab: ${agentInput.tab}. ${agentInput.userModel?`What you know about her: ${agentInput.userModel}`:""}
@@ -4837,6 +2476,7 @@ IMPORTANT — when doing any research or community pulse request:
   if(data.error) throw new Error(typeof data.error==="string"?data.error:JSON.stringify(data.error));
   return {reply:data.choices?.[0]?.message?.content||"hmm, my whiskers twitched — ask me again? 🦊"};
 }
+
 async function aiCall(mode,input,vidiq){
   if(!SB) throw new Error("This needs live mode — connect Supabase first.");
   const { data, error } = await SB.functions.invoke(CONFIG.aiFn, { body:{ mode, input:input||{}, userId:CONFIG.userId, vidiq:vidiq||null } });
@@ -4844,6 +2484,7 @@ async function aiCall(mode,input,vidiq){
   if(data && data.error) throw new Error(data.error);
   return data;
 }
+
 /* streaming agent call — live status events ("🔎 searched the web…") while Kiko works, then the final payload */
 async function aiCallAgentStream(input,onStatus){
   const res=await fetch(CONFIG.url+"/functions/v1/"+CONFIG.aiFn,{ method:"POST",
@@ -4862,7 +2503,7 @@ async function aiCallAgentStream(input,onStatus){
   if(payload.error) throw new Error(payload.error);
   return payload;
 }
-function scoreColor(s){ return s>=75?'#3a9d83':s>=50?'var(--peri-deep)':'var(--sakura-deep)'; }
+
 /* copy: pull text from OPT result by key (no huge strings in attributes) */
 function optCopy(k){
   const v=OPT.video||{}, s=OPT.stream||{};
@@ -4871,142 +2512,14 @@ function optCopy(k){
     twitch:s.twitchTitle||"", twitter:s.twitterTitle||"" };
   return m[k]||"";
 }
-function copyBtn(k,label){ return `<button class="btn" data-act="copyText" data-k="${k}" style="margin-top:6px">📋 ${label||'Copy'}</button>`; }
-function hashChips(hs){ const arr=Array.isArray(hs)?hs:[]; return `<div class="chiprow">${arr.map((h,i)=>`<span class="pill ${i===0?'pill-mint':i<3?'pill-lav':'pill-sak'}">${esc(h)}</span>`).join("")}</div>`; }
-function optVideoForm(){
-  return `<p class="soft" style="font-size:12px;margin:6px 0 10px">Title score, stronger titles, tags, 1S/2M/2L hashtags, and a full description — in your voice. ✨</p>
-  <div class="field"><div class="label">Title / working title</div><input class="inp" id="ovTitle" placeholder="e.g. I tried VTubing on a $0 budget"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-    <div class="field"><div class="label">Format</div><select class="inp" id="ovFormat">${OPT_FORMATS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
-    <div class="field"><div class="label">Platform</div><select class="inp" id="ovPlatform">${OPT_PLATFORMS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
-  </div>
-  <div class="field"><div class="label">What's it about? (topic, hook, key points)</div><textarea class="inp" id="ovAbout" placeholder="the angle, what happens, who it's for…"></textarea></div>
-  <button class="btn btn-grad" data-act="optVideo" ${OPT.busy==='video'?'disabled':''}>${OPT.busy==='video'?'optimizing…':'✨ optimize'}</button>`;
-}
-function optStreamForm(){
-  return `<p class="soft" style="font-size:12px;margin:6px 0 10px">Stream titles (your style + the game), a ready-to-paste description with your links, YouTube + Twitch + X titles, tags & hashtags. ✨</p>
-  <div class="field"><div class="label">Game / stream focus</div><input class="inp" id="osGame" placeholder="e.g. Elden Ring DLC — first deathless attempt"></div>
-  <div class="field"><div class="label">Drops?</div><div class="chiprow"><button class="chiptog ${OPT.drops?'on':''}" data-act="optDrops"><span>${OPT.drops?'✓':'＋'}</span>Drops active</button></div></div>
-  <div class="field"><div class="label">Anything special this stream? (vibe, goal, milestone)</div><textarea class="inp" id="osSpecial" placeholder="subathon, first playthrough, chill vibes, charity goal…"></textarea></div>
-  <button class="btn btn-grad" data-act="optStream" ${OPT.busy==='stream'?'disabled':''}>${OPT.busy==='stream'?'optimizing…':'✨ optimize'}</button>`;
-}
-function titleList(arr){ return `<ul style="padding-left:18px;font-size:13px;margin:4px 0">${(arr||[]).map(t=>`<li style="margin:5px 0">${esc(t)}</li>`).join("")}</ul>`; }
-function optVideoResult(r){
-  return `<section class="panel">
-    <div class="card-head"><span class="label">✨ Optimized</span>${r.titleScore!=null?`<span class="pill" style="background:#eef0fa;color:${scoreColor(r.titleScore)};font-size:13px">Title score ${r.titleScore}/100</span>`:''}</div>
-    ${r.titleWhy?`<p class="soft" style="font-size:12px;margin:0 0 8px">${esc(r.titleWhy)}</p>`:''}
-    <div class="label" style="margin:6px 0 2px">Stronger titles ${copyBtn('vtitles','copy')}</div>${titleList(r.titles)}
-    <div class="label" style="margin:12px 0 2px">YouTube tags ${copyBtn('vtags','copy')}</div><div class="soft" style="font-size:12px">${(r.tags||[]).map(esc).join(", ")}</div>
-    <div class="label" style="margin:12px 0 4px">Hashtags ${copyBtn('vhash','copy')}</div>${hashChips(r.hashtags)}
-    <div class="label" style="margin:12px 0 4px">Description ${copyBtn('vdesc','copy')}</div>
-    <div class="soft-card" style="font-size:12px;white-space:pre-wrap">${esc(r.description||"")}</div>
-  </section>`;
-}
-function optStreamResult(r){
-  return `<section class="panel">
-    <div class="label" style="margin-bottom:2px">✨ YouTube stream titles ${copyBtn('stitles','copy')}</div>${titleList(r.titles)}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
-      <div class="soft-card"><div class="label">Twitch title ${copyBtn('twitch','copy')}</div><div style="font-size:12.5px;margin-top:4px">${esc(r.twitchTitle||"")}</div></div>
-      <div class="soft-card"><div class="label">X / Twitter title ${copyBtn('twitter','copy')}</div><div style="font-size:12.5px;margin-top:4px">${esc(r.twitterTitle||"")}</div></div>
-    </div>
-    <div class="label" style="margin:12px 0 4px">Hashtags ${copyBtn('shash','copy')}</div>${hashChips(r.hashtags)}
-    <div class="label" style="margin:12px 0 2px">Tags ${copyBtn('stags','copy')}</div><div class="soft" style="font-size:12px">${(r.tags||[]).map(esc).join(", ")}</div>
-    ${(r.tips||[]).length?`<div class="label" style="margin:12px 0 4px">Tips 🦊</div><ul style="padding-left:18px;font-size:12.5px">${(r.tips||[]).map(t=>`<li style="margin:4px 0">${esc(t)}</li>`).join("")}</ul>`:''}
-    <div class="label" style="margin:12px 0 4px">Description ${copyBtn('sdesc','copy')}</div>
-    <div class="soft-card" style="font-size:12px;white-space:pre-wrap">${esc(r.description||"")}</div>
-  </section>`;
-}
-function channelBlock(sn){
-  return `<div class="soft-card" style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px">
-      <div><div class="label">Subscribers</div><div class="bignum">${Number(sn.subscribers||0).toLocaleString()}</div></div>
-      <div><div class="label">Total views</div><div class="bignum">${Number(sn.views||0).toLocaleString()}</div></div>
-      <div><div class="label">Videos</div><div class="bignum">${Number(sn.videos||0).toLocaleString()}</div></div></div>
-    ${(sn.recent||[]).length?`<div style="margin-top:10px">${sn.recent.map(r=>`<div class="listrow"><span class="grow" style="font-size:12.5px">${esc(r.title)}</span><span class="soft" style="font-size:11px">${r.views!=null?Number(r.views).toLocaleString()+' views':''}</span></div>`).join("")}</div>`:''}`;
-}
-function thumbCard(){
-  const d=OPT.thumbData, t=OPT.thumb;
-  return `<section class="panel">
-    <div class="card-head"><span class="label">🖼️ Thumbnail check</span>${t&&t.score!=null?`<span class="pill" style="background:#eef0fa;color:${scoreColor(t.score)};font-size:13px">${t.score}/100</span>`:''}</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Upload your thumbnail — see it at real feed sizes and get a vidIQ-style click read.</p>
-    <input class="inp" type="file" id="thumbFile" accept="image/*">
-    ${d?`<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-top:12px">
-        <div><img src="${d}" style="width:246px;height:138px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"><div class="label" style="text-align:center;margin-top:3px">grid 246×138</div></div>
-        <div><img src="${d}" style="width:168px;height:94px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"><div class="label" style="text-align:center;margin-top:3px">sidebar 168×94</div></div>
-        <div><img src="${d}" style="width:120px;height:68px;object-fit:cover;border-radius:7px;border:1px solid var(--line)"><div class="label" style="text-align:center;margin-top:3px">mobile 120×68</div></div>
-      </div>
-      <button class="btn btn-grad" data-act="thumbCheck" style="margin-top:10px" ${OPT.busy==='thumb'?'disabled':''}>${OPT.busy==='thumb'?'reading…':'📈 check thumbnail'}</button>`:''}
-    ${t?`<div class="soft-card" style="margin-top:10px;font-size:12.5px">
-        ${t.verdict?`<p style="margin:0 0 6px">${esc(t.verdict)}</p>`:''}
-        ${(t.strengths||[]).length?`<div class="label" style="color:#3a9d83">Working</div><ul style="padding-left:16px;margin:2px 0 8px">${t.strengths.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:''}
-        ${(t.improvements||[]).length?`<div class="label" style="color:var(--sakura-deep)">Tweak</div><ul style="padding-left:16px;margin:2px 0">${t.improvements.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:''}
-      </div>`:''}
-  </section>`;
-}
+
 /* ===================== SCRIPT WRITER (voice-to-text → formatted script) ===================== */
 let RECOG=null, scrRecOn=false;
-const CREATOR_SUBS=[["tools","✍️ Tools"],["sponsors","🤝 Sponsors"],["ideas","💡 Ideas"]];
-function viewCreator(){
-  const sub=["tools","sponsors","ideas"].includes(state.creatorSub)?state.creatorSub:"tools";
-  if(sub==="sponsors") return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(viewSponsors())+DISCLAIMER;
-  if(sub==="ideas") return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(viewIdeas())+DISCLAIMER;
-  return subNav(CREATOR_SUBS,sub,"creatorSub")+stripDisc(viewOptimize())+stripDisc(viewFormalizer())+stripDisc(viewScript())+DISCLAIMER;
-}
-function viewFormalizer(){
-  const tb=state.tb||(state.tb={spice:3,steps:null,task:"",fText:"",fTone:"professional",fOut:"",eTask:"",eOut:null,cText:"",groups:null,tText:"",tOut:null,busy:""});
-  return `<div class="page">
-  <section class="panel">
-    <div class="card-head"><h2 style="font-size:18px">🪄 Formalizer</h2><span class="pill pill-gray">reword anything</span></div>
-    <p class="soft" style="font-size:12px;margin:0">Paste what you want to say, pick a tone — comes back polished. Great for emails, DMs, captions, anything that needs a second pass. ${DEMO?"<b>(needs live mode)</b>":""}</p>
-  </section>
-  <section class="panel">
-    <div class="label" style="margin-bottom:6px">🪄 Formalizer</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Paste what you want to say; pick how it should sound.</p>
-    <textarea class="inp" id="tbFText" rows="3" placeholder="the raw words…">${esc(tb.fText||'')}</textarea>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <select class="inp" id="tbFTone" style="max-width:200px">${["professional","friendly","sociable","more formal","shorter","softer / kinder","more assertive","easier to read"].map(t=>`<option ${tb.fTone===t?'selected':''}>${t}</option>`).join("")}</select>
-      <button class="btn btn-grad" data-act="tbFormal" ${tb.busy==='formal'?'disabled':''}>${tb.busy==='formal'?'…':'rewrite'}</button>
-    </div>
-    ${tb.fOut?`<div class="soft-card" style="margin-top:8px;font-size:12.5px;white-space:pre-wrap">${esc(tb.fOut)}</div><button class="btn" data-act="tbCopyF" style="margin-top:6px">📋 copy</button>`:""}
-  </section>
-  </div>`;
-}
-function viewScript(){
-  const sent=state.sentinel||{}; const saved=sent.scripts||[];
-  if(!state.script) state.script={kind:"short",title:"",references:"",raw:"",out:null};
-  const s=state.script, kind=s.kind||"short"; const tw=kind==="twitter";
-  const kindWord=tw?"X post":kind==="long"?"long-form":"short";
-  const bodyLabel=tw?"post":"script";
-  const seg=`<div class="seg">${[["short","📲 Short"],["long","🎬 Long-form"],["twitter","🐦 X / Twitter"]].map(([k,l])=>`<button data-act="scriptKind" data-v="${k}" class="${kind===k?'on':''}">${l}</button>`).join("")}</div>`;
-  const out=s.out;
-  const chars=tw&&out&&out.script?String(out.script).length:0;
-  const outHtml = out ? `<div class="soft-card" style="margin-top:10px">
-      ${(out.hooks&&out.hooks.length)?`<div class="label">${tw?'opening-line options':'hook options'}</div>${out.hooks.map(h=>`<div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><span class="grow" style="font-size:12.5px">${esc(h)}</span><button class="btn" data-act="scrCopyHook" data-t="${esc(h)}" style="padding:2px 8px">copy</button></div>`).join("")}`:""}
-      <div class="label" style="margin-top:10px">${bodyLabel}${out.title?` · <span class="soft">${esc(out.title)}</span>`:""}${tw?` <span class="soft" style="font-weight:500">· ${chars} char${chars===1?'':'s'}${chars>280?' (thread)':''}</span>`:""} <button class="btn" data-act="scrCopyScript" style="padding:2px 8px;margin-left:6px">copy ${bodyLabel}</button></div>
-      <div id="scrScript" style="white-space:pre-wrap;font-size:13px;line-height:1.6;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:4px;background:#fff">${esc(out.script||"")}</div>
-      ${out.cta?`<div class="label" style="margin-top:8px">${tw?'closing line':'CTA'}</div><div class="soft" style="font-size:12.5px">${esc(out.cta)}</div>`:""}
-    </div>` : "";
-  const kpill=k=>k==='long'?['pill-lav','LF']:k==='twitter'?['pill-ice','X']:['pill-sak','SF'];
-  const savedHtml = saved.length?`<section class="panel"><div class="card-head"><span class="label">📁 saved drafts</span></div>${saved.slice().reverse().map(d=>{const kp=kpill(d.kind);return `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)"><span class="pill ${kp[0]}">${kp[1]}</span><span class="grow" style="font-size:12.5px">${esc(d.title||"(untitled)")}</span><button class="btn" data-act="loadScript" data-id="${d.id}">open</button><button class="x" data-act="delScript" data-id="${d.id}" title="remove">✕</button></div>`;}).join("")}</section>`:"";
-  return `<div class="page">
-    <section class="panel">
-      <div class="card-head"><h2 style="font-size:18px">📝 Script writer</h2>${seg}</div>
-      <p class="soft" style="font-size:12.5px;margin:0 0 12px">${tw?"Talk out your idea (or paste notes) — I'll shape it into an X/Twitter post in your voice, with a few opening-line options. ❄️🦊":`Drop in your research, then just talk it out — I'll shape your own words into your ${kindWord} format, in your voice. ❄️🦊`}${DEMO?` <b>(Deploy the ai function &amp; turn demo off to format.)</b>`:""}</p>
-      <div class="label">Working title <span class="soft">· optional</span></div>
-      <input class="inp" id="scrTitle" value="${esc(s.title||"")}" placeholder="${tw?'e.g. one year of being a little snowfox 🦊':'e.g. I tried cozy gaming on a $0 setup'}" />
-      <div class="label" style="margin-top:10px">Research / references <span class="soft">· paste facts, links, notes</span></div>
-      <textarea class="inp" id="scrRefs" rows="4" placeholder="paste your sources, bullet points, key facts…">${esc(s.references||"")}</textarea>
-      <div class="card-head" style="margin-top:12px"><div class="label">🎙️ Your words <span class="soft">· talk, it types for you</span></div>
-        <div style="display:flex;gap:6px"><button class="btn" id="recBtn" data-act="recToggle">🎙️ Record</button><button class="btn" data-act="scrClearRaw">clear</button></div></div>
-      <textarea class="inp" id="scrRaw" rows="7" placeholder="${tw?'what do you want to post about? talk or type — I’ll tidy it. ❄️':'hit Record and just talk — or type. Don’t worry about being tidy, I’ll clean it up. ❄️'}">${esc(s.raw||"")}</textarea>
-      <div id="recHint" class="soft" style="font-size:11.5px;margin-top:4px"></div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn btn-grad" data-act="formatScript">✨ ${tw?'write the X post':'format into a '+kindWord+' script'}</button><button class="btn" data-act="saveScript">💾 save draft</button><button class="btn" data-act="teachVoice" data-v="${tw?'twitter':'script'}" title="paste your own writing so it sounds like you">🎓 teach my voice${voiceExamples(tw?'twitter':'script').length?` · ${voiceExamples(tw?'twitter':'script').length}`:""}</button></div>
-      <div id="scrOut">${outHtml}</div>
-    </section>
-    ${savedHtml}
-  </div>`;
-}
+
 function scrCapture(){ if(!state.script)state.script={kind:"short"}; const g=id=>{const el=document.getElementById(id);return el?el.value:undefined;}; const t=g("scrTitle"),r=g("scrRefs"),w=g("scrRaw"); if(t!=null)state.script.title=t; if(r!=null)state.script.references=r; if(w!=null)state.script.raw=w; }
+
 function setRecBtn(on){ const b=document.getElementById("recBtn"); if(b){ b.textContent=on?"⏹ Stop":"🎙️ Record"; b.classList.toggle("on",on); } const h=document.getElementById("recHint"); if(h)h.textContent=on?"listening… speak naturally, tap Stop when you're done 🌸":""; }
+
 function scrRecToggle(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ toast("Voice typing needs Chrome or Edge on desktop 🌸"); return; }
@@ -5019,6 +2532,7 @@ function scrRecToggle(){
   RECOG.onend=function(){ if(scrRecOn){ try{RECOG.start();}catch(e){} } };   // auto-continue after pauses until Stop
   try{ RECOG.start(); scrRecOn=true; setRecBtn(true); }catch(e){ toast("Mic busy — try again 🌸"); }
 }
+
 async function scrFormat(){
   scrCapture(); if(scrRecOn)scrRecToggle(); const out=document.getElementById("scrOut"); if(!out)return;
   if(DEMO||!SB){ out.innerHTML=`<div class="soft-card" style="font-size:12.5px;margin-top:10px">✨ Runs once the ai function is deployed and demo is off ❄️</div>`; return; }
@@ -5028,17 +2542,23 @@ async function scrFormat(){
   try{ const r=await aiCall("script",{kind:state.script.kind,title:state.script.title,references:state.script.references,raw:state.script.raw,voice:voiceExamples(tw?"twitter":"script")}); if(r&&r.error){ out.innerHTML=`<div class="soft" style="color:var(--sakura-deep);font-size:12.5px;margin-top:10px">${esc(r.error)}</div>`; return; } state.script.out=r; render(); }
   catch(e){ out.innerHTML=`<div class="soft" style="color:var(--sakura-deep);font-size:12.5px;margin-top:10px">${esc(e.message||e)}</div>`; }
 }
+
 async function scrSaveDraft(){
   scrCapture(); const s=state.script; if(!(s.title||s.raw||s.references)){ toast("Nothing to save yet 🌸"); return; }
   await setSent(n=>{ const list=(n.scripts||[]).slice(); const rec={id:s.id||("sc"+uid().slice(0,8)),kind:s.kind,title:s.title||"",references:s.references||"",raw:s.raw||"",out:s.out||null,updated:new Date().toISOString()}; const i=list.findIndex(x=>x.id===rec.id); if(i>=0)list[i]=rec; else list.push(rec); s.id=rec.id; return {...n,scripts:list}; });
   toast("Saved 💗"); render();
 }
+
 async function scrLoadDraft(id){ const d=((state.sentinel||{}).scripts||[]).find(x=>x.id===id); if(d){ state.script={id:d.id,kind:d.kind||"short",title:d.title||"",references:d.references||"",raw:d.raw||"",out:d.out||null}; render(); } }
+
 async function scrDelDraft(id){ await setSent(n=>({...n,scripts:(n.scripts||[]).filter(x=>x.id!==id)})); toast("Removed"); render(); }
+
 
 /* ===== 🎓 Teach Kiko your voice — real writing samples that shape generated scripts ===== */
 const VOICE_KINDS=[["any","Any"],["script","Scripts"],["twitter","Posts"],["title","Titles"]];
+
 function voiceExamples(kind){ const all=(state.sentinel.eqVoice||[]); return all.filter(e=>e&&e.text&&(!e.kind||e.kind==="any"||e.kind===kind)); }
+
 function teachModal(kind){
   const k=VOICE_KINDS.some(x=>x[0]===kind)?kind:"script";
   $("#modal").innerHTML=`<div class="modal-bg" data-act="closeModal"><div class="modal" data-act="noop" style="max-width:440px">
@@ -5052,6 +2572,7 @@ function teachModal(kind){
     ${(state.sentinel.eqVoice||[]).length?`<div class="label" style="margin:14px 0 6px">Saved samples (${(state.sentinel.eqVoice||[]).length})</div>${(state.sentinel.eqVoice||[]).slice().reverse().map(e=>`<div class="listrow"><span class="grow" style="font-size:12px"><span class="pill pill-gray" style="font-size:9px">${esc((VOICE_KINDS.find(x=>x[0]===e.kind)||['','any'])[1]||e.kind||'any')}</span> ${esc((e.note||e.text||"").slice(0,60))}${(e.note||e.text||"").length>60?'…':''}</span><button class="x" data-act="delVoice" data-v="${e.id}">✕</button></div>`).join("")}`:''}
   </div></div>`;
 }
+
 
 function sponsorBlock(){
   const sp=(state.sentinel.sponsors||[]).slice();
@@ -5082,6 +2603,7 @@ function sponsorBlock(){
     </div></details>
   </section>`;
 }
+
 /* creator tools — draft streams from game events + a quick post-stream debrief */
 function creatorTools(){
   const s=state.sentinel||{}; const wk=weekStartISO(0);
@@ -5107,203 +2629,44 @@ function creatorTools(){
   </section>`;
   return draft+debrief;
 }
+
 /* her reusable YouTube description template — saved in the DB, auto-appended to every generated description */
 function descTemplate(){ const t=state.sentinel&&state.sentinel.descTemplate; return (t!=null&&t!=="")?t:CONFIG.descFooter; }
-function descTemplateCard(){
-  const t=descTemplate(); const custom=!!(state.sentinel&&state.sentinel.descTemplate);
-  return `<section class="panel">
-    <div class="card-head"><span class="label">📋 Description template</span>${custom?'<span class="pill pill-mint">saved ✓</span>':'<span class="pill pill-gray">default</span>'}</div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Your standing block for long-form YouTube — dividers, your GamerSupps code, all your links. Kiko pastes this onto the end of every description it writes, exactly as typed. ✨</p>
-    <textarea class="inp" id="descTmpl" rows="9" style="font-size:12px;line-height:1.5" placeholder="━━━━━━━━━━━━━━━\n💜 GamerSupps — code MIFUYU for 10% off: …\n\n🔗 my links:\n▸ Twitch: …">${esc(t)}</textarea>
-    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-      <button class="btn btn-grad" data-act="saveDescTemplate">💾 save template</button>
-      ${custom?`<button class="btn" data-act="resetDescTemplate" title="go back to the built-in default">↺ reset to default</button>`:''}
-    </div>
-  </section>`;
-}
-function viewOptimize(){
-  const m=OPT.mode;
-  return `<div class="page">
-  <section class="panel">
-    <div class="card-head"><h2 style="font-size:18px">🔴 ${m==='video'?'Video':'Stream'} optimization</h2>
-      <div class="seg">
-        <button data-act="optMode" data-v="video" class="${m==='video'?'on':''}">📹 Video</button>
-        <button data-act="optMode" data-v="stream" class="${m==='stream'?'on':''}">🔴 Livestream</button>
-      </div></div>
-    ${m==='video'?optVideoForm():optStreamForm()}
-    <details class="acc" style="margin-top:10px"><summary>➕ Paste VidIQ data (optional)</summary><div class="acc-body">
-      <p class="soft" style="font-size:11px;margin:0 0 6px">VidIQ has no public API, so the engine bakes vidIQ-style judgment into the prompt. If you looked something up in VidIQ, paste it here and it'll be folded in.</p>
-      <textarea class="inp" id="optVidiq" placeholder="paste VidIQ keyword/score data… (optional)"></textarea></div></details>
-    ${DEMO?`<div class="disc" style="margin-top:10px">${CONFIG.creator.snow}<span>The AI helper runs in <b>live</b> mode once the <b>ai</b> Edge Function is deployed (deploy-ai.ps1). ❄️</span></div>`:''}
-  </section>
-  ${OPT.err&&!DEMO?`<div class="disc">⚠️<span>${esc(OPT.err)}</span></div>`:''}
-  ${m==='video'?(OPT.video?optVideoResult(OPT.video):''):(OPT.stream?optStreamResult(OPT.stream):'')}
-  ${thumbCard()}
-  ${descTemplateCard()}
-  <details class="acc" style="margin-top:14px"><summary>📺 Channel snapshot</summary><div class="acc-body">
-    <button class="btn btn-grad" data-act="optChannel" ${OPT.busy==='channel'?'disabled':''}>${OPT.busy==='channel'?'…':'Pull '+esc(CONFIG.youtube.handle)}</button>
-    ${OPT.channel?channelBlock(OPT.channel):''}
-  </div></details>
-  ${DISCLAIMER}</div>`;
-}
+
 
 /* ===================== CALENDAR (front-end only; events on sentinel row) ===================== */
-const CAL_TZ_TARGET="Europe/Amsterdam";   // Mifu is CET — everything is shown in this zone
+const CAL_TZ_TARGET="Europe/Amsterdam";
+   // Mifu is CET — everything is shown in this zone
 const CAL_TZ_LABEL="CET";
+
 const CAL_TZS=[["Europe/Amsterdam","CET · Europe (your time)"],["Europe/London","UK"],["UTC","UTC"],["America/New_York","ET · Eastern"],["America/Chicago","CT · Central"],["America/Denver","MT · Mountain"],["America/Los_Angeles","PT · Pacific"],["Asia/Tokyo","JP · Japan"]];
+
 const CAL_TZ_SHORT={"Europe/Amsterdam":"CET","Europe/London":"UK","UTC":"UTC","America/New_York":"ET","America/Chicago":"CT","America/Denver":"MT","America/Los_Angeles":"PT","Asia/Tokyo":"JP"};
-const CAL_COLORS=["#9fc7f0","#c9b8f0","#a9e0cb","#ff9ed8","#b8d4f0"];   // sky · lavender · mint · sakura · ice
-const GAME_COLOR_DEFAULT="#f6cba9";   // game updates (peach)
-const GAME_EVENT_COLOR="#a9e0cb";     // limited-time game events (mint)
-const GAME_STREAM_COLOR="#c9b8f0";    // game livestream days (light purple)
+
+const CAL_COLORS=["#9fc7f0","#c9b8f0","#a9e0cb","#ff9ed8","#b8d4f0"];
+    // game livestream days (light purple)
 const DEFAULT_GAMES=["Wuthering Waves","Honkai Star Rail","Neverness to Everness","Arknights Endfield","Zenless Zone Zero","Genshin Impact"];
+
 function gameSrc(ev){ return ev&&(ev.src==="game"||ev.src==="gameevent"||ev.src==="gamestream"); }
-function gameSrcColor(ev,gameColor){ return ev.src==="gamestream"?GAME_STREAM_COLOR : ev.src==="gameevent"?(ev.color||GAME_EVENT_COLOR) : (gameColor||GAME_COLOR_DEFAULT); }
+
 function gameSrcIcon(ev){ return ev.src==="gamestream"?"📺 " : ev.src==="gameevent"?"🎉 " : ev.src==="game"?"🎮 " : ""; }
+
 let CAL_COLOR=CAL_COLORS[0];
+
 function tzOffsetMs(tz,utcMs){ const p=new Intl.DateTimeFormat("en-US",{timeZone:tz,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date(utcMs)).reduce((a,x)=>(a[x.type]=x.value,a),{}); const asUTC=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second); return asUTC-utcMs; }
+
 function wallToUtc(dateStr,timeStr,tz){ const [Y,M,D]=dateStr.split("-").map(Number); const [h,m]=(timeStr||"00:00").split(":").map(Number); const guess=Date.UTC(Y,M-1,D,h,m); let off=tzOffsetMs(tz,guess); off=tzOffsetMs(tz,guess-off); return guess-off; }
+
 function toLocal(dateStr,timeStr,tz){ if(!timeStr)return null; const utc=wallToUtc(dateStr,timeStr,tz||CAL_TZ_TARGET); const p=new Intl.DateTimeFormat("en-US",{timeZone:CAL_TZ_TARGET,hour:"numeric",minute:"2-digit",hour12:true,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(utc)).reduce((a,x)=>(a[x.type]=x.value,a),{}); const lDate=`${p.year}-${p.month}-${p.day}`; return { tTime:`${p.hour}:${p.minute} ${p.dayPeriod}`, tDate:lDate, dayDiff:lDate!==dateStr }; }
+
 function fmt12(timeStr){ if(!timeStr)return ""; const [h,m]=timeStr.split(":").map(Number); const ap=h<12?"AM":"PM"; const hh=h%12||12; return `${hh}:${String(m).padStart(2,"0")} ${ap}`; }
+
 function calShift(iso,delta){ const d=new Date(iso+"T00:00"); d.setDate(d.getDate()+delta); return d.toLocaleDateString("en-CA"); }
 
-function renderCalendar(){
-  const sent=state.sentinel||{};
-  const events=sent.calendarEvents||[];
-  const gameColor=sent.gameColor||GAME_COLOR_DEFAULT;
-  const showStreams=state.calShowStreams!==false, showGames=state.calShowGames!==false, showEvents=state.calShowEvents!==false, showBdays=state.calShowBdays!==false;
-  const view=state.calView||"week";
-  if(!state.calRef) state.calRef=new Date();
-
-  const filterBar=`<div class="chiprow" style="margin-bottom:10px">
-    <button class="chiptog ${showEvents?'on':''}" data-act="calToggleEvents"><span>${showEvents?'✓':''}</span>📌 Events</button>
-    <button class="chiptog ${showBdays?'on':''}" data-act="calToggleBdays"><span>${showBdays?'✓':''}</span>🎂 Birthdays</button>
-    <button class="chiptog ${showStreams?'on':''}" data-act="calToggleStreams"><span>${showStreams?'✓':''}</span>🔴 Streams</button>
-    <button class="chiptog ${showGames?'on':''}" data-act="calToggleGames"><span>${showGames?'✓':''}</span>🎮 Games</button>
-  </div>`;
-  const viewToggle=`<div class="seg"><button class="${view==='week'?'on':''}" data-act="calViewWeek">📋 Week</button><button class="${view==='month'?'on':''}" data-act="calViewMonth">🗓️ Month</button></div>`;
-
-  if(view==="week"){
-    const ref=state.calRef instanceof Date?state.calRef:new Date();
-    const dow=ref.getDay(); const diffToMon=dow===0?-6:1-dow;
-    const monday=new Date(ref); monday.setDate(ref.getDate()+diffToMon);
-    const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
-    const dayNames=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-    const days=dayNames.map((_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
-    const fmtS=(d)=>d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
-    const rangeStr=monday.getMonth()===sunday.getMonth()?
-      `${monday.toLocaleDateString("en-US",{month:"long",year:"numeric"})}, ${monday.getDate()}–${sunday.getDate()}`:
-      `${fmtS(monday)} – ${fmtS(sunday)}, ${sunday.getFullYear()}`;
-
-    const rows=days.map((d,i)=>{
-      const ds=d.toLocaleDateString("en-CA"), isToday=ds===TODAY, dayName=dayNames[i];
-      const monthShort=d.toLocaleDateString("en-US",{month:"short"});
-      const streamChips=showStreams?slotsForDate(d).filter(s=>s.day===dayName).map(s=>
-        `<div class="cal-wk-stream" data-act="editSchedule">🔴 ${s.time?esc(s.time)+" · ":""}${esc(s.show||s.title||"Stream")}</div>`
-      ).join(""):"";
-      const bdayChips=showBdays?(sent.birthdays||[]).filter(b=>(d.getMonth()+1)===Number(b.month)&&d.getDate()===Number(b.day)).map(b=>
-        `<div class="cal-wk-bday">🎂 ${esc(b.name)}</div>`
-      ).join(""):"";
-      const dayEvs=events.filter(ev=>(ds===ev.date||ds===(ev.endDate||ev.date))&&(gameSrc(ev)?showGames:showEvents));
-      const evChips=dayEvs.sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99")).map(ev=>{
-        const bg=gameSrc(ev)?gameSrcColor(ev,gameColor):(ev.color||CAL_COLORS[0]);
-        const ic=gameSrcIcon(ev);
-        const et=toLocal(ev.date,ev.time,ev.tz);
-        const timeStr=et?`<span class="cal-wk-time">${et.tTime}</span>`:(ev.time?`<span class="cal-wk-time">${fmt12(ev.time)}</span>`:"");
-        const multi=ev.endDate&&ev.endDate>ev.date, isEnd=multi&&ds===ev.endDate, suffix=multi?(isEnd?" · ends":" · starts"):"";
-        const lk=ev.url?` 🔗`:"";
-        return `<div class="cal-wk-ev" style="background:${bg}" data-act="calEvent" data-eid="${ev.id}">${ic}${timeStr}${esc(ev.title)}${suffix}${lk}</div>`;
-      }).join("");
-      const empty=!streamChips&&!bdayChips&&!evChips;
-      return `<div class="cal-wk-row${isToday?' today':''}" data-date="${ds}" data-act="calAdd">
-        <div class="cal-wk-label">
-          <span class="cal-wk-dn">${isToday?'Today':dayName}</span>
-          <span class="cal-wk-dd">${d.getDate()}</span>
-          <span class="cal-wk-mo">${monthShort}</span>
-        </div>
-        <div class="cal-wk-events">${streamChips}${bdayChips}${evChips}${empty?`<span class="cal-wk-empty">nothing planned 🌙</span>`:""}</div>
-      </div>`;
-    }).join("");
-
-    return `<div class="page"><div class="panel">
-      <div class="card-head" style="flex-wrap:wrap;gap:10px">
-        <div><h2 style="font-size:18px">📅 ${rangeStr}</h2>
-          <div class="label" style="margin-top:2px">tap a day to add · 🔴 streams · 🎮 games · 📌 events</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          ${viewToggle}
-          <div style="display:flex;gap:6px"><button class="btn" data-act="calPrev">‹ prev</button><button class="btn" data-act="calToday">this week</button><button class="btn" data-act="calNext">next ›</button></div>
-        </div>
-      </div>
-      ${filterBar}
-      <div class="cal-wk-list">${rows}</div>
-      <p class="soft" style="font-size:11.5px;margin-top:12px">Nothing here is set in stone — tap any day to add or edit. 💗 Games refresh automatically every Friday.</p>
-    </div>
-    ${gamesTrackedCard(sent)}</div>`;
-  }
-
-  // ── Month view ──
-  const ref=state.calRef instanceof Date?state.calRef:new Date();
-  const y=ref.getFullYear(), m=ref.getMonth();
-  const startDow=new Date(y,m,1).getDay();
-  const gridStart=new Date(y,m,1-startDow);
-  const monthName=ref.toLocaleDateString("en-US",{month:"long",year:"numeric"});
-  const dows=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  let cells="";
-  for(let i=0;i<42;i++){
-    const d=new Date(gridStart); d.setDate(gridStart.getDate()+i);
-    const ds=d.toLocaleDateString("en-CA");
-    const inMonth=d.getMonth()===m, isToday=ds===TODAY;
-    const dayShort=dows[d.getDay()];
-    const streamChips=showStreams?slotsForDate(d).filter(s=>s.day===dayShort).map(s=>`<div class="cal-stream" data-act="editSchedule" title="Stream day — tap to edit your schedule">🔴 ${s.time?esc(s.time)+" · ":""}${esc(s.show||s.title||"Stream")}</div>`).join(""):"";
-    const bdayChips=showBdays?(sent.birthdays||[]).filter(b=>(d.getMonth()+1)===Number(b.month)&&d.getDate()===Number(b.day)).map(b=>`<div class="cal-bday" data-act="scrollAgenda" title="🎂 ${esc(b.name)}'s birthday">🎂 ${esc(b.name)}</div>`).join(""):"";
-    const dayEvents=events.filter(ev=>(ds===ev.date||ds===(ev.endDate||ev.date))&&(gameSrc(ev)?showGames:showEvents));
-    const evChips=dayEvents.sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99")).map(ev=>{
-      const multi=ev.endDate&&ev.endDate>ev.date, isEnd=multi&&ds===ev.endDate, suffix=multi?(isEnd?" · ends":" · starts"):"";
-      const bg=gameSrc(ev)?gameSrcColor(ev,gameColor):(ev.color||CAL_COLORS[0]);
-      const ic=gameSrcIcon(ev);
-      const et=toLocal(ev.date,ev.time,ev.tz);
-      const lk=ev.url?" 🔗":"", act=`data-act="calEvent"`;
-      const tip=esc((et?et.tTime+" "+CAL_TZ_LABEL+" — ":"")+ev.title+(multi?` (${fmtDate(ev.date)}–${fmtDate(ev.endDate)})`:"")+(ev.note?" — "+ev.note:"")+(linkable?" — (tap to open)":""));
-      return `<div class="cal-ev" draggable="${(!multi||!isEnd)?'true':'false'}" data-eid="${ev.id}" ${act} style="background:${bg}" title="${tip}">${ic}${esc(ev.title)}${suffix}${lk}</div>`;
-    }).join("");
-    cells+=`<div class="cal-cell ${inMonth?"":"other"} ${isToday?"today":""}" data-date="${ds}" data-act="calAdd"><span class="cal-daynum">${d.getDate()}</span>${streamChips}${bdayChips}${evChips}</div>`;
-  }
-  return `<div class="page"><div class="panel">
-    <div class="card-head"><div><h2 style="font-size:18px">📅 ${monthName}</h2><div class="label" style="margin-top:2px">tap a day to add · drag to move · 🔴 streams · 🎮 game updates</div></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        ${viewToggle}
-        <div style="display:flex;gap:6px"><button class="btn" data-act="calPrev">‹</button><button class="btn" data-act="calToday">today</button><button class="btn" data-act="calNext">›</button></div>
-      </div>
-    </div>
-    <div class="chiprow" style="margin-bottom:8px">
-      <button class="chiptog ${showEvents?'on':''}" data-act="calToggleEvents"><span>${showEvents?'✓':''}</span>📌 Events</button>
-      <button class="chiptog ${showBdays?'on':''}" data-act="calToggleBdays"><span>${showBdays?'✓':''}</span>🎂 Birthdays</button>
-      <button class="chiptog ${showStreams?'on':''}" data-act="calToggleStreams"><span>${showStreams?'✓':''}</span>🔴 Stream schedule</button>
-      <button class="chiptog ${showGames?'on':''}" data-act="calToggleGames"><span>${showGames?'✓':''}</span>🎮 Games (updates · events · streams)</button>
-    </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);margin-bottom:10px">
-      <span><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${GAME_COLOR_DEFAULT};vertical-align:middle"></span> 🎮 update</span>
-      <span><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${GAME_EVENT_COLOR};vertical-align:middle"></span> 🎉 event start/end</span>
-      <span><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${GAME_STREAM_COLOR};vertical-align:middle"></span> 📺 livestream</span>
-    </div>
-    <div class="cal-grid" style="margin-bottom:6px">${dows.map(d=>`<div class="cal-dow">${d}</div>`).join("")}</div>
-    <div class="cal-grid">${cells}</div>
-    <p class="soft" style="font-size:11.5px;margin-top:12px">Konfuyu~ nothing here is set in stone — drag things around whenever your week shifts. 💗 Games refresh automatically every Friday.</p>
-  </div>
-  ${gamesTrackedCard(sent)}</div>`;
-}
 async function gameTopicAdd(name){ await setSent(n=>{ let g=(n.gameTopics&&n.gameTopics.length)?n.gameTopics.slice():DEFAULT_GAMES.slice(); if(!g.some(x=>x.toLowerCase()===String(name).toLowerCase()))g.push(name); return {...n,gameTopics:g}; }); }
+
 async function gameTopicRemove(name){ await setSent(n=>{ let g=(n.gameTopics&&n.gameTopics.length)?n.gameTopics.slice():DEFAULT_GAMES.slice(); g=g.filter(x=>x.toLowerCase()!==String(name).toLowerCase()); return {...n,gameTopics:g}; }); }
-function gamesTrackedCard(sent){
-  const games=(sent.gameTopics&&sent.gameTopics.length)?sent.gameTopics:DEFAULT_GAMES;
-  return `<section class="panel" style="margin-top:14px">
-    <div class="card-head"><div class="label">🎮 Games I track</div><span class="pill pill-gray">${games.length}</span></div>
-    <p class="soft" style="font-size:11.5px;margin:0 0 8px">Updates, limited-time events &amp; livestream days for these are pulled in each Friday. Ask Kiko to "track [game]" or "stop tracking [game]" anytime, or use the box below.</p>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${games.map(g=>`<span class="pill pill-lav" style="display:inline-flex;align-items:center;gap:6px">${esc(g)} <button class="x" data-act="delGameTopic" data-v="${esc(g)}" style="font-size:11px;padding:0">✕</button></span>`).join("")}</div>
-    <div style="display:flex;gap:8px"><input class="inp" id="gameTopicInput" placeholder="add a game (e.g. Genshin Impact)"><button class="btn btn-grad" data-act="addGameTopic">＋ track</button></div>
-  </section>`;
-}
+
 
 /* ----- Events & Birthdays agenda + reminder settings (under the calendar) ----- */
 function nextBirthdayInfo(b){
@@ -5313,43 +2676,9 @@ function nextBirthdayInfo(b){
   let d=mk(y); if(d<today) d=mk(y+1);
   return { date:d.toLocaleDateString("en-CA"), days:Math.round((d-today)/86400000) };
 }
+
 function whenLabel(days){ return days===0?"<b>today</b>":days===1?"<b>tomorrow</b>":("in "+days+" days"); }
-/* (calAgenda removed 2026-06-18 — Events & birthdays now live on the Events tab; reminders moved to the Planner) */
-/* the 🔔 Reminders card — shared by the Calendar and the Planner (same data, same buttons) */
-function remindersCard(){
-  const rem=state.sentinel.reminders||{};
-  const OFFSETS=[[0,"Same day"],[1,"1 day before"],[3,"3 days before"],[7,"1 week before"]];
-  const offs=rem.offsets||[0,1];
-  const notif=(typeof Notification!=="undefined")?Notification.permission:"unsupported";
-  return `<section class="panel" style="margin-top:14px">
-    <div class="card-head"><h2 style="font-size:17px">🔔 Reminders</h2></div>
-    <p class="soft" style="font-size:12px;margin:0 0 10px">Get a gentle nudge before events &amp; birthdays. Pick how far ahead you'd like to be reminded.</p>
-    <div class="chiprow" style="margin-bottom:12px">
-      ${OFFSETS.map(([v,l])=>`<button class="chiptog ${offs.includes(v)?'on':''}" data-act="remOffset" data-v="${v}"><span>${offs.includes(v)?'✓':''}</span>${l}</button>`).join("")}
-    </div>
-    <div class="chiprow" style="margin-bottom:10px">
-      <button class="chiptog ${rem.browser?'on':''}" data-act="remBrowser"><span>${rem.browser?'✓':''}</span>💻 Browser pop-ups${notif==="denied"?" (blocked in browser)":notif==="unsupported"?" (not in this browser — use 📱)":""}</button>
-      <button class="chiptog ${rem.push?'on':''}" data-act="remPush"><span>${rem.push?'✓':''}</span>📱 Phone push</button>
-      <button class="chiptog ${rem.email?'on':''}" data-act="remEmail"><span>${rem.email?'✓':''}</span>✉️ Email</button>
-    </div>
-    <div style="margin:12px 0 0">
-      <div class="label" style="margin-bottom:4px">⏰ Your reminders <span class="soft" style="text-transform:none;letter-spacing:0">· or just tell Kiko "remind me to…"</span></div>
-      ${activeReminders().length?activeReminders().map(r=>({r,eff:nextReminderDate(r)})).sort((a,b)=>a.eff<b.eff?-1:1).map(({r,eff})=>{
-        const days=Math.round((new Date(eff+"T00:00")-new Date(TODAY+"T00:00"))/86400000);
-        return `<div class="agenda-row"><span class="agenda-when">${whenLabel(Math.max(0,days))}</span><span class="agenda-dot" style="background:var(--peri)"></span><span class="grow">⏰ ${esc(r.text)} <span class="soft" style="font-size:11px">· ${fmtDate(eff)}${r.time?" · "+fmt12(r.time):""}${r.repeat&&r.repeat!=="none"?" · "+esc(r.repeat):""}</span></span><button class="x" data-act="doneReminderCR" data-v="${r.id}" title="done">✓</button><button class="x" data-act="delReminderCR" data-v="${r.id}" title="remove">✕</button></div>`;
-      }).join(""):`<p class="soft" style="font-size:12px">No reminders yet — add anything: meds at 9pm, water the plants, email the accountant… ❄️</p>`}
-      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <input class="inp" id="crText" placeholder="remind me to…" style="flex:2;min-width:140px">
-        <input class="inp" id="crDate" type="date" value="${TODAY}" style="max-width:140px">
-        <input class="inp" id="crTime" type="time" style="max-width:110px">
-        <select class="inp" id="crRepeat" style="max-width:110px"><option value="none">once</option><option value="daily">daily</option><option value="weekly">weekly</option><option value="monthly">monthly</option></select>
-        <button class="btn btn-grad" data-act="addReminderCR">＋ add</button>
-      </div>
-    </div>
-    ${rem.email?`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input class="inp" id="remEmailAddr" type="email" placeholder="you@email.com" value="${esc(rem.emailAddr||CONFIG.ownerEmail||"")}" style="max-width:260px"><button class="btn" data-act="saveRemEmail">save email</button><span class="soft" style="font-size:11px">${rem.emailAddr?"sending to "+esc(rem.emailAddr):"add your email to receive reminders"}</span></div>`:""}
-    <p class="soft" style="font-size:11px;margin-top:10px">💻 Browser pop-ups appear while Mifuyu OS is open in a tab. ✉️ Email needs the reminder service set up on the server (one-time). Both respect Calm mode. ❄️</p>
-  </section>`;
-}
+
 
 async function calEventModal(date,eid){
   const sent=await DB.daily(SENTINEL);
@@ -5404,26 +2733,6 @@ async function calEventModal(date,eid){
   refreshConv();
 }
 
-function wireCalDnD(){
-  let dragEid=null;
-  document.querySelectorAll(".cal-ev[draggable='true'],.cal-span[draggable='true']").forEach(ev=>{
-    ev.addEventListener("dragstart",e=>{ dragEid=ev.dataset.eid; ev.classList.add("dragging"); if(e.dataTransfer){e.dataTransfer.effectAllowed="move"; try{e.dataTransfer.setData("text/plain",dragEid);}catch(_){}}});
-    ev.addEventListener("dragend",()=>{ ev.classList.remove("dragging"); document.querySelectorAll(".cal-cell.drag-over").forEach(c=>c.classList.remove("drag-over")); });
-  });
-  document.querySelectorAll(".cal-cell").forEach(cell=>{
-    cell.addEventListener("dragover",e=>{ e.preventDefault(); if(e.dataTransfer)e.dataTransfer.dropEffect="move"; cell.classList.add("drag-over"); });
-    cell.addEventListener("dragleave",()=>cell.classList.remove("drag-over"));
-    cell.addEventListener("drop",async e=>{
-      e.preventDefault(); cell.classList.remove("drag-over");
-      const eid=dragEid||(e.dataTransfer&&e.dataTransfer.getData("text/plain"));
-      const date=cell.dataset.date;
-      if(!eid||!date)return;
-      state.sentinel=await DB.saveDaily(SENTINEL,n=>{ const evs=(n.calendarEvents||[]).slice(); const t=evs.find(x=>x.id===eid);
-        if(t){ if(t.endDate&&t.endDate>t.date){ const delta=daysBetween(t.date,date); t.endDate=calShift(t.endDate,delta); } t.date=date; } return {...n,calendarEvents:evs}; });
-      render();
-    });
-  });
-}
 
 /* ===================== HANDLERS ===================== */
 // Pull everything from the DB once and cache it in state. Called on boot, and again only
@@ -5432,8 +2741,11 @@ function wireCalDnD(){
 function applyAppConfig(){ try{ const a=(state.sentinel&&state.sentinel.appConfig)||{};
   if(a.name)CONFIG.creator.name=a.name; if(a.greeting)CONFIG.creator.greeting=a.greeting;
   if(a.weightUnit)CONFIG.weightUnit=a.weightUnit; if(a.weightDisplay)CONFIG.weightDisplay=a.weightDisplay; }catch(e){} }
+
 let WITHINGS_AUTOSYNC_DONE=false;
-let WITHINGS_BUSY=false;   // one Withings call at a time — concurrent calls race the single-use refresh token
+
+let WITHINGS_BUSY=false;
+   // one Withings call at a time — concurrent calls race the single-use refresh token
 async function loadData(){
   state.sentinel = await DB.daily(SENTINEL);
   applyAppConfig();
@@ -5442,6 +2754,7 @@ async function loadData(){
   state._loaded = true;
   try{ withingsAutoSync(); }catch(e){}   // pull new weigh-ins from the scale in the background
 }
+
 /* automatic Withings sync — so new weigh-ins arrive without tapping "Sync from scale".
    Runs once per session on load if connected and the last sync is over ~3h old. */
 async function withingsAutoSync(){
@@ -5457,14 +2770,18 @@ async function withingsAutoSync(){
   }catch(e){}
   finally{ WITHINGS_BUSY=false; }
 }
+
 async function setToday(merge){ state.today=await DB.saveDaily(TODAY,n=>merge(n)); }
+
 async function setSent(merge){ state.sentinel=await DB.saveDaily(SENTINEL,n=>merge(n)); }
+
 // one weight-log entry per day — merge new fields into today's row (weight, body comp, etc.)
 async function upsertWeightToday(fields){
   await setSent(n=>{ const wl=(n.weightLog||[]).slice(); const i=wl.findIndex(x=>x.date===TODAY);
     if(i>=0) wl[i]={...wl[i],...fields,date:TODAY}; else wl.push({date:TODAY,...fields});
     return {...n,weightLog:wl}; });
 }
+
 
 const H={
   tab(el){ setTab(el.dataset.tab); },
@@ -6523,8 +3840,10 @@ const H={
   copyText(el){ const t=optCopy(el.dataset.k); const ok=()=>toast("copied 📋");
     if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(ok,()=>ok()); } else { ok(); } },
 };
+
 async function addSub(taskId,text){ text=(text||"").trim(); if(!text) return;
   await setSent(n=>({...n,tasks:(n.tasks||[]).map(t=>t.id===taskId?{...t,sub:[...(t.sub||[]),{id:"s"+Date.now(),text,done:false}]}:t)})); render(); }
+
 document.addEventListener("keydown",async e=>{
   if(e.key!=="Enter") return; const t=e.target;
   // Kiko chat: Enter sends, Shift+Enter drops to a new line (so she can write longer messages)
@@ -6536,6 +3855,7 @@ document.addEventListener("keydown",async e=>{
   else if(t.id==="goalWeek"){ e.preventDefault(); H.addGoal({dataset:{p:'week'}}); }
   else if(t.id==="goalMonth"){ e.preventDefault(); H.addGoal({dataset:{p:'month'}}); }
 });
+
 document.addEventListener("change",e=>{
   const t=e.target; if(!t) return;
   if(t.id==="thumbFile"){
@@ -6607,7 +3927,10 @@ document.addEventListener("change",e=>{
     t.value="";
   }
 });
-window._lastPtr="mouse"; document.addEventListener("pointerdown",e=>{ window._lastPtr=e.pointerType||"mouse"; },true);   // pen/touch must not trigger native HTML5 drags
+
+window._lastPtr="mouse";
+ document.addEventListener("pointerdown",e=>{ window._lastPtr=e.pointerType||"mouse"; },true);
+   // pen/touch must not trigger native HTML5 drags
 /* ===================== UNIVERSAL VOICE CAPTURE (#5) ===================== */
 const VOICE_CATS=[
   ["stream","🔴","Stream Idea"],
@@ -6617,8 +3940,11 @@ const VOICE_CATS=[
   ["personal","🌸","Personal Note"],
   ["random","💭","Random"],
 ];
+
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+
 let voiceRec=null, voiceBaseText="";
+
 function voiceOpenModal(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const canSpeak = !IS_IOS && !!SR;
@@ -6640,6 +3966,7 @@ function voiceOpenModal(){
   </div></div>`;
   const ta=$("#voiceText"); if(ta){ setTimeout(()=>{ ta.focus(); if(canSpeak) voiceToggleMic(); },60); }
 }
+
 function voiceToggleMic(){
   if(voiceRec){ voiceStopMic(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if(!SR){ toast("voice isn't available — type away 🌱"); return; }
@@ -6654,7 +3981,9 @@ function voiceToggleMic(){
     const b=$("#voiceMicBtn"); if(b){ b.textContent="⏹ Stop"; } const f=$("#voiceFab"); if(f)f.classList.add("listening");
   }catch(_){ toast("couldn't start the mic — type away 🌱"); voiceRec=null; }
 }
+
 function voiceStopMic(){ if(voiceRec){ try{voiceRec.stop();}catch(_){} voiceRec=null; } const b=$("#voiceMicBtn"); if(b){ b.textContent="🎙️ Start talking"; } const f=$("#voiceFab"); if(f)f.classList.remove("listening"); }
+
 
 /* shortcut: Alt+R or Ctrl+Space — never while typing in a field */
 document.addEventListener("keydown",e=>{
@@ -6665,17 +3994,22 @@ document.addEventListener("keydown",e=>{
   }
 });
 
+
 document.addEventListener("click",async e=>{ const el=e.target.closest("[data-act]"); if(!el)return; const fn=H[el.dataset.act];
   if(fn){ try{ await fn(el); }catch(err){ console.error(err); toast("hmm, try again"); } } });
+
 // same delegation for elements whose handler fires on input/change rather than click (sliders, file pickers)
 document.addEventListener("input",e=>{ const el=e.target.closest("[data-act-input]"); if(!el)return; const fn=H[el.dataset.actInput]; if(fn) fn(el); });
+
 document.addEventListener("change",async e=>{ const el=e.target.closest("[data-act-change]"); if(!el)return; const fn=H[el.dataset.actChange]; if(fn){ try{ await fn(el); }catch(err){ console.error(err); toast("hmm, try again"); } } });
+
 // CSP-safe replacement for inline onerror= attributes on <img> tags
 document.addEventListener("error",e=>{
   const img=e.target; if(!img||img.tagName!=="IMG")return;
   if(img.dataset.fallback&&img.src!==img.dataset.fallback){ img.src=img.dataset.fallback; return; }
   if(img.dataset.hideOnError!=null) img.style.display="none";
 },true);
+
 /* ===== 🎨 mood-board: freeform drag + resize of cards (Milanote-style) ===== */
 (function(){
   let mbDrag=null, mbRz=null;
@@ -6698,6 +4032,7 @@ document.addEventListener("error",e=>{
   },true);
   document.addEventListener("pointercancel",()=>{ if(!mbDrag&&!mbRz)return; mbDrag=null; mbRz=null; try{render();}catch(_){} },true);
 })();
+
 /* ===== 📚 tools & tutorials: drag rows to reorder ===== */
 (function(){
   let rr=null;
@@ -6720,10 +4055,12 @@ document.addEventListener("error",e=>{
   },true);
   document.addEventListener("pointercancel",()=>{ if(rr){ rr.row.style.opacity=""; rr.row.style.boxShadow=""; rr=null; } },true);
 })();
+
 /* ===== 🕐 hero clock — keeps the big 24h clock honest without re-rendering the page ===== */
 setInterval(()=>{ try{
   const gc=document.getElementById("ghClock"); if(gc) gc.textContent=nowHM();
 }catch(e){} },15000);
+
 // global undo — Ctrl+Z / ⌘Z rolls back the last data change, unless you're typing in a field (native undo wins there)
 document.addEventListener("keydown",e=>{
   if((e.key==="z"||e.key==="Z") && (e.ctrlKey||e.metaKey) && !e.shiftKey && !e.altKey){
@@ -6733,8 +4070,10 @@ document.addEventListener("keydown",e=>{
   }
 });
 
+
 /* ===================== BREATHING (JS paced) ===================== */
 let breathRAF=null;
+
 function startBreath(){
   const bub=$("#bubble"), lab=$("#breathLabel"); if(!bub)return;
   if(breathRAF){ cancelAnimationFrame(breathRAF); clearInterval(breathRAF); breathRAF=null; } // idempotent — never stack loops
@@ -6755,21 +4094,29 @@ function startBreath(){
   }
   breathRAF=requestAnimationFrame(frame);
 }
+
 function stopBreath(){ if(breathRAF){ cancelAnimationFrame(breathRAF); clearInterval(breathRAF); breathRAF=null; }
   const bub=$("#bubble"),lab=$("#breathLabel"); if(bub)bub.style.transform="scale(.72)"; if(lab)lab.textContent="ready"; }
 
+
 /* ===================== STICKY NOTES (rich text + resizable) ===================== */
 const STICKY_COLORS=["#fde2f2","#e6ecfb","#dcf3eb","#e2f0fb","#ece2fb","#fdeadb"];
+
 const STICKY_W=200, STICKY_H=150;
+
 const STICKY_TOOLS=[["bold","B","font-weight:800"],["italic","i","font-style:italic"],["underline","U","text-decoration:underline"],
   ["strikeThrough","S","text-decoration:line-through"],["small","A-",""],["big","A+",""],["head","H","font-weight:800"]];
+
 function stickyHTML(s){ return (s.html!=null) ? s.html : esc(s.text||""); }
+
 async function persistStickies(list){ state.sentinel.stickies=list; await DB.saveDaily(SENTINEL,n=>({...n,stickies:list})); }
+
 async function addSticky(text){
   const note={ id:"sk"+Date.now(), html:text?esc(text):"", color:STICKY_COLORS[Math.floor(Math.random()*STICKY_COLORS.length)],
     x:0.30+Math.random()*0.4, y:0.30+Math.random()*0.3, w:STICKY_W, h:STICKY_H };
   await persistStickies([...(state.sentinel.stickies||[]),note]); renderStickies();
 }
+
 function renderStickies(){
   const layer=$("#stickyLayer"); if(!layer)return;
   const list=state.sentinel.stickies||[];
@@ -6803,47 +4150,63 @@ function renderStickies(){
   layer.querySelectorAll('[data-drag]').forEach(h=>{ h.onpointerdown=ev=>{ if(ev.target.closest('[data-fmt],[data-stx],[data-stcolor]')) return; startDrag(ev,h.dataset.drag); }; });
   layer.querySelectorAll('[data-resize]').forEach(h=>{ h.onpointerdown=ev=>startResize(ev,h.dataset.resize); });
 }
+
 function fmtCmd(cmd){
   if(cmd==="big") document.execCommand('fontSize',false,'5');
   else if(cmd==="small") document.execCommand('fontSize',false,'2');
   else if(cmd==="head"){ document.execCommand('fontSize',false,'6'); document.execCommand('bold',false,null); }
   else document.execCommand(cmd,false,null);
 }
+
 let dragInfo=null;
+
 function startDrag(ev,id){ ev.preventDefault(); const el=ev.target.closest('.sticky');
   dragInfo={ id, el, dx:ev.clientX-el.offsetLeft, dy:ev.clientY-el.offsetTop };
-  window.addEventListener('pointermove',onDrag); window.addEventListener('pointerup',endDrag,{once:true}); window.addEventListener('pointercancel',endDrag,{once:true}); }   /* palm rejection cancels constantly with the Pencil */
+  window.addEventListener('pointermove',onDrag); window.addEventListener('pointerup',endDrag,{once:true}); window.addEventListener('pointercancel',endDrag,{once:true}); }
+   /* palm rejection cancels constantly with the Pencil */
 function onDrag(ev){ if(!dragInfo)return; const el=dragInfo.el;
   let x=Math.max(0,Math.min(ev.clientX-dragInfo.dx,window.innerWidth-el.offsetWidth));
   let y=Math.max(0,Math.min(ev.clientY-dragInfo.dy,window.innerHeight-el.offsetHeight));
   el.style.left=x+"px"; el.style.top=y+"px"; }
+
 async function endDrag(){ window.removeEventListener('pointermove',onDrag); if(!dragInfo)return;
   const el=dragInfo.el, id=dragInfo.id; const x=Math.max(0,Math.min(1,el.offsetLeft/Math.max(1,window.innerWidth-el.offsetWidth))), y=Math.max(0,Math.min(1,el.offsetTop/Math.max(1,window.innerHeight-el.offsetHeight)));
   await persistStickies((state.sentinel.stickies||[]).map(s=>s.id===id?{...s,x,y}:s)); dragInfo=null; }
+
 let resizeInfo=null;
+
 function startResize(ev,id){ ev.preventDefault(); ev.stopPropagation(); const el=ev.target.closest('.sticky');
   resizeInfo={ id, el, sx:ev.clientX, sy:ev.clientY, sw:el.offsetWidth, sh:el.offsetHeight };
   window.addEventListener('pointermove',onResize); window.addEventListener('pointerup',endResize,{once:true}); window.addEventListener('pointercancel',endResize,{once:true}); }
+
 function onResize(ev){ if(!resizeInfo)return; const el=resizeInfo.el;
   el.style.width=Math.max(140,resizeInfo.sw+(ev.clientX-resizeInfo.sx))+"px";
   el.style.height=Math.max(110,resizeInfo.sh+(ev.clientY-resizeInfo.sy))+"px"; }
+
 async function endResize(){ window.removeEventListener('pointermove',onResize); if(!resizeInfo)return;
   const el=resizeInfo.el, id=resizeInfo.id, w=el.offsetWidth, h=el.offsetHeight;
   await persistStickies((state.sentinel.stickies||[]).map(s=>s.id===id?{...s,w,h}:s)); resizeInfo=null; }
-window.addEventListener('resize',()=>{ if(!dragInfo&&!resizeInfo) renderStickies(); });   // don't rebuild (detach) a sticky that's mid drag/resize
-window.addEventListener('resize',()=>{ try{ const c=$("#kikoChat"); if(c&&!c.classList.contains("hidden")){ applyKikoChatSize(c); positionKikoUI(); } }catch(e){} });   // keep the free-resized chat within the viewport on rotate/resize
+
+window.addEventListener('resize',()=>{ if(!dragInfo&&!resizeInfo) renderStickies(); });
+   // don't rebuild (detach) a sticky that's mid drag/resize
+window.addEventListener('resize',()=>{ try{ const c=$("#kikoChat"); if(c&&!c.classList.contains("hidden")){ applyKikoChatSize(c); positionKikoUI(); } }catch(e){} });
+   // keep the free-resized chat within the viewport on rotate/resize
 
 /* ===================== FLOATING TIMER (rest + pomodoro focus, pop-out) ===================== */
 const TIMER={ open:false, mode:"focus", running:false, iv:null, secs:1500, total:1500,
   phase:"focus", workMin:25, breakMin:5, cycles:0 };
+
 let pipWin=null;
+
 function toggleTimer(){
   if(pipWin){ try{ pipWin.close(); }catch(_){} pipWin=null; }
   TIMER.open=!TIMER.open;
   $("#restWidget").classList.toggle("hidden", !TIMER.open);
   if(TIMER.open) paintTimer();
 }
+
 function timerTarget(){ return pipWin ? pipWin.document.getElementById("timerHost") : $("#restWidget"); }
+
 function timerMarkup(){
   const mm=String(Math.floor(TIMER.secs/60)).padStart(2,'0'), ss=String(TIMER.secs%60).padStart(2,'0');
   const pct=Math.max(0,Math.min(1,TIMER.total?(1-TIMER.secs/TIMER.total):0)); const R=42,C=2*Math.PI*R;
@@ -6863,21 +4226,28 @@ function timerMarkup(){
     <div style="display:flex;gap:6px;justify-content:center"><button class="btn btn-grad" data-tact="toggle">${TIMER.running?'Pause':'Start'}</button><button class="btn" data-tact="reset">Reset</button></div>
     <p class="soft" style="font-size:10.5px;text-align:center;margin:8px 0 0">Focus, then a kind little break. 🍅</p>`;
 }
+
 function paintTimer(){ const t=timerTarget(); if(!t) return; t.innerHTML=timerMarkup();
   t.querySelectorAll('[data-tmode]').forEach(b=>b.onclick=()=>setTimerMode(b.dataset.tmode));
   t.querySelectorAll('[data-tpreset]').forEach(b=>b.onclick=()=>setTimerPreset(b.dataset.tpreset));
   t.querySelectorAll('[data-tact]').forEach(b=>b.onclick=()=>{ const a=b.dataset.tact;
     if(a==="toggle") timerToggle(); else if(a==="reset") timerReset(); else if(a==="close") toggleTimer(); else if(a==="pop") popOutTimer(); });
 }
+
 function timerStop(){ if(TIMER.iv){ clearInterval(TIMER.iv); TIMER.iv=null; } }
+
 function setTimerMode(m){ TIMER.mode="focus"; TIMER.running=false; timerStop();
   TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=TIMER.workMin*60;
   TIMER.secs=TIMER.total; paintTimer(); }
+
 function setTimerPreset(v){ TIMER.running=false; timerStop();
   const [w,b]=v.split("-").map(Number); TIMER.workMin=w; TIMER.breakMin=b; TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=w*60;
   TIMER.secs=TIMER.total; paintTimer(); }
+
 function timerToggle(){ TIMER.running=!TIMER.running; timerStop(); if(TIMER.running) TIMER.iv=setInterval(timerTick,1000); paintTimer(); }
+
 function timerReset(){ TIMER.running=false; timerStop(); TIMER.phase="focus"; TIMER.cycles=0; TIMER.total=TIMER.workMin*60; TIMER.secs=TIMER.total; paintTimer(); }
+
 function timerTick(){
   TIMER.secs=Math.max(0,TIMER.secs-1);
   if(TIMER.secs===0){
@@ -6887,6 +4257,7 @@ function timerTick(){
   }
   paintTimer();
 }
+
 async function popOutTimer(){
   if(pipWin){ pipWin.focus(); return; }
   if(!('documentPictureInPicture' in window)){ toast("Pop-out needs Chrome or Edge 🦊"); return; }
@@ -6900,30 +4271,44 @@ async function popOutTimer(){
   }catch(e){ console.error(e); pipWin=null; toast("couldn't pop out"); }
 }
 
+
 /* ===================== BOOT ===================== */
 window.addEventListener('error',ev=>{ const v=document.getElementById('view');
   if(v && !v.innerHTML.trim()){ v.innerHTML='<div class="panel" style="margin:18px"><h3>aw, a hiccup ❄️</h3><p class="soft">'+esc(ev.message||'unknown error')+'</p></div>'; } });
 
+
 /* ===================== KIKO — AI snowfox pet ===================== */
 const KIKO={ open:false, busy:false, status:null, log:[], journal:null, tax:null, pendingImages:[], mic:false, _spoken:-1 };
+
 try{ loadKikoLog(); }catch(e){}
+
 const KIKO_GREETS=["Konfuyu~! Need anything? ❄️","Pspsps… ask me something! 🦊","I'm right here if you need me 💗","Hi Mifu~ ✿","Wanna brainstorm? 🌸"];
+
 /* sprite walk engine + desktop-pet physics — frames measured from fox.png (164x210). Row 2 = 4-frame walk cycle. */
 const KIKO_SHEET={url:"fox.png",W:164,H:210};
+
 const KIKO_WALK=[{x:6,y:52,w:35,h:32},{x:44,y:53,w:38,h:31},{x:88,y:52,w:35,h:32},{x:130,y:53,w:34,h:31}];
+
 const KIKO_SIT={x:6,y:10,w:35,h:32};
-const KIKO_SCALE=2.1, KSPRW=Math.round(38*2.1), KSPRH=Math.round(32*2.1);  // ~80 x ~67
-const KIKO_FACES="right";         // art faces right by default; flip when moving left
+
+const KIKO_SCALE=2.1, KSPRW=Math.round(38*2.1), KSPRH=Math.round(32*2.1);
+  // ~80 x ~67
+const KIKO_FACES="right";
+         // art faces right by default; flip when moving left
 let KIKO_RAF=null, kikoX=null, kikoY=0, kikoVX=0, kikoVY=0, kikoDir=1, kikoFrameI=0, kikoFrameT=0, kikoState="walk", kikoStateT=0, kikoLast=0;
+
 function setKikoFrame(f){ const el=$("#kikoSprite"); if(!el)return; const s=KIKO_SCALE;
   el.style.backgroundImage=`url(${KIKO_SHEET.url})`; el.style.backgroundRepeat="no-repeat";
   el.style.width=(f.w*s)+"px"; el.style.height=(f.h*s)+"px";
   el.style.backgroundSize=`${KIKO_SHEET.W*s}px ${KIKO_SHEET.H*s}px`;
   el.style.backgroundPosition=`-${(f.x*s).toFixed(1)}px -${(f.y*s).toFixed(1)}px`;
 }
+
 function kikoFacing(){ const flip=(KIKO_FACES==="right")?(kikoDir<0):(kikoDir>0); return flip?"scaleX(-1)":"scaleX(1)"; }
+
 // pace only between the sticky button (left ~62px) and timer button (right) — clear of both
 function kikoBounds(){ return { min:72, max:Math.max(90, window.innerWidth-72-KSPRW) }; }
+
 function positionKikoUI(){
   const k=$("#kiko"); if(k){ k.style.left=Math.round(kikoX)+"px"; k.style.bottom=Math.round(14+kikoY)+"px"; }
   const topY=Math.round(14+kikoY+KSPRH+8);
@@ -6935,6 +4320,7 @@ function positionKikoUI(){
   if(bub && !bub.classList.contains("hidden")){ let bl=Math.round(kikoX-8); bl=Math.max(8,Math.min(bl,window.innerWidth-210));
     bub.style.left=bl+"px"; bub.style.right="auto"; bub.style.bottom=topY+"px"; }
 }
+
 function kikoStep(now){
   const sp=$("#kikoSprite"); if(!sp){ KIKO_RAF=requestAnimationFrame(kikoStep); return; }
   const dt=Math.min(60, now-(kikoLast||now)); kikoLast=now;
@@ -6965,7 +4351,9 @@ function kikoStep(now){
   }
   positionKikoUI(); KIKO_RAF=requestAnimationFrame(kikoStep);
 }
+
 function kikoStart(){ if(KIKO_RAF)return; kikoLast=performance.now(); kikoSetupDrag(); KIKO_RAF=requestAnimationFrame(kikoStep); }
+
 function kikoSetupDrag(){
   const k=$("#kiko"); if(!k||k._wired) return; k._wired=true;
   let down=false, moved=false, sx=0, sy=0, gox=0, goy=0, samp=[];
@@ -6984,12 +4372,16 @@ function kikoSetupDrag(){
   // safety: if pointer capture is lost without a proper up/cancel (mobile can steal it), don't wedge in "held" forever
   k.addEventListener('lostpointercapture',()=>{ if(down){ down=false; if(kikoState==="held"){ kikoState="walk"; kikoStateT=0; } } });
 }
+
 function kikoInputEl(){ return document.getElementById("kikoTabInput")||document.getElementById("kikoInput"); }
+
 // compact, real numbers for the agent's DATA SNAPSHOT — lets Kiko answer "how's my…" accurately
 /* background sentinel writes (episodic log, reflection) flow through ONE queue — two read-merge-write
    saves racing each other were clobbering data (the v3.0 learning bug). Serial = safe. */
 let KIKO_WQ=Promise.resolve();
+
 function queueSent(fn){ KIKO_WQ=KIKO_WQ.then(()=>setSent(fn)).catch(()=>{}); return KIKO_WQ; }
+
 /* episodic memory — a rolling log of what Kiko actually did, so it can answer "what did you change?" and learn */
 async function logKikoActions(summaries){
   try{ if(!summaries||!summaries.length)return;
@@ -6998,11 +4390,13 @@ async function logKikoActions(summaries){
     await queueSent(n=>({...n,kikoActions:[...(n.kikoActions||[]),...entries].slice(-60)}));
   }catch(e){}
 }
+
 /* reflection — Kiko quietly learns Mifu's durable preferences from the conversation (no retraining).
    He's shown what he ALREADY remembers so he never re-learns it; auto-facts are fuzzy-deduped and capped. */
 /* Tier 1A: push a piece of text into Kiko's semantic memory (best-effort, off the hot path).
    Inert unless the server has OPENAI_API_KEY + the pgvector migration. */
-async function memPush(kind,text,importance){ try{ if(DEMO||!SB) return; const t=String(text||"").trim(); if(t.length<6) return; aiCall("memWrite",{kind:kind||"note",text:t.slice(0,2000),importance:importance||5}).catch(()=>{}); }catch(e){} }   // .catch: fire-and-forget can't be caught by try
+async function memPush(kind,text,importance){ try{ if(DEMO||!SB) return; const t=String(text||"").trim(); if(t.length<6) return; aiCall("memWrite",{kind:kind||"note",text:t.slice(0,2000),importance:importance||5}).catch(()=>{}); }catch(e){} }
+   // .catch: fire-and-forget can't be caught by try
 async function kikoReflect(){
   try{ if(DEMO||!SB) return; const hist=KIKO.log.slice(-24).map(m=>({role:m.role,text:String(m.text||"").slice(0,400)}));
     if(hist.filter(h=>h.role==="me").length<2) return;   // need a little to learn from
@@ -7025,6 +4419,7 @@ async function kikoReflect(){
       return upd; });
   }catch(e){}
 }
+
 /* FULL data snapshot for Kiko — every part of the OS, so it can answer about and correlate ANYTHING.
    Organised into labelled lines; the agent prompt tells Kiko to treat this as the live truth. */
 function kikoDataSummary(){
@@ -7181,11 +4576,15 @@ function kikoDataSummary(){
     return L.join("\n");
   }catch(e){ return ""; }
 }
+
 // persistent conversation (survives reloads) + spoken replies
-function saveKikoLog(){ try{ localStorage.setItem("kiko-chat", JSON.stringify(KIKO.log.slice(-60).map(m=>({role:m.role,text:m.text,...(m.imgs?{hadImgs:m.imgs.length}:{})})))); }catch(e){} }   // images stay in-session only (localStorage is tiny)
+function saveKikoLog(){ try{ localStorage.setItem("kiko-chat", JSON.stringify(KIKO.log.slice(-60).map(m=>({role:m.role,text:m.text,...(m.imgs?{hadImgs:m.imgs.length}:{})})))); }catch(e){} }
+   // images stay in-session only (localStorage is tiny)
 function loadKikoLog(){ try{ const s=localStorage.getItem("kiko-chat"); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) KIKO.log=a; KIKO._spoken=KIKO.log.length-1; } }catch(e){} }
+
 function speakKiko(text){ try{ if(localStorage.getItem("kiko-voice")!=="1") return; if(!window.speechSynthesis) return;
   speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(String(text).slice(0,400)); u.rate=1.04; u.pitch=1.25; speechSynthesis.speak(u); }catch(e){} }
+
 function kikoLogHTML(){
   const imgRow=m=> m.imgs&&m.imgs.length ? `<div class="kimg-row">${m.imgs.map(im=>`<img class="kimg" src="${im}" alt="attached">`).join("")}</div>`
     : (m.hadImgs ? `<div class="soft" style="font-size:10.5px">📷 ${m.hadImgs} image${m.hadImgs>1?"s":""} (from an earlier session)</div>` : "");
@@ -7193,6 +4592,7 @@ function kikoLogHTML(){
     ? KIKO.log.map(m=>`<div class="kiko-msg ${m.role}">${imgRow(m)}${esc(m.role==='pet'?stripMd(m.text):(m.text||""))}</div>`).join("")
     : `<div class="kiko-msg pet">Hey Mifu! ${greeting()} — how are you? I'm here to help! ❄️</div>`;
 }
+
 // shared chat body (log + photo preview + input bar) — used by the floating bubble AND the Ask-Kiko tab
 function kikoChatInner(inputId, fileId, logId){
   return `<div class="kiko-log" id="${logId}">${kikoLogHTML()}${KIKO.busy?`<div class="kiko-msg pet">…${esc(KIKO.status||"thinking")} ❄️</div>`:""}</div>
@@ -7204,6 +4604,7 @@ function kikoChatInner(inputId, fileId, logId){
       <button class="btn btn-grad" data-act="kikoSend" ${KIKO.busy?"disabled":""}>send</button>
     </div>`;
 }
+
 function paintKiko(){
   saveKikoLog();
   if(KIKO.log.length){ const li=KIKO.log.length-1, last=KIKO.log[li];
@@ -7218,6 +4619,7 @@ function paintKiko(){
   const tlog=$("#kikoTabLog"); if(tlog) tlog.scrollTop=tlog.scrollHeight;
   const inp=kikoInputEl(); if(inp&&!KIKO.busy&&window.matchMedia&&matchMedia("(pointer:fine)").matches) try{ inp.focus(); }catch(_){}   // don't pop the phone keyboard on every repaint
 }
+
 /* drag the ⤡ on the floating chat to resize it — size remembered per device */
 /* apply the remembered free size to the chat window (desktop/iPad only — mobile is a fixed bottom sheet) */
 function applyKikoChatSize(c){
@@ -7227,6 +4629,7 @@ function applyKikoChatSize(c){
   const h=Math.min(Math.max(300,Number(localStorage.getItem("kiko-chat-h2"))||440),Math.round(window.innerHeight*0.86));   // -h2: new key — the old "kiko-chat-h" stored LOG height, not window height
   c.style.width=w+"px"; c.style.height=h+"px";
 }
+
 /* sticky-note-style free corner resize (top-left grip; the window is bottom-anchored above Kiko, so it grows up & out) */
 function wireKikoChatResize(c){
   if(window.innerWidth<=640) return;                       // mobile bottom sheet → no free resize
@@ -7246,6 +4649,7 @@ function wireKikoChatResize(c){
     g.addEventListener("pointermove",move); g.addEventListener("pointerup",up); g.addEventListener("pointercancel",up);
   });
 }
+
 function kikoGreet(){
   if(KIKO.open) return;
   if(PREF.calm) return;                                          // calm mode = no chatter
@@ -7256,6 +4660,7 @@ function kikoGreet(){
   b.classList.remove("hidden");
   clearTimeout(b._h); b._h=setTimeout(()=>b.classList.add("hidden"),5500);
 }
+
 
 /* Kiko agent — execute an AI action against the app's data/state */
 async function execAgentAction(a){
@@ -7577,14 +4982,17 @@ async function execAgentAction(a){
   }catch(e){ console.error("action failed",T,e); return null; }
   return null;
 }
+
 /* fuzzy item matcher for agent delete/complete: exact → startsWith → contains */
 function findByText(list,text,key){ const q=String(text||"").toLowerCase().trim(); if(!q)return -1;
   let i=list.findIndex(x=>String(x[key]||"").toLowerCase()===q);
   if(i<0) i=list.findIndex(x=>String(x[key]||"").toLowerCase().startsWith(q));
   if(i<0) i=list.findIndex(x=>String(x[key]||"").toLowerCase().includes(q));
   return i; }
+
 /* normalize any weekday phrasing → the 3-letter form the schedule uses (Mon..Sun) */
 function normDay(d){ if(!d)return null; const m={sun:"Sun",sunday:"Sun",mon:"Mon",monday:"Mon",tue:"Tue",tues:"Tue",tuesday:"Tue",wed:"Wed",weds:"Wed",wednesday:"Wed",thu:"Thu",thur:"Thu",thurs:"Thu",thursday:"Thu",fri:"Fri",friday:"Fri",sat:"Sat",saturday:"Sat"}; return m[String(d).trim().toLowerCase()]||null; }
+
 
 function start(){
   applyPrefs();
@@ -7640,6 +5048,7 @@ function start(){
   sc.onerror=()=>{ render(); };
   document.head.appendChild(sc);
 }
+
 function gameEventPrompt(gameName){
   const sources={
     "Infinity Nikki":"https://infinitynikki.infoldgames.com/en/news AND https://game8.co/games/Infinity-Nikki AND r/InfinityNikki. Nikki runs MANY small simultaneous events — find ALL of them ending within 14 days. Look for: gathering/exploration events, limited claimable rewards, styling contests, resonance events, story events, Starlit Crystal activities, Wishing Well events. Include EVERY one with an exact end date, not just the most obvious banner.",
@@ -7668,6 +5077,7 @@ Rules:
 - Only include things with confirmed real dates from official sources or wikis
 - One entry per event — no duplicates`;
 }
+
 async function refreshGachaEvents(){
   const btn=document.getElementById("gachaRefreshBtn");
   const body=document.getElementById("gachaFocusBody");
@@ -7715,6 +5125,7 @@ async function refreshGachaEvents(){
   }
 }
 
+
 async function exportBackup(){
   const btn=document.getElementById("exportBtn"), msg=document.getElementById("backupMsg");
   if(btn)btn.disabled=true; if(msg)msg.textContent="Exporting…";
@@ -7729,6 +5140,7 @@ async function exportBackup(){
   }catch(e){ if(msg)msg.textContent="Export failed: "+e.message+" 🌧️"; }
   if(btn)btn.disabled=false;
 }
+
 
 async function restoreFromBackup(input){
   const msg=document.getElementById("restoreMsg"); if(!input.files||!input.files[0])return;
@@ -7758,7 +5170,9 @@ async function restoreFromBackup(input){
     setTimeout(()=>location.reload(),1500);
   }catch(e){ if(msg)msg.textContent="Restore failed: "+e.message+" 🌧️"; }
 }
+
 start();
+
 
 /* ===== modular layout engine: drag-reorder (cards + tabs) · freeform resize · masonry · iPad/Pencil-ready ===== */
 (function(){
@@ -7859,9 +5273,12 @@ start();
   if(window.visualViewport){ let vw=visualViewport.width; visualViewport.addEventListener("resize",()=>{ if(Math.abs(visualViewport.width-vw)<2)return; vw=visualViewport.width; try{window.dispatchEvent(new Event("resize"));}catch(e){} }); }
 })();
 
+
 /* ===== PWA + phone push plumbing ===== */
 if("serviceWorker" in navigator){ try{ navigator.serviceWorker.register("sw.js"); }catch(e){} }
+
 function urlB64ToUint8(s){ const pad="=".repeat((4-s.length%4)%4); const b=(s+pad).replace(/-/g,"+").replace(/_/g,"/"); const raw=atob(b); const arr=new Uint8Array(raw.length); for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i); return arr; }
+
 
 /* ===== custom reminders: "remind me to … at …", once or repeating ===== */
 function nextReminderDate(r){   // the next occurrence (for repeats whose stored date is in the past)
@@ -7874,7 +5291,9 @@ function nextReminderDate(r){   // the next occurrence (for repeats whose stored
   if(r.repeat==="monthly"){ while(d<today)d.setMonth(d.getMonth()+1); return d.toLocaleDateString("en-CA"); }
   return r.date;
 }
+
 function activeReminders(){ return (state.sentinel.customReminders||[]).filter(r=>!r.done); }
+
 /* timed pop-ups while the app is open — checks every minute */
 function checkTimedReminders(){
   try{
@@ -7890,14 +5309,18 @@ function checkTimedReminders(){
     });
   }catch(e){}
 }
+
 setTimeout(checkTimedReminders,7000);
+
 setInterval(checkTimedReminders,60*1000);
+
 
 /* ===== pre-stream transition bridge — time-blindness aid: a soft heads-up at T-60 and T-15 ===== */
 function parseSlotTime(t){ if(!t)return null; const m=String(t).trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i); if(!m)return null;
   let h=Number(m[1]); const min=Number(m[2]||0); const ap=(m[3]||"").toLowerCase();
   if(ap==="pm"&&h<12)h+=12; if(ap==="am"&&h===12)h=0; if(!ap&&h>=1&&h<=8)h+=12;   // "3PM" style; bare small hours mean afternoon here
   return h*60+min; }
+
 function streamBridge(){
   try{
     const lvl=localStorage.getItem("kiko-prolevel")||(localStorage.getItem("kiko-proactive")==="0"?"quiet":"gentle");
@@ -7917,8 +5340,11 @@ function streamBridge(){
       localStorage.setItem(key,"1"); break; }
   }catch(e){}
 }
+
 setTimeout(streamBridge,8000);
+
 setInterval(streamBridge,60*1000);
+
 
 /* ===== in-browser event / birthday reminders (fires while the app is open) ===== */
 function checkReminders(){
@@ -7939,8 +5365,11 @@ function checkReminders(){
     });
   }catch(e){ console.error(e); }
 }
+
 setTimeout(checkReminders, 6000);
+
 setInterval(checkReminders, 30*60*1000);
+
 
 /* ===== proactive Kiko: a morning briefing + an evening journal nudge (once a day, via his bubble) ===== */
 /* the "noticing" engine — scans her real data for the single most worth-raising thing right now */
@@ -7989,6 +5418,7 @@ function kikoNotice(){
     return null;
   }catch(e){ return null; }
 }
+
 function kikoProactive(){
   try{
     const lvl=localStorage.getItem("kiko-prolevel")|| (localStorage.getItem("kiko-proactive")==="0"?"quiet":"gentle");
@@ -8028,8 +5458,11 @@ function kikoProactive(){
     }
   }catch(e){}
 }
+
 setTimeout(kikoProactive, 9000);
+
 setInterval(kikoProactive, 20*60*1000);
+
 
 /* returning from the Withings OAuth link → tidy the URL, then pull her latest measurements */
 (function(){
@@ -8041,6 +5474,7 @@ setInterval(kikoProactive, 20*60*1000);
     else if(w==="err"){ const reason=p.get("reason"); setTimeout(()=>toast("Withings link didn't complete"+(reason?" — "+reason:"")+" 🌧️ (try the 🔍 Diagnose button on the Body page)"),3000); }
   }catch(e){}
 })();
+
 
 /* ===== glowing petal cursor trail (icy snowfox) ===== */
 (function(){
@@ -8065,6 +5499,7 @@ setInterval(kikoProactive, 20*60*1000);
   }
   window.addEventListener("pointermove",e=>{ if(e.pointerType!=="mouse")return; const now=performance.now(); if(now-last<55)return; last=now; spawn(e.clientX,e.clientY); },{passive:true});   /* mouse only — Apple Pencil hover must not spray petals */
 })();
+
 
 /* ===== cute falling snow: 5 pretty snowflake designs drifting gently down ===== */
 (function(){
