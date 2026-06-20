@@ -1142,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.biweeklyFocus";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.calFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1465,8 +1465,7 @@ const DB = {
       // using a cached copy risks overwriting real data with a sparse in-memory snapshot.
       const {data}=await SB.from("daily_logs").select("notes").eq("user_id",UID).eq("date",SENTINEL).maybeSingle();
       cur=JSON.parse(JSON.stringify((data&&data.notes)||{}));
-      // keep in-memory cache in sync with what we just read
-      state.sentinel=cur;
+      // do NOT update state.sentinel here — optimistic updates may already be applied
     } else {
       // daily rows: cache is safe — only one writer (this session) ever touches today's row
       const cached=date===TODAY?state.today:null;
@@ -1568,7 +1567,7 @@ function applyPrefs(){
 const MODULAR_TABS=["home","homehealth","care","food","gachas"];
 const MODULAR_GRID_TABS=["home","homehealth","care","food","gachas"];
 const MODULAR_LABELS={};
-function modLayout(tab){ const L=(state.sentinel.layout||{})[tab]||{}; return {order:L.order||[],size:L.size||{},min:L.min||{},hidden:L.hidden||{}}; }
+function modLayout(tab){ const L=(state.sentinel.layout||{})[tab]||{}; return {order:L.order||[],size:L.size||{},min:L.min||{},hidden:L.hidden||{},left:L.left||null,right:L.right||null}; }
 async function setLayout(tab, mut){ await setSent(n=>{ const layout={...(n.layout||{})}; const L={order:[],size:{},min:{},hidden:{},...(layout[tab]||{})}; mut(L); layout[tab]=L; return {...n,layout}; }); }
 function modularGrid(tab, items, addable){
   const L=modLayout(tab); MODULAR_LABELS[tab]={}; const byKey={};
@@ -1583,9 +1582,21 @@ function modularGrid(tab, items, addable){
       ${it.html}</div>`; };
   const hiddenN=Object.keys(L.hidden).filter(k=>L.hidden[k]&&byKey[k]).length;
   const add=addable===false?"":`<button class="home-add" data-act="manageCards" data-tab="${tab}">＋ cards${hiddenN?` · ${hiddenN} hidden`:""}</button>`;
-  // span2 items go directly in .grid-modular (flex-basis:100%); span1 items pair into .grid-col divs
   let html='', buf=[];
-  const flushBuf=()=>{ if(!buf.length)return; const l=buf.filter((_,i)=>i%2===0),r=buf.filter((_,i)=>i%2!==0); html+=`<div class="grid-col" data-col="0">${l.map(makeW).join("")}</div><div class="grid-col" data-col="1">${r.map(makeW).join("")}</div>`; buf=[]; };
+  const flushBuf=()=>{
+    if(!buf.length)return;
+    let l,r;
+    if(L.left||L.right){
+      // use explicit column assignment saved from drag
+      const lSet=new Set(L.left||[]), rSet=new Set(L.right||[]);
+      l=buf.filter(k=>lSet.has(k)||(!rSet.has(k)&&buf.indexOf(k)%2===0));
+      r=buf.filter(k=>rSet.has(k));
+      // any buf item not in either set falls to left (above handles it via indexOf%2)
+    } else {
+      l=buf.filter((_,i)=>i%2===0); r=buf.filter((_,i)=>i%2!==0);
+    }
+    html+=`<div class="grid-col" data-col="0">${l.map(makeW).join("")}</div><div class="grid-col" data-col="1">${r.map(makeW).join("")}</div>`; buf=[];
+  };
   visible.forEach(k=>{ if(isFW(k)){flushBuf();html+=makeW(k);}else buf.push(k); });
   flushBuf();
   return `<div class="grid-modular" data-tab="${tab}">${html}${add}</div>`;
@@ -2623,6 +2634,47 @@ function compactGachaAlert(){
     <button class="btn" data-act="tab" data-tab="gachas" style="margin-top:10px;width:100%">Open Gachas →</button>
   </div>`;
 }
+function pulsePrompt(gameName){
+  return `Today is ${TODAY}. You are a community researcher for a VTuber who covers gacha games. Search Reddit (r/${gameName.replace(/\s/g,'')}, r/gachagaming, r/gachagaming_meta), Twitter/X, YouTube comments, and any fan wikis or news sites RIGHT NOW for what the ${gameName} community is ACTUALLY talking about this week.
+
+CRITICAL RULES:
+- Only include things specific to ${gameName} — do NOT mix up content from other games
+- Verify every character name, event name, and date belongs to ${gameName} before including it
+- For DRAMA: there is ALWAYS something people are frustrated or unhappy about. Look for: content droughts, marketing failures, communication issues (wrong YouTube channel, no official announcement), gacha rate complaints, broken promises, dev silence, comparison to competitors, censorship, rerun controversies, lack of content, roadmap disappointments, community infighting, anything. If the obvious controversies seem "old", dig deeper — find what people are still upset about or newly upset about. NEVER write "no significant controversy" or "no drama". That answer is always wrong.
+- Include real source URLs people can click to verify
+
+Reply in EXACTLY this format — no intro, no preamble, just these four lines:
+HYPE: [one sentence — the SPECIFIC character/event/update/collab people are hyped about RIGHT NOW, with their exact name and a source link]
+DRAMA: [one sentence — the REAL frustration, controversy, or backlash happening in the community RIGHT NOW — be specific: name what happened, when, who's involved, and include a source link. NEVER say "no significant controversy".]
+IDEA: [one punchy stream or video title reacting to the real current mood — short, catchy, YouTube-title style]
+DETAIL: [full breakdown: what exactly happened, when, how the community reacted, direct quotes or receipts if you can find them, why it matters for a streamer covering this game, all your sources]`;
+}
+async function refreshCommunityPulse(gid){
+  const btn=document.getElementById("pulse-btn-"+gid);
+  if(btn){ btn.disabled=true; btn.textContent="🦊…"; }
+  try{
+    const g=(gachaList()||[]).find(x=>x.id===gid); if(!g) return;
+    const d=await kikoSimpleCall({question:pulsePrompt(g.name),history:[],tab:"gachas",userModel:state.sentinel.kikoUserModel||"",smart:false});
+    const ans=d.reply||"";
+    if(ans) await setSent(n=>{ const v=(n.sparkVault||[]).filter(x=>x.gid!==gid); return {...n,sparkVault:[...v,{id:"spark"+Date.now(),gid,text:ans,date:TODAY}]}; });
+    try{ render(); }catch(_){}
+  }catch(e){ if(btn){ btn.disabled=false; btn.textContent="research"; } }
+}
+async function refreshAllCommunityPulse(){
+  const btn=document.getElementById("pulseAllBtn");
+  if(btn){ btn.disabled=true; btn.textContent="🦊 researching…"; }
+  const list=gachaList()||[];
+  for(const g of list){
+    try{
+      const d=await kikoSimpleCall({question:pulsePrompt(g.name),history:[],tab:"gachas",userModel:state.sentinel.kikoUserModel||"",smart:false});
+      const ans=d.reply||"";
+      if(ans) await setSent(n=>{ const v=(n.sparkVault||[]).filter(x=>x.gid!==g.id); return {...n,sparkVault:[...v,{id:"spark"+Date.now(),gid:g.id,text:ans,date:TODAY}]}; });
+      await new Promise(r=>setTimeout(r,2000));
+    }catch(_){}
+  }
+  try{ render(); }catch(_){}
+  if(btn){ btn.disabled=false; btn.textContent="🔄 refresh all"; }
+}
 function cardGachaCommunityPulse(){
   const list=gachaList();
   const vault=(state.sentinel.sparkVault||[]).slice().reverse();
@@ -2630,13 +2682,11 @@ function cardGachaCommunityPulse(){
     const match=vault.find(v=>v.gid===g.id);
     return{g,idea:match};
   });
-  const allNames=list.map(g=>g.name).join(', ');
-  const bulkSeed=`I'm a VTuber and gacha content creator. Search the internet RIGHT NOW (Reddit, YouTube, Twitter/X) for what each of these game communities is actually talking about this week. For each game give me: 1) what's genuinely trending — name the SPECIFIC character, event, patch or moment by name, 2) any real drama, controversy or frustration — name EXACTLY what happened, who was involved, and when, and 3) one punchy stream idea that reacts to the real current mood. For EVERY point include at least one source link I can click to verify. No vague summaries — if you can't find something specific, say so. Games: ${allNames}.`;
   return `<section class="panel" style="margin-top:16px">
-    <div class="card-head"><span class="label">🦊 Community Pulse</span><button class="btn btn-grad" data-act="kikoSeedAsk" data-seed="${esc(bulkSeed)}">Ask Kiko to research all →</button></div>
+    <div class="card-head"><span class="label">🦊 Community Pulse</span><button id="pulseAllBtn" class="btn btn-grad" onclick="refreshAllCommunityPulse()">🔄 refresh all</button></div>
     <div style="background:rgba(180,150,220,.09);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
       <span style="font-size:18px;flex:none">🦊</span>
-      <p style="font-size:12px;line-height:1.5;margin:0">Kiko reads Reddit, YouTube &amp; Twitter in real time to find what each community is buzzing about — then sparks a content idea per game. Tap a game's button for a deep-dive, or ask Kiko all at once above.</p>
+      <p style="font-size:12px;line-height:1.5;margin:0">Kiko searches Reddit, YouTube &amp; Twitter live to find real community buzz — hype, drama, and a content idea per game. Hit research to refresh any game instantly, no chat needed!</p>
     </div>
     ${gameIdeas.map(({g,idea})=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--line)">
       <div style="width:34px;height:34px;border-radius:50%;background:#EEEDFE;color:#534AB7;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;line-height:1.2">${esc(g.name.slice(0,5))}</div>
@@ -2650,22 +2700,34 @@ function cardGachaCommunityPulse(){
             ${p.drama?`<div><span style="font-weight:700;color:var(--sakura-deep)">Drama:</span> ${esc(p.drama)}</div>`:""}
             ${p.idea?`<div><span style="font-weight:700;color:var(--mint)">Idea:</span> ${esc(p.idea)}</div>`:""}
           </div>`;
-          return `${expanded
-            ?`<div style="font-size:12.5px;line-height:1.6;margin:0 0 4px">${renderMd(p.detail||idea.text)}</div>`
-            :collapsed}
+          const expandedView=`<div style="display:flex;flex-direction:column;gap:8px;margin:0 0 6px">
+            ${p.hype?`<div style="background:rgba(100,120,220,.10);border-left:3px solid var(--peri-deep);border-radius:0 8px 8px 0;padding:8px 10px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--peri-deep);margin-bottom:3px">✨ HYPE</div>
+              <div style="font-size:12.5px;line-height:1.6">${renderMd(p.hype)}</div>
+            </div>`:""}
+            ${p.drama?`<div style="background:rgba(220,100,130,.10);border-left:3px solid var(--sakura-deep);border-radius:0 8px 8px 0;padding:8px 10px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--sakura-deep);margin-bottom:3px">🔥 DRAMA</div>
+              <div style="font-size:12.5px;line-height:1.6">${renderMd(p.drama)}</div>
+            </div>`:""}
+            ${p.idea?`<div style="background:rgba(100,200,160,.10);border-left:3px solid var(--mint);border-radius:0 8px 8px 0;padding:8px 10px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--mint);margin-bottom:3px">💡 STREAM IDEA</div>
+              <div style="font-size:12.5px;line-height:1.6">${renderMd(p.idea)}</div>
+            </div>`:""}
+            ${p.detail?`<div style="background:rgba(150,150,150,.07);border-radius:8px;padding:8px 10px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">📋 FULL BREAKDOWN</div>
+              <div style="font-size:12px;line-height:1.7;color:var(--text)">${renderMd(p.detail)}</div>
+            </div>`:""}
+          </div>`;
+          return `${expanded?expandedView:collapsed}
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <span style="font-size:10px;color:var(--muted)">Saved ${fmtDate(idea.date)}</span>
             <button class="x" style="font-size:11px;color:var(--lav-deep)" data-act="togglePulseExpand" data-gid="${esc(g.id)}">${expanded?"▲ collapse":"▼ read more"}</button>
           </div>`;
-        })():`<p style="font-size:12px;color:var(--muted);margin:0">No ideas saved yet — ask Kiko!</p>`}
+        })():`<p style="font-size:12px;color:var(--muted);margin:0">No data yet — hit research! 🦊</p>`}
       </div>
-      <button class="btn" style="font-size:11px;flex-shrink:0" data-act="kikoSeedAsk" data-gameid="${esc(g.id)}" data-seed="${esc(`Search Reddit (r/${g.name.replace(/\s/g,'')}, r/gachagaming), Twitter/X, and YouTube comments RIGHT NOW for what the ${g.name} community is actually saying this week. Be SPECIFIC — name real things, real dates, real people. Reply in EXACTLY this format — no intro, no extra text:
-HYPE: [one sentence naming the SPECIFIC character/event/update people are excited about RIGHT NOW — include their name/title + a source link]
-DRAMA: [one sentence on the REAL frustration or controversy in the community RIGHT NOW — dig into marketing decisions, communication failures, content droughts, gacha rates, broken promises, dev behaviour, anything — NEVER say "no drama", there is ALWAYS something people are unhappy about, even if it's small — include a source link]
-IDEA: [one punchy stream or video title reacting to the REAL current mood — short, catchy, YouTube-title style]
-DETAIL: [your full breakdown: what exactly happened, when, community reaction with receipts, sources, why it matters for a streamer covering this game]`)}">research</button>
+      <button id="pulse-btn-${esc(g.id)}" class="btn" style="font-size:11px;flex-shrink:0" onclick="refreshCommunityPulse('${esc(g.id)}')">research</button>
     </div>`).join('')}
-    <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.4">Kiko connects to the internet to find live community buzz — ideas here are always fresh, not pre-programmed. 🌐</p>
+    <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.4">Kiko connects to the internet live — results are always fresh, never pre-programmed. 🌐</p>
   </section>`;
 }
 function viewGachas(){
@@ -2681,14 +2743,21 @@ function viewGachas(){
   const wkOff=state.gachaWeekOffset||0;
   const wkLo=wkOff*7, wkHi=wkLo+7;
   const daysUntilEnd=e=>{ if(!e.endDate) return null; const d=daysBetween(TODAY,e.endDate); return d>=0?d:null; };
-  const isEndingTitle=e=>/\bend\b|\bends\b|\bclos|\bexpir|\blast day/i.test(e.title||'');
-  const focusEnding=allEvs.filter(e=>{
-    const due=daysUntilEnd(e);
-    if(due!=null) return due>=wkLo&&due<=wkHi;
-    return e.days>=wkLo&&e.days<=wkHi&&isEndingTitle(e);
-  }).sort((a,b)=>{ const da=daysUntilEnd(a)??a.days, db=daysUntilEnd(b)??b.days; return da-db; });
-  const endingIds=new Set(focusEnding.map(e=>e.id));
-  const focusStart=allEvs.filter(e=>e.days>=wkLo&&e.days<=wkHi&&!endingIds.has(e.id)).sort((a,b)=>a.days-b.days);
+  const isEndingTitle=e=>/\bend\b|\bends\b|\bclos|\bexpir|\blast day|\breset\b/i.test(e.title||'');
+  // "due in days" = days until endDate if set, else days until start (for title-based ending events)
+  const dueDays=e=>{ const d=daysUntilEnd(e); return d!=null?d:e.days; };
+  const isEndingEvent=e=>{ const due=daysUntilEnd(e); if(due!=null) return due>=0&&due<=14; return isEndingTitle(e)&&e.days>=0&&e.days<=14; };
+  // split into today / this-week / next-week
+  const focusToday=allEvs.filter(e=>isEndingEvent(e)&&dueDays(e)===0).sort((a,b)=>dueDays(a)-dueDays(b));
+  const todayIds=new Set(focusToday.map(e=>e.id));
+  const focusEnding=allEvs.filter(e=>!todayIds.has(e.id)&&isEndingEvent(e)&&dueDays(e)>=wkLo&&dueDays(e)<=wkHi).sort((a,b)=>dueDays(a)-dueDays(b));
+  const endingIds=new Set([...todayIds,...focusEnding.map(e=>e.id)]);
+  const focusStart=allEvs.filter(e=>!endingIds.has(e.id)&&e.days>=wkLo&&e.days<=wkHi).sort((a,b)=>a.days-b.days);
+  // checked-off state (day-scoped, stored in localStorage)
+  const checkedKey="gachaEvChecked_"+TODAY;
+  const getChecked=()=>{ try{ return new Set(JSON.parse(localStorage.getItem(checkedKey)||"[]")); }catch(_){ return new Set(); } };
+  const toggleEvChecked=id=>{ const s=getChecked(); s.has(id)?s.delete(id):s.add(id); localStorage.setItem(checkedKey,JSON.stringify([...s])); try{render();}catch(_){} };
+  window._toggleEvChecked=toggleEvChecked;
   const wkLabel=wkOff===0?"This week":"Next week";
   const lastRefresh=localStorage.getItem("gachaEvLastRefresh")||"never";
   const weeklies=gachaWeeklies();
@@ -2708,9 +2777,19 @@ function viewGachas(){
       </div>
       <p class="soft" style="font-size:11px;margin:0 0 6px">Last updated: ${lastRefresh==="never"?"never — press Refresh!":lastRefresh}</p>
       <div id="gachaFocusBody">
-      ${!focusEnding.length&&!focusStart.length?`<p class="soft" style="font-size:12px;margin:4px 0">No events found for ${wkLabel.toLowerCase()} — press 🔄 Refresh and Kiko will look them up!</p>`:""}
-      ${focusEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:8px 0 2px;letter-spacing:-.01em">⏳ Ending ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Make sure to grab all event gems before they're gone!</p>${focusEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(daysUntilEnd(e)??e.days,e.days===0,fmtDate(e.endDate||e.date))}</div>`).join('')}`:''}
-      ${focusStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:8px 0 2px;letter-spacing:-.01em">🌟 Starting ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${focusStart.map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
+      ${!focusToday.length&&!focusEnding.length&&!focusStart.length?`<p class="soft" style="font-size:12px;margin:4px 0">No events found for ${wkLabel.toLowerCase()} — press 🔄 Refresh and Kiko will look them up!</p>`:""}
+      ${(()=>{ const checked=getChecked(); return focusToday.length?`
+        <div style="background:rgba(220,80,60,.08);border:1.5px solid rgba(220,80,60,.25);border-radius:10px;padding:8px 10px;margin:4px 0 10px">
+          <p style="font-size:13px;font-weight:800;color:#d94f30;margin:0 0 2px;letter-spacing:-.01em">🚨 Do today!</p>
+          <p class="soft" style="font-size:11px;margin:0 0 8px">These end or reset today — grab your gems now!</p>
+          ${focusToday.map(e=>{ const done=checked.has(e.id); return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid rgba(220,80,60,.15)">
+            <button onclick="window._toggleEvChecked('${esc(e.id)}')" style="width:22px;height:22px;border-radius:6px;border:2px solid ${done?'#d94f30':'rgba(220,80,60,.4)'};background:${done?'#d94f30':'transparent'};color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">${done?'✓':''}</button>
+            <span class="grow" style="font-size:13px;${done?'text-decoration:line-through;color:var(--muted)':''}">${esc(e.title)}</span>
+            <span class="pill tier-urgent" style="flex:none">Today!</span>
+          </div>`; }).join('')}
+        </div>`:''})()}
+      ${focusEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:8px 0 2px;letter-spacing:-.01em">⏳ Ending ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Make sure to grab all event gems before they're gone!</p>${focusEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(dueDays(e),false,fmtDate(e.endDate||e.date))}</div>`).join('')}`:''}
+      ${focusStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:8px 0 2px;letter-spacing:-.01em">🌟 Starting ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${focusStart.map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,false,fmtDate(e.date))}</div>`).join('')}`:''}
       </div>
     </section>
   </div>`;
@@ -6227,15 +6306,15 @@ function renderCalendar(){
       const bdayChips=showBdays?(sent.birthdays||[]).filter(b=>(d.getMonth()+1)===Number(b.month)&&d.getDate()===Number(b.day)).map(b=>
         `<div class="cal-wk-bday">🎂 ${esc(b.name)}</div>`
       ).join(""):"";
-      const dayEvs=events.filter(ev=>ds>=ev.date&&ds<=(ev.endDate||ev.date)&&(gameSrc(ev)?showGames:showEvents));
+      const dayEvs=events.filter(ev=>(ds===ev.date||ds===(ev.endDate||ev.date))&&(gameSrc(ev)?showGames:showEvents));
       const evChips=dayEvs.sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99")).map(ev=>{
         const bg=gameSrc(ev)?gameSrcColor(ev,gameColor):(ev.color||CAL_COLORS[0]);
         const ic=gameSrcIcon(ev);
         const et=toLocal(ev.date,ev.time,ev.tz);
-        const linkable=gameSrc(ev)&&ev.url, act=linkable?`data-act="calLink" data-url="${esc(ev.url)}"`:`data-act="calEvent"`;
         const timeStr=et?`<span class="cal-wk-time">${et.tTime}</span>`:(ev.time?`<span class="cal-wk-time">${fmt12(ev.time)}</span>`:"");
         const multi=ev.endDate&&ev.endDate>ev.date, isEnd=multi&&ds===ev.endDate, suffix=multi?(isEnd?" · ends":" · starts"):"";
-        return `<div class="cal-wk-ev" style="background:${bg}" ${act} data-eid="${ev.id}">${ic}${timeStr}${esc(ev.title)}${suffix}</div>`;
+        const lk=ev.url?` 🔗`:"";
+        return `<div class="cal-wk-ev" style="background:${bg}" data-act="calEvent" data-eid="${ev.id}">${ic}${timeStr}${esc(ev.title)}${suffix}${lk}</div>`;
       }).join("");
       const empty=!streamChips&&!bdayChips&&!evChips;
       return `<div class="cal-wk-row${isToday?' today':''}" data-date="${ds}" data-act="calAdd">
@@ -6286,7 +6365,7 @@ function renderCalendar(){
       const bg=gameSrc(ev)?gameSrcColor(ev,gameColor):(ev.color||CAL_COLORS[0]);
       const ic=gameSrcIcon(ev);
       const et=toLocal(ev.date,ev.time,ev.tz);
-      const linkable=gameSrc(ev)&&ev.url, act=linkable?`data-act="calLink" data-url="${esc(ev.url)}"`:`data-act="calEvent"`, lk=linkable?" 🔗":"";
+      const lk=ev.url?" 🔗":"", act=`data-act="calEvent"`;
       const tip=esc((et?et.tTime+" "+CAL_TZ_LABEL+" — ":"")+ev.title+(multi?` (${fmtDate(ev.date)}–${fmtDate(ev.endDate)})`:"")+(ev.note?" — "+ev.note:"")+(linkable?" — (tap to open)":""));
       return `<div class="cal-ev" draggable="${(!multi||!isEnd)?'true':'false'}" data-eid="${ev.id}" ${act} style="background:${bg}" title="${tip}">${ic}${esc(ev.title)}${suffix}${lk}</div>`;
     }).join("");
@@ -6383,6 +6462,11 @@ async function calEventModal(date,eid){
   const curTz=ev?(ev.tz||CAL_TZ_TARGET):CAL_TZ_TARGET;
   document.getElementById("modal").innerHTML=`<div class="modal-bg" data-act="closeModal"><div class="modal" data-act="noop" style="max-width:420px;width:100%;max-height:92vh;overflow:auto"><div class="card-head"><h3 style="font-size:16px">${ev?"✏️ Edit event":"➕ New event"}</h3><button class="btn" data-act="closeModal">✕</button></div>
     <input type="hidden" id="calEid" value="${ev?ev.id:""}" />
+    ${ev&&ev.autoFetched&&(ev.note||ev.url)?`<div style="background:rgba(100,120,220,.08);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--lav-deep);margin-bottom:4px">🦊 KIKO FOUND</div>
+      ${ev.note?`<p style="font-size:12.5px;line-height:1.5;margin:0 0 6px">${esc(ev.note)}</p>`:""}
+      ${ev.url?`<a href="${esc(ev.url)}" target="_blank" rel="noopener" style="font-size:11.5px;color:var(--lav-deep);word-break:break-all">🔗 ${esc(ev.url)}</a>`:""}
+    </div>`:""}
     <div class="label" style="margin-bottom:4px">What's happening?</div>
     <input class="inp" id="calTitle" value="${ev?esc(ev.title):""}" placeholder="e.g. Collab stream 🎀" />
     <div style="display:flex;gap:10px;margin-top:10px">
@@ -6397,7 +6481,7 @@ async function calEventModal(date,eid){
     <div class="label" style="margin:12px 0 4px">Note</div>
     <textarea class="inp" id="calNote" rows="2" placeholder="anything to remember… 🌸">${ev&&ev.note?esc(ev.note):""}</textarea>
     <div class="label" style="margin:12px 0 4px">Link (optional)</div>
-    <div style="display:flex;gap:8px"><input class="inp" id="calUrl" value="${ev&&ev.url?esc(ev.url):""}" placeholder="https://… update info" />${ev&&ev.url?`<button class="btn" data-act="calLink" data-url="${esc(ev.url)}" title="open link">🔗</button>`:""}</div>
+    <div style="display:flex;gap:8px"><input class="inp" id="calUrl" value="${ev&&ev.url?esc(ev.url):""}" placeholder="https://… update info" />${ev&&ev.url?`<a href="${esc(ev.url)}" target="_blank" rel="noopener" class="btn" title="open link">🔗</a>`:""}</div>
     <div class="label" style="margin:12px 0 4px">Colour</div>
     <div id="calColors" style="display:flex;gap:8px">${CAL_COLORS.map(c=>`<button class="cal-swatch" data-color="${c}" style="background:${c};border:2px solid ${c===CAL_COLOR?"var(--ink)":"transparent"}"></button>`).join("")}</div>
     <div style="display:flex;gap:8px;margin-top:16px">
@@ -8720,18 +8804,22 @@ async function refreshGachaEvents(){
     const prompt=`Today is ${TODAY}. Search the web RIGHT NOW for in-game events, endgame resets, and limited-time content for these games: ${games}.
 
 Return ONLY a valid JSON array — no markdown, no explanation, just the raw array. Each item:
-{"title":"[Game] — [specific event name]","game":"[game name]","date":"YYYY-MM-DD","endDate":"YYYY-MM-DD or null","type":"event|reset|livestream|update"}
+{"title":"[Game] — [specific event name]","game":"[game name]","date":"YYYY-MM-DD","endDate":"YYYY-MM-DD or null","type":"event|reset|livestream|update","url":"https://... source link or empty string","note":"brief one-line description of what this is"}
 
 Rules:
 - Focus on IN-GAME EVENTS and LIMITED TIME CONTENT — things that expire and you'll miss if you don't play
 - Include endgame rotation resets (e.g. ZZZ Hollow Zero/Shiyu Defense resets, HSR Memory of Chaos/Pure Fiction, WuWa Tower of Adversity, Arknights CC/IS resets, Genshin Spiral Abyss, R1999 Limbo)
+- For resets like ZZZ Hollow Zero, Shiyu Defense, Deadly Assault — find the EXACT current cycle end date, not a generic date. Check the official ZZZ wiki or HoYoLAB for the current cycle's specific end timestamp
 - Include limited time events ending within 14 days — name the SPECIFIC event
 - Include any announced official livestreams in the next 14 days
 - DO NOT include gacha banners — she tracks those separately
 - "date" = start date (or today if already started), "endDate" = when it ends (null if unknown)
+- "url" = link to the wiki page, official post, or source you used — leave "" if you can't find one
+- "note" = one short sentence explaining what this is and why she should care
 - NEVER mix up games — verify each item belongs to the correct game before including it
 - Only include things with real confirmed dates from official sources or wikis
-- If a game has nothing happening this week, skip it`;
+- If a game has nothing happening this week, skip it
+- DO NOT create duplicate entries — one entry per event, even if it spans multiple weeks`;
     const d=await kikoSimpleCall({question:prompt,history:[],tab:"gachas",userModel:"",smart:false});
     const raw=(d.reply||"").replace(/```json|```/g,"").trim();
     const events=JSON.parse(raw);
@@ -8748,7 +8836,9 @@ Rules:
         src:"game",
         autoFetched:true,
         tz:"Europe/Amsterdam",
-        time:"",note:"",url:""
+        time:"",
+        note:e.note||"",
+        url:e.url||""
       }));
       return {...n,calendarEvents:[...kept,...fresh]};
     });
@@ -8876,16 +8966,18 @@ start();
       const grid=x.c.closest(".grid-modular")||x.c;
       const tab=grid.getAttribute("data-tab")||x.c.getAttribute("data-tab");
       // walk grid children: span2 items are direct children, span1 items are in .grid-col pairs
-      const order=[]; const ch=[...grid.children]; let ci=0;
-      while(ci<ch.length){ const c=ch[ci];
-        if(c.classList.contains("home-widget")){ const k=c.getAttribute("data-w"); if(k)order.push(k); ci++; }
-        else if(c.classList.contains("grid-col")){ const l=[...c.querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")); const nc=ch[ci+1]; const r=nc&&nc.classList.contains("grid-col")?[...nc.querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")):[]; const ml=Math.max(l.length,r.length); for(let j=0;j<ml;j++){if(l[j])order.push(l[j]);if(r[j])order.push(r[j]);} ci+=nc&&nc.classList.contains("grid-col")?2:1; }
-        else ci++; }
-      // optimistic update so layoutHome() sees the new order immediately
+      // read explicit left/right column contents from the DOM — no interleaving
+      const cols=[...grid.querySelectorAll(".grid-col")];
+      const leftKeys=cols[0]?[...cols[0].querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")).filter(Boolean):[];
+      const rightKeys=cols[1]?[...cols[1].querySelectorAll(".home-widget")].map(w=>w.getAttribute("data-w")).filter(Boolean):[];
+      const order=[...leftKeys,...rightKeys]; // flat list for compat
+      // optimistic update
       if(!state.sentinel.layout)state.sentinel.layout={};
       if(!state.sentinel.layout[tab])state.sentinel.layout[tab]={order:[],size:{},min:{},hidden:{}};
       state.sentinel.layout[tab].order=order;
-      setLayout(tab,L=>{ L.order=order; });
+      state.sentinel.layout[tab].left=leftKeys;
+      state.sentinel.layout[tab].right=rightKeys;
+      setLayout(tab,L=>{ L.order=order; L.left=leftKeys; L.right=rightKeys; });
     }
   },true);
   document.addEventListener("pointercancel",()=>{ if(!d)return; if(d.thumb)d.thumb.remove(); if(d.ph){ d.ph.parentElement&&d.ph.parentElement.insertBefore(d.item,d.ph); d.ph.remove(); } if(d.item)d.item.classList.remove("dragsrc","resizing","reordering"); d=null; },true);
