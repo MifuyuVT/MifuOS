@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self';" />
+<!-- Same meta-tag CSP caveat as index.html: no frame-ancestors / X-Frame-Options / X-Content-Type-Options
+     possible on GitHub Pages, so clickjacking protection is out of reach here. -->
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;" />
 <title>Mifuyu OS — Log in</title>
 <link rel="icon" type="image/png" href="sakura.png" />
 <link rel="stylesheet" href="login.css" />
