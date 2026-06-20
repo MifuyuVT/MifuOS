@@ -1142,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.userIdFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.migrationFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -8617,13 +8617,59 @@ function start(){
   sc.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
   sc.onload=async()=>{
     try{ SB=window.supabase.createClient(CONFIG.url,CONFIG.anonKey); }catch(e){ console.error(e); render(); return; }
-    // Are we already signed in (from a previous visit)?
+    // handle magic link callback (URL has #access_token after clicking the email link)
+    if(location.hash.includes("access_token")){
+      const {data:{session},error}=await SB.auth.getSession();
+      if(session&&session.user){ UID=session.user.id; history.replaceState(null,"",location.pathname); render(); return; }
+    }
     const {data:{session}}=await SB.auth.getSession();
-    if(session && session.user){ UID=session.user.id; }   // signed in → use real auth UUID
-    render();                                                       // always render — UID already defaulted to CONFIG.userId
+    if(session&&session.user){ UID=session.user.id; }
+    // one-time migration: merge any sentinel data saved under "mifuyu" into the real UUID row
+    try{
+      const legacyId="mifuyu";
+      if(UID!==legacyId){
+        const {data:legRow}=await SB.from("daily_logs").select("notes").eq("user_id",legacyId).eq("date",SENTINEL).maybeSingle();
+        const legData=legRow&&legRow.notes&&Object.keys(legRow.notes).length>3?legRow.notes:null;
+        if(legData){
+          const {data:realRow}=await SB.from("daily_logs").select("notes").eq("user_id",UID).eq("date",SENTINEL).maybeSingle();
+          const realData=(realRow&&realRow.notes)||{};
+          const merged={...legData,...realData}; // real data wins on conflict
+          await SB.from("daily_logs").upsert({user_id:UID,date:SENTINEL,notes:merged},{onConflict:"user_id,date"});
+          // also migrate legacy daily rows that aren't already under UUID
+          const {data:legDays}=await SB.from("daily_logs").select("date,notes").eq("user_id",legacyId).neq("date",SENTINEL);
+          if(legDays&&legDays.length){
+            const {data:realDays}=await SB.from("daily_logs").select("date").eq("user_id",UID).neq("date",SENTINEL);
+            const realDates=new Set((realDays||[]).map(r=>r.date));
+            const toMigrate=legDays.filter(r=>!realDates.has(r.date));
+            if(toMigrate.length) await SB.from("daily_logs").upsert(toMigrate.map(r=>({user_id:UID,date:r.date,notes:r.notes})),{onConflict:"user_id,date"});
+          }
+          console.log("✅ migrated legacy mifuyu data to UUID account");
+        }
+      }
+    }catch(migErr){ console.warn("migration skipped:",migErr); }
+    render();
   };
-  sc.onerror=()=>{ render(); };                 // offline fallback — render with whatever we have
+  sc.onerror=()=>{ render(); };
   document.head.appendChild(sc);
+}
+function showLogin(){
+  const v=$("#view"); if(!v)return;
+  v.innerHTML=`<div style="max-width:360px;margin:80px auto;padding:0 16px;text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">❄️🦊</div>
+    <h2 style="font-family:var(--display);font-size:22px;margin:0 0 6px">Konfuyu~!</h2>
+    <p class="soft" style="font-size:13px;margin:0 0 28px">Enter your email and we'll send you a magic link to sign in.</p>
+    <input id="loginEmail" class="inp" type="email" placeholder="your@email.com" value="${esc(CONFIG.ownerEmail||'')}" style="width:100%;margin-bottom:10px;text-align:center">
+    <button id="loginBtn" class="btn btn-grad" style="width:100%;padding:11px" onclick="sendMagicLink()">✉️ Send magic link</button>
+    <p id="loginMsg" class="soft" style="font-size:12px;margin-top:14px;min-height:18px"></p>
+  </div>`;
+}
+async function sendMagicLink(){
+  const inp=document.getElementById("loginEmail"), msg=document.getElementById("loginMsg"), btn=document.getElementById("loginBtn");
+  const email=(inp&&inp.value||"").trim(); if(!email){ if(msg)msg.textContent="Enter your email first 💗"; return; }
+  if(btn)btn.disabled=true; if(msg)msg.textContent="Sending…";
+  const {error}=await SB.auth.signInWithOtp({email,options:{emailRedirectTo:location.href}});
+  if(msg)msg.textContent=error?"Couldn't send — "+error.message+" 🌧️":"Check your email for the magic link! ✨ (check spam too)";
+  if(btn)btn.disabled=false;
 }
 start();
 
