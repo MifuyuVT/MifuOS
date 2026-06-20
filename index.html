@@ -1142,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.dragAndEvents";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.biweeklyFocus";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1610,7 +1610,7 @@ function manageCardsModal(tab){
     <button class="btn" data-act="resetLayout" data-tab="${tab}" style="margin-top:12px">↺ reset this page's layout</button>
   </div></div>`;
 }
-const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerEnergy:"all", energyLevel:"medium", plnMoreOpen:false, plnShowAll:false, trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week", creatorSub:"script" };
+const state={ tab:"home", today:{}, sentinel:{}, range:[], breathOn:false, plannerEnergy:"all", energyLevel:"medium", plnMoreOpen:false, plnShowAll:false, trendMetrics:["mood"], trendType:"area", trendDays:14, wtMetrics:["w"], wtType:"area", wtRange:"all", calView:"week", creatorSub:"script", gachaWeekOffset:0 };
 try{ state.trendType=localStorage.getItem("mifu-trend-type")||state.trendType; state.wtType=localStorage.getItem("mifu-wt-type")||state.wtType; }catch(e){}   // remember her chart choices
 const OPT={ mode:"video", drops:false, busy:"", err:"", channel:null, video:null, stream:null, thumbData:null, thumb:null }; // Optimize tab
 
@@ -2677,19 +2677,19 @@ function viewGachas(){
   const allEvs=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)}));
   const endingSoon=allEvs.filter(e=>e.days>=0&&e.days<=3&&/\bend\b|\bends\b|\bclos/i.test(e.title||''));
   const todayUpd=allEvs.filter(e=>e.days>=0&&e.days<=30&&!/\bend\b|\bends\b|\bclos/i.test(e.title||''));
-  // weekly gacha focus — ending = endDate within 7 days OR title says "ends/closes"
+  // bi-weekly focus — offset 0 = this week (days 0-7), offset 1 = next week (days 7-14)
+  const wkOff=state.gachaWeekOffset||0;
+  const wkLo=wkOff*7, wkHi=wkLo+7;
   const daysUntilEnd=e=>{ if(!e.endDate) return null; const d=daysBetween(TODAY,e.endDate); return d>=0?d:null; };
   const isEndingTitle=e=>/\bend\b|\bends\b|\bclos|\bexpir|\blast day/i.test(e.title||'');
-  // an event is "ending" if its endDate is within 7 days, OR if it has no endDate but title says "ends"
-  const thisWeekEnding=allEvs.filter(e=>{
+  const focusEnding=allEvs.filter(e=>{
     const due=daysUntilEnd(e);
-    if(due!=null) return due<=7;
-    return e.days>=0&&e.days<=7&&isEndingTitle(e);
+    if(due!=null) return due>=wkLo&&due<=wkHi;
+    return e.days>=wkLo&&e.days<=wkHi&&isEndingTitle(e);
   }).sort((a,b)=>{ const da=daysUntilEnd(a)??a.days, db=daysUntilEnd(b)??b.days; return da-db; });
-  // "starting" = start date within next 7 days and NOT already ending
-  const endingIds=new Set(thisWeekEnding.map(e=>e.id));
-  const thisWeekStart=allEvs.filter(e=>e.days>=0&&e.days<=7&&!endingIds.has(e.id)).sort((a,b)=>a.days-b.days);
-  const byGame=g=>gachaKeywords(g).some(kw=>(g.name||'').toLowerCase().replace(/\W/g,'').includes(kw.replace(/\W/g,'')));
+  const endingIds=new Set(focusEnding.map(e=>e.id));
+  const focusStart=allEvs.filter(e=>e.days>=wkLo&&e.days<=wkHi&&!endingIds.has(e.id)).sort((a,b)=>a.days-b.days);
+  const wkLabel=wkOff===0?"This week":"Next week";
   const lastRefresh=localStorage.getItem("gachaEvLastRefresh")||"never";
   const weeklies=gachaWeeklies();
   // game cards as modular widgets — drag/resize/minimize come for free
@@ -2700,12 +2700,17 @@ function viewGachas(){
       <div class="gg-stat" style="flex:1"><span class="gg-stat-n ${wkDone===total&&total?'ok':''}">${wkDone}/${total}</span><span class="gg-stat-l">Weeklies</span></div>
     </div>
     <section class="panel" style="margin:0;flex:1;display:flex;flex-direction:column">
-      <div class="card-head"><span class="label">✨ Weekly Gacha Focus</span><button id="gachaRefreshBtn" class="btn" onclick="refreshGachaEvents()" title="Kiko researches current events for all your games">🔄 Refresh</button></div>
-      <p class="soft" style="font-size:11px;margin:0 0 8px">Last updated: ${lastRefresh==="never"?"never — press Refresh!":lastRefresh}</p>
+      <div class="card-head"><span class="label">✨ Gacha Focus</span><button id="gachaRefreshBtn" class="btn" onclick="refreshGachaEvents()" title="Kiko researches current events for all your games">🔄 Refresh</button></div>
+      <div style="display:flex;align-items:center;gap:6px;margin:0 0 8px">
+        <button class="btn" style="padding:3px 8px;font-size:11px" onclick="state.gachaWeekOffset=0;render()" ${wkOff===0?'disabled':''}>← This week</button>
+        <span style="font-size:12px;font-weight:700;color:var(--lav-deep);flex:1;text-align:center">${wkLabel}</span>
+        <button class="btn" style="padding:3px 8px;font-size:11px" onclick="state.gachaWeekOffset=1;render()" ${wkOff===1?'disabled':''}>Next week →</button>
+      </div>
+      <p class="soft" style="font-size:11px;margin:0 0 6px">Last updated: ${lastRefresh==="never"?"never — press Refresh!":lastRefresh}</p>
       <div id="gachaFocusBody">
-      ${!thisWeekEnding.length&&!thisWeekStart.length?`<p class="soft" style="font-size:12px;margin:4px 0">No events found — press 🔄 Refresh and Kiko will look them up for you!</p>`:""}
-      ${thisWeekEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:12px 0 2px;letter-spacing:-.01em">⏳ Ending this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Do these before they're gone!</p>${thisWeekEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
-      ${thisWeekStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:12px 0 2px;letter-spacing:-.01em">🌟 Starting this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${thisWeekStart.slice(0,6).map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
+      ${!focusEnding.length&&!focusStart.length?`<p class="soft" style="font-size:12px;margin:4px 0">No events found for ${wkLabel.toLowerCase()} — press 🔄 Refresh and Kiko will look them up!</p>`:""}
+      ${focusEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:8px 0 2px;letter-spacing:-.01em">⏳ Ending ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Make sure to grab all event gems before they're gone!</p>${focusEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(daysUntilEnd(e)??e.days,e.days===0,fmtDate(e.endDate||e.date))}</div>`).join('')}`:''}
+      ${focusStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:8px 0 2px;letter-spacing:-.01em">🌟 Starting ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${focusStart.map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
       </div>
     </section>
   </div>`;
