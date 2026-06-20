@@ -1106,7 +1106,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.comingUp";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.kikoLive";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1124,6 +1124,7 @@ const CONFIG = {
   weightUnit:"kg",
   weightDisplay:"soft", // soft | numbers | hidden
   aiFn:"ai",            // Supabase Edge Function name powering the Optimize tab (keys live there, never here)
+  kikoFn:"ChatGPT_KIKO_AI", // Kiko's Edge Function
   youtube:{ handle:"@mifuyu", url:"https://youtube.com/@mifuyu", channelId:"" },
   platforms:{ youtube:"YouTube", tiktok:"TikTok", instagram:"Instagram", twitter:"X", twitch:"Twitch" },
   // Pasted verbatim into generated descriptions — edit freely.
@@ -5410,6 +5411,18 @@ async function setTaskStatusById(id,st){
 const OPT_FORMATS=[["long","Long form"],["short","Short form"]];   /* X/Twitter posts moved to the 📝 Script tab */
 const OPT_PLATFORMS=[["youtube","YouTube"],["tiktok","TikTok"],["instagram","Instagram"],["twitter","X"],["twitch","Twitch"]];
 const oval=id=>{ const e=document.getElementById(id); return e?e.value.trim():""; };
+async function kikoSimpleCall(agentInput){
+  const sys=`You are Kiko, a warm and playful snow fox AI companion living inside ${CONFIG.creator.name}'s (${CONFIG.creator.fullName}) personal OS. You're cozy, caring, and a little mischievous. Today is ${TODAY}. Help her with streaming, gacha games, creative work, and daily life. Be concise but warm. Use soft emojis occasionally (🦊❄️🌸) but don't overdo it.
+Current tab: ${agentInput.tab}. ${agentInput.userModel?`What you know about her: ${agentInput.userModel}`:""}`;
+  const history=(agentInput.history||[]).map(m=>({role:m.role==="me"?"user":"assistant",content:m.text}));
+  const messages=[{role:"system",content:sys},...history,{role:"user",content:agentInput.question||(agentInput.images&&agentInput.images.length?"(sent an image)":"...")}];
+  const res=await fetch(`${CONFIG.url}/functions/v1/${CONFIG.kikoFn}`,{method:"POST",
+    headers:{"Content-Type":"application/json","apikey":CONFIG.anonKey,"Authorization":"Bearer "+CONFIG.anonKey},
+    body:JSON.stringify({messages})});
+  const data=await res.json();
+  if(data.error) throw new Error(typeof data.error==="string"?data.error:JSON.stringify(data.error));
+  return {reply:data.choices?.[0]?.message?.content||"hmm, my whiskers twitched — ask me again? 🦊"};
+}
 async function aiCall(mode,input,vidiq){
   if(!SB) throw new Error("This needs live mode — connect Supabase first.");
   const { data, error } = await SB.functions.invoke(CONFIG.aiFn, { body:{ mode, input:input||{}, userId:CONFIG.userId, vidiq:vidiq||null } });
@@ -6924,8 +6937,8 @@ const H={
           smart:localStorage.getItem("kiko-smart")==="1",
           summary:kikoDataSummary()};
         let d;
-        try{ d=await aiCallAgentStream(agentInput,t=>{ KIKO.status=t; paintKiko(); }); }   // live "what I'm doing" updates
-        catch(_se){ d=await aiCall("agent",agentInput); }                                  // fallback: plain call
+        try{ d=await kikoSimpleCall(agentInput); }
+        catch(_se){ d=await kikoSimpleCall(agentInput); }
         KIKO.status=null;
         if(d&&d.error) throw new Error(d.error);
         ans=(d&&(d.reply||d.answer))||"hmm, my whiskers twitched — ask me again? 🦊";
