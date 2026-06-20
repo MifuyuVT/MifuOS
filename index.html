@@ -1142,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.calFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.eventTypes";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -2577,9 +2577,10 @@ function gachaEventsForGame(g,allEvs){
   return allEvs.filter(e=>{ const t=(e.title||'').toLowerCase().replace(/\W+/g,''); return kws.some(kw=>t.includes(kw)); }).sort((a,b)=>a.days-b.days);
 }
 function gachaEventType(e){
-  if(e.src==='gamestream'||/livestream|showcase|preview|reveal/i.test(e.title||'')) return 'Livestream';
-  if(/banner|rerun/i.test(e.title||'')) return 'New Banner';
-  if(/\bupdate\b|\bversion\b|\bpatch\b/i.test(e.title||'')) return 'New Update';
+  if(e.src==='gamestream'||/livestream|showcase|preview|reveal|special program/i.test(e.title||'')) return 'Livestream';
+  if(/banner|rerun|\bphase\s*[12]\b|\([^)]+\/[^)]+\)/i.test(e.title||'')) return 'Banner';
+  if(/\breset\b/i.test(e.title||'')) return 'Reset';
+  if(/\bupdate\b|\bversion\b|\bpatch\b/i.test(e.title||'')) return 'Update';
   return 'Event';
 }
 function gachaGameSpark(g,evs){
@@ -2592,14 +2593,32 @@ function gachaGameSpark(g,evs){
   const when=e.days===0?'today':e.days===1?'tomorrow':`in ${e.days} days`;
   return {text:`${type} — "${e.title}" starts ${when}. Stream idea?`, type};
 }
+function evDaysChip(days, dateStr){
+  // always show "In X days" for future events instead of vague "This Month"
+  let label, cls;
+  if(days<=0){ label="Today"; cls="tier-today"; }
+  else if(days===1){ label="Tomorrow"; cls="tier-tmrw"; }
+  else{ label=`In ${days} day${days===1?'':'s'}`; cls=days<=7?"tier-week":"tier-month"; }
+  return `<span class="pill ${cls}" style="flex:none;white-space:nowrap">${label}${dateStr?" • "+dateStr:""}</span>`;
+}
+const EV_TYPE_ICONS={"Livestream":"📺","Banner":"✦","Update":"🔄","Event":"🎉","Reset":"🔁"};
+function evTypeLabel(e){
+  const t=gachaEventType(e);
+  const icon=EV_TYPE_ICONS[t]||"🎮";
+  return `<span style="font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--muted);margin-right:3px">${icon} ${t.toUpperCase()}</span>`;
+}
 function gachaGameCard(g,checks,weeklies,allEvs){
   const done=!!checks[g.id], streak=gachaStreak(g.id);
   const evs=gachaEventsForGame(g,allEvs);
-  const isEnding=e=>/\bend\b|\bends\b|\bclos/i.test(e.title||'');
+  const isEnding=e=>/\bend\b|\bends\b|\bclos|\breset\b/i.test(e.title||'');
   const ending=evs.filter(e=>e.days>=0&&e.days<=14&&isEnding(e)).slice(0,3);
   const coming=evs.filter(e=>e.days>=0&&!isEnding(e)).slice(0,3);
-  const spark=gachaGameSpark(g,evs);
   const wkDone=gachaWkDoneThisWeek(g.id);
+  const evRow=(e,orange)=>`<div class="kn-row" style="font-size:11.5px;align-items:flex-start;gap:6px">
+    <span class="kn-dot" style="margin-top:4px;flex:none${orange?';background:#e07030':''}"></span>
+    <span class="grow" style="line-height:1.4">${evTypeLabel(e)}${esc(e.title)}</span>
+    ${evDaysChip(e.days,fmtDate(orange?(e.endDate||e.date):e.date))}
+  </div>`;
   return `<div class="gg-card ${done?'gg-done':''}">
     <div class="gg-head">
       <span class="gg-name">${esc(g.name)}</span>
@@ -2609,9 +2628,8 @@ function gachaGameCard(g,checks,weeklies,allEvs){
       </div>
     </div>
     <button class="chiptog ${wkDone?'on':''}" data-act="gachaWkToggle" data-v="${g.id}" style="width:100%;justify-content:center;margin-bottom:8px"><span>${wkDone?'✓':'◦'}</span>${wkDone?'Weekly done':'Mark weekly done'}</button>
-    ${coming.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px">🌟 Coming up</div><div class="kn-row" style="font-size:11.5px"><span class="kn-dot"></span><span class="grow">${esc(coming[0].title)}</span>${evTierChip(coming[0].days,coming[0].days===0,fmtDate(coming[0].date))}</div>${coming.length>1?`<button class="soft" data-act="gachaCardMore" data-gid="${g.id}" style="font-size:11px;background:none;border:none;cursor:pointer;padding:3px 0;display:block;color:var(--muted)">${(state.gachaExpanded||{})[g.id]?'▾':'▸'} ${coming.length-1} more future update${coming.length-1===1?'':'s'}</button>${(state.gachaExpanded||{})[g.id]?coming.slice(1).map(e=>`<div class="kn-row" style="font-size:11.5px"><span class="kn-dot"></span><span class="grow">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join(''):''}`:''}`:''}
-    ${ending.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px;color:#e07030">⏳ Ending soon</div>${ending.map(e=>`<div class="kn-row" style="font-size:11.5px"><span class="kn-dot" style="background:#e07030"></span><span class="grow">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
-    ${spark?`<div class="gg-spark"><span class="gg-spark-label">✨ ${esc(spark.type)}</span><p style="font-size:12px;margin:4px 0 7px;line-height:1.45">${esc(spark.text)}</p><button class="chiptog" data-act="sparkSave" data-spark="${esc(spark.text)}" style="font-size:11px"><span>📌</span>Save idea</button></div>`:''}
+    ${ending.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px;color:#e07030">⏳ Ending soon</div>${ending.map(e=>evRow(e,true)).join('')}`:''}
+    ${coming.length?`<div class="sec-label" style="margin:8px 0 4px;font-size:9px">🌟 Coming up</div>${evRow(coming[0],false)}${coming.length>1?`<button class="soft" data-act="gachaCardMore" data-gid="${g.id}" style="font-size:11px;background:none;border:none;cursor:pointer;padding:3px 0;display:block;color:var(--muted)">${(state.gachaExpanded||{})[g.id]?'▾':'▸'} ${coming.length-1} more future update${coming.length-1===1?'':'s'}</button>${(state.gachaExpanded||{})[g.id]?coming.slice(1).map(e=>evRow(e,false)).join(''):''}`:''}`:''}
   </div>`;
 }
 function gachaUpdatesSection(allEvs){
@@ -2769,7 +2787,7 @@ function viewGachas(){
       <div class="gg-stat" style="flex:1"><span class="gg-stat-n ${wkDone===total&&total?'ok':''}">${wkDone}/${total}</span><span class="gg-stat-l">Weeklies</span></div>
     </div>
     <section class="panel" style="margin:0;flex:1;display:flex;flex-direction:column">
-      <div class="card-head"><span class="label">✨ Gacha Focus</span><button id="gachaRefreshBtn" class="btn" onclick="refreshGachaEvents()" title="Kiko researches current events for all your games">🔄 Refresh</button></div>
+      <div class="card-head"><span class="label">✨ Gacha Focus</span><button id="gachaRefreshBtn" class="btn btn-grad" onclick="refreshGachaEvents()">🔄 Refresh events</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin:0 0 8px">
         <button class="btn" style="padding:3px 8px;font-size:11px" onclick="state.gachaWeekOffset=0;render()" ${wkOff===0?'disabled':''}>← This week</button>
         <span style="font-size:12px;font-weight:700;color:var(--lav-deep);flex:1;text-align:center">${wkLabel}</span>
@@ -2788,8 +2806,8 @@ function viewGachas(){
             <span class="pill tier-urgent" style="flex:none">Today!</span>
           </div>`; }).join('')}
         </div>`:''})()}
-      ${focusEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:8px 0 2px;letter-spacing:-.01em">⏳ Ending ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Make sure to grab all event gems before they're gone!</p>${focusEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(dueDays(e),false,fmtDate(e.endDate||e.date))}</div>`).join('')}`:''}
-      ${focusStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:8px 0 2px;letter-spacing:-.01em">🌟 Starting ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${focusStart.map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,false,fmtDate(e.date))}</div>`).join('')}`:''}
+      ${focusEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:8px 0 2px;letter-spacing:-.01em">⏳ Ending ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Make sure to grab all event gems before they're gone!</p>${focusEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evDaysChip(dueDays(e),fmtDate(e.endDate||e.date))}</div>`).join('')}`:''}
+      ${focusStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:8px 0 2px;letter-spacing:-.01em">🌟 Starting ${wkLabel.toLowerCase()}</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${focusStart.map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evDaysChip(e.days,fmtDate(e.date))}</div>`).join('')}`:''}
       </div>
     </section>
   </div>`;
