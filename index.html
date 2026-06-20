@@ -2578,7 +2578,7 @@ function gachaEventsForGame(g,allEvs){
 }
 function gachaEventType(e){
   if(e.src==='gamestream'||/livestream|showcase|preview|reveal|special program/i.test(e.title||'')) return 'Livestream';
-  if(/banner|rerun|\bphase\s*[12]\b|\([^)]+\/[^)]+\)/i.test(e.title||'')) return 'Banner';
+  if(/banner|rerun|\bwarp\b|light cone|\bphase\s*[12]\b|\([^)]+\/[^)]+\)|\bwish\b|\bconvene\b|\bresonator\b|w-engine|signal search|\bheadhunting\b|wishing well|stylist.?s choice|invitation of fates|resonance vision|\bglimpse\b|\bpull\b|\bsummon\b|\bgacha\b|tempered blade|bygone reminiscence/i.test(e.title||'')) return 'Banner';
   if(/\breset\b/i.test(e.title||'')) return 'Reset';
   if(/\bupdate\b|\bversion\b|\bpatch\b/i.test(e.title||'')) return 'Update';
   return 'Event';
@@ -2789,9 +2789,10 @@ function viewGachas(){
   // split into today / this-week / next-week
   const focusToday=allEvs.filter(e=>isEndingEvent(e)&&dueDays(e)===0).sort((a,b)=>dueDays(a)-dueDays(b));
   const todayIds=new Set(focusToday.map(e=>e.id));
-  const focusEnding=allEvs.filter(e=>!todayIds.has(e.id)&&isEndingEvent(e)&&dueDays(e)>=wkLo&&dueDays(e)<=wkHi).sort((a,b)=>dueDays(a)-dueDays(b));
+  const isBanner=e=>gachaEventType(e)==='Banner';
+  const focusEnding=allEvs.filter(e=>!todayIds.has(e.id)&&!isBanner(e)&&isEndingEvent(e)&&dueDays(e)>=wkLo&&dueDays(e)<=wkHi).sort((a,b)=>dueDays(a)-dueDays(b));
   const endingIds=new Set([...todayIds,...focusEnding.map(e=>e.id)]);
-  const focusStart=allEvs.filter(e=>!endingIds.has(e.id)&&e.days>=wkLo&&e.days<=wkHi).sort((a,b)=>a.days-b.days);
+  const focusStart=allEvs.filter(e=>!endingIds.has(e.id)&&!isBanner(e)&&e.days>=wkLo&&e.days<=wkHi).sort((a,b)=>a.days-b.days);
   // checked-off state (day-scoped, stored in localStorage)
   const checkedKey="gachaEvChecked_"+TODAY;
   const getChecked=()=>{ try{ return new Set(JSON.parse(localStorage.getItem(checkedKey)||"[]")); }catch(_){ return new Set(); } };
@@ -8849,11 +8850,27 @@ Rules:
 - Focus on IN-GAME EVENTS and LIMITED TIME CONTENT — things that expire and you'll miss if you don't play
 - Include endgame rotation resets (e.g. ZZZ Hollow Zero/Shiyu Defense/Deadly Assault resets, HSR Memory of Chaos/Pure Fiction, WuWa Tower of Adversity, Arknights CC/IS resets, Genshin Spiral Abyss, Reverse: 1999 Limbo/Mane's Bulletin)
 - For resets like ZZZ Hollow Zero, Shiyu Defense, Deadly Assault — find the EXACT current cycle end date, not a generic date. Check the official ZZZ wiki or HoYoLAB for the current cycle's specific end timestamp
-- For Reverse: 1999 specifically — check r/Reverse1999, the official Bluepoch social media, and the R1999 wiki (reverse1999.fandom.com or 1999.wiki.gg) for current patch events, Limbo season, Mane's Bulletin reset, and any banners or story chapters going live. R1999 patch versions last ~6 weeks — include the current patch end date if found
-- Include limited time events ending within 14 days — name the SPECIFIC event
+Per-game sources — check THESE SPECIFIC PAGES for each game, not just a generic search:
+
+INFINITY NIKKI: Check https://infinitynikki.infoldgames.com/en/news AND https://game8.co/games/Infinity-Nikki AND r/InfinityNikki. Nikki runs MANY small simultaneous events — find ALL of them ending within 14 days. Types to look for: gathering/exploration events, limited claimable rewards, styling contests, resonance events, story events, weekly Starlit Crystal activities. Include EVERY one with an exact end date.
+
+HONKAI: STAR RAIL: Check https://game8.co/games/Honkai-Star-Rail/archives/408749 for the full event schedule. Include in-game reward events (Aptitude Showcase, story events, challenge events, SU events). Do NOT include "Gift of Tempered Blade", "Bygone Reminiscence" or any character/light cone warp.
+
+GENSHIN IMPACT: Check https://game8.co/games/Genshin-Impact for the full event list. Genshin runs many simultaneous events per patch — find all of them ending within 14 days. Do NOT include any "Phase 1/2" banner entries.
+
+ZENLESS ZONE ZERO: Check https://game8.co/games/Zenless-Zone-Zero/archives/457176 AND https://zzz.rng.moe/en/timeline for the full schedule including Hollow Zero and Shiyu Defense EXACT reset dates for the current cycle.
+
+WUTHERING WAVES: Check https://game8.co/games/Wuthering-Waves/archives/453473 AND https://wuwa.uk/event-calendar for all active events with end dates. Current 3.4 events include: Instant Flashlight, Night City Roaming, Gifts of Dreamchasers (all ending July 9), Matrix Reform (Jun 25 - Jul 9).
+
+ARKNIGHTS: Check https://arknights.wiki.gg/wiki/Event/Upcoming for all upcoming and active events. Include CC (Contingency Contract), IS (Integrated Strategies) seasons, and limited story events.
+
+REVERSE: 1999: Check https://dotgg.gg/reverse-1999/events/ AND https://reverse1999.fandom.com/wiki/Events for active events. Current events include Turquoise Serpent Club (ends Jun 29) and Where Spirits Rest (ends Jul 1) — verify these are still active and find any others.
+
+NEVERNESS TO EVERNESS (NTE): Check https://gamewith.net/nte/74811 AND https://www.pockettactics.com/neverness-to-everness/events for the current event schedule. NTE is a newer game — look for story events, collaboration events (e.g. Porsche collab), and in-game activities with end dates.
+- Include limited time events ending within 14 days — name the SPECIFIC event, include the EXACT end date
 - Include any announced official livestreams in the next 14 days
-- DO NOT include gacha pull banners (the actual "pull this character" mechanic) — she tracks those separately
-- DO include new patch/version updates, story chapters, and limited-time events that arrive alongside a new character release — e.g. "R1999 2.5 patch" or "R1999 — [character name] story event" is fine, just not "R1999 — [character name] banner"
+- DO NOT include gacha pull banners, character warps, light cone warps, or weapon banners — she tracks those separately. This includes anything with "warp", "banner", "light cone event warp", "phase 1", "phase 2" in the title
+- DO include new patch/version updates, story chapters, and limited-time in-game events that arrive alongside a new character release — e.g. "HSR 3.2 patch" or "HSR — Ripples Rejoined event" is fine, but NOT "HSR — Bygone Reminiscence Light Cone Warp"
 - "date" = start date (or today if already started), "endDate" = when it ends (null if unknown)
 - "url" = link to the wiki page, official post, or source you used — leave "" if you can't find one
 - "note" = one short sentence explaining what this is and why she should care — NO quotes or apostrophes inside this field, use plain text only
