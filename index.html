@@ -1142,11 +1142,11 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.navDragFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.userIdFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
-  userId: "mifuyu",
+  userId: "dba5e0b4-ec1c-455a-a93d-88b167b9ce26",
   creator: {
     name:"Mifu", fullName:"Yukitsune Mifuyu", emoji:"🦊", snow:"❄️",
     greeting:"Konfuyu~!", pronouns:"she/they",
@@ -2651,11 +2651,11 @@ function cardGachaCommunityPulse(){
           </div>`;
         })():`<p style="font-size:12px;color:var(--muted);margin:0">No ideas saved yet — ask Kiko!</p>`}
       </div>
-      <button class="btn" style="font-size:11px;flex-shrink:0" data-act="kikoSeedAsk" data-gameid="${esc(g.id)}" data-seed="${esc(`Search the internet RIGHT NOW for what the ${g.name} community is talking about this week. Reply in EXACTLY this format — no intro, no extra text, just these four lines:
-HYPE: [one sentence naming the specific character/event/update people are excited about right now + source link]
-DRAMA: [one sentence naming the specific controversy/frustration/backlash happening right now + source link]
-IDEA: [one punchy stream or video title idea reacting to the current mood — short and catchy, like a YouTube title]
-DETAIL: [your full detailed breakdown with all sources and context]`)}">research</button>
+      <button class="btn" style="font-size:11px;flex-shrink:0" data-act="kikoSeedAsk" data-gameid="${esc(g.id)}" data-seed="${esc(`Search Reddit (r/${g.name.replace(/\s/g,'')}, r/gachagaming), Twitter/X, and YouTube comments RIGHT NOW for what the ${g.name} community is actually saying this week. Be SPECIFIC — name real things, real dates, real people. Reply in EXACTLY this format — no intro, no extra text:
+HYPE: [one sentence naming the SPECIFIC character/event/update people are excited about RIGHT NOW — include their name/title + a source link]
+DRAMA: [one sentence on the REAL frustration or controversy in the community RIGHT NOW — dig into marketing decisions, communication failures, content droughts, gacha rates, broken promises, dev behaviour, anything — NEVER say "no drama", there is ALWAYS something people are unhappy about, even if it's small — include a source link]
+IDEA: [one punchy stream or video title reacting to the REAL current mood — short, catchy, YouTube-title style]
+DETAIL: [your full breakdown: what exactly happened, when, community reaction with receipts, sources, why it matters for a streamer covering this game]`)}">research</button>
     </div>`).join('')}
     <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.4">Kiko connects to the internet to find live community buzz — ideas here are always fresh, not pre-programmed. 🌐</p>
   </section>`;
@@ -2685,7 +2685,8 @@ function viewGachas(){
     </div>
     <section class="panel" style="margin:0;flex:1;display:flex;flex-direction:column">
       <div class="card-head"><span class="label">✨ Weekly Gacha Focus</span><button class="btn" data-act="kikoSeedAsk" data-seed="${esc(kikoSeed)}" title="Ask Kiko to research">🦊 Research</button></div>
-      ${thisWeekEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:4px 0 2px;letter-spacing:-.01em">⏳ Ending this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Do these before they're gone!</p>${thisWeekEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:'<p class="soft" style="font-size:12px;margin:0 0 6px">Nothing ending this week ✨</p>'}
+      ${wkPending.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:4px 0 2px;letter-spacing:-.01em">🎮 Still need weeklies</p><p class="soft" style="font-size:11px;margin:0 0 6px">Do these before the week resets!</p>${wkPending.map(g=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(g.name)}</span><button class="chiptog" data-act="gachaWkToggle" data-v="${g.id}" style="font-size:10px;padding:3px 8px"><span>◦</span>done</button></div>`).join('')}`:`<p class="soft" style="font-size:12px;margin:0 0 6px">All weeklies done this week! ✨</p>`}
+      ${thisWeekEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:12px 0 2px;letter-spacing:-.01em">⏳ Ending this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Do these before they're gone!</p>${thisWeekEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
       ${thisWeekStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:12px 0 2px;letter-spacing:-.01em">🌟 Starting this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${thisWeekStart.slice(0,4).map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
     </section>
   </div>`;
@@ -5055,11 +5056,11 @@ function viewKiko(){
     </section>
     ${creator?`<section class="panel" style="padding:8px 10px;margin-bottom:10px">
       <div class="label" style="margin-bottom:6px">🎮 Community pulse — research a game</div>
-      <div class="kiko-skills">${gachaList().map(g=>`<button class="kiko-skill" data-act="kikoSeedAsk" data-gameid="${esc(g.id)}" data-seed="${esc(`Search the internet RIGHT NOW for what the ${g.name} community is talking about this week. Reply in EXACTLY this format — no intro, no extra text, just these four lines:
-HYPE: [one sentence naming the specific character/event/update people are excited about right now + source link]
-DRAMA: [one sentence naming the specific controversy/frustration/backlash happening right now + source link]
-IDEA: [one punchy stream or video title idea reacting to the current mood — short and catchy, like a YouTube title]
-DETAIL: [your full detailed breakdown with all sources and context]`)}">${g.emoji||'🎮'} ${esc(g.name)}</button>`).join("")}
+      <div class="kiko-skills">${gachaList().map(g=>`<button class="kiko-skill" data-act="kikoSeedAsk" data-gameid="${esc(g.id)}" data-seed="${esc(`Search Reddit (r/${g.name.replace(/\s/g,'')}, r/gachagaming), Twitter/X, and YouTube comments RIGHT NOW for what the ${g.name} community is actually saying this week. Be SPECIFIC — name real things, real dates, real people. Reply in EXACTLY this format — no intro, no extra text:
+HYPE: [one sentence naming the SPECIFIC character/event/update people are excited about RIGHT NOW — include their name/title + a source link]
+DRAMA: [one sentence on the REAL frustration or controversy in the community RIGHT NOW — dig into marketing decisions, communication failures, content droughts, gacha rates, broken promises, dev behaviour, anything — NEVER say "no drama", there is ALWAYS something people are unhappy about, even if it's small — include a source link]
+IDEA: [one punchy stream or video title reacting to the REAL current mood — short, catchy, YouTube-title style]
+DETAIL: [your full breakdown: what exactly happened, when, community reaction with receipts, sources, why it matters for a streamer covering this game]`)}">${g.emoji||'🎮'} ${esc(g.name)}</button>`).join("")}
       <button class="kiko-skill" data-act="kikoSkill" data-send="${esc(`I'm a VTuber and gacha content creator. Please search the internet (Reddit, YouTube, Twitter/X) and find what each of these game communities is currently buzzing about right now. For each game tell me: 1) what positive topics/moments are trending this week, 2) any drama, controversy, frustration or discontent in the community right now, and 3) one specific actionable stream or video idea I could make this week that taps into the current community mood. Games: ${gachaList().map(g=>g.name).join(", ")}. Keep each point short and punchy — one sentence max.`)}">🦊 Research all games</button>
     </section>`:""}
     <section class="panel" style="padding:6px"><div id="kikoTabChat" class="kiko-tabchat"></div></section>
@@ -8618,8 +8619,8 @@ function start(){
     try{ SB=window.supabase.createClient(CONFIG.url,CONFIG.anonKey); }catch(e){ console.error(e); render(); return; }
     // Are we already signed in (from a previous visit)?
     const {data:{session}}=await SB.auth.getSession();
-    if(session && session.user){ UID=session.user.id; render(); }   // signed in → load the app
-    else { showLoginScreen(); }                                     // not signed in → show login
+    if(session && session.user){ UID=session.user.id; }   // signed in → use real auth UUID
+    render();                                                       // always render — UID already defaulted to CONFIG.userId
   };
   sc.onerror=()=>{ render(); };                 // offline fallback — render with whatever we have
   document.head.appendChild(sc);
