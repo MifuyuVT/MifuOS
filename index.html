@@ -4,8 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <!-- CSP via meta tag — GitHub Pages can't set response headers, so this is the only enforcement point available.
-     img-src allows any https image because journal/inspo entries embed arbitrary user-picked image URLs. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'self';" />
+     img-src allows any https image because journal/inspo entries embed arbitrary user-picked image URLs.
+     Known gap: meta-delivered CSP can't carry frame-ancestors (CSP3 disallows it for <meta>), and GitHub
+     Pages gives no way to send X-Frame-Options / X-Content-Type-Options / Permissions-Policy either — so
+     there's no clickjacking protection here short of moving off GitHub Pages or fronting it with something
+     that can inject real response headers. -->
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co https://cdn.jsdelivr.net; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;" />
 <title>Mifuyu OS ❄️🦊</title>
 <link rel="icon" type="image/png" href="sakura.png" />
 <link rel="apple-touch-icon" href="AYAYA.png" />
