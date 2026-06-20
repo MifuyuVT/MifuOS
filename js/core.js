@@ -5005,6 +5005,15 @@ function start(){
   const lastGachaRefresh=localStorage.getItem("gachaEvLastRefresh")||"";
   if(isSunday&&lastGachaRefresh!==TODAY) setTimeout(refreshGachaEvents, 12000);   // one hello, then at most every 10 min (was 45s — way too chatty)
   if(DEMO){ render(); return; }                 // demo: data is instant — one render
+  // Defer until DOMContentLoaded, which only fires once every parser-blocking <script> tag
+  // (all js/view-*.js) has already run. Without this gate, render()'s tab-dispatch table
+  // below — `{home:viewHome,...,kiko:viewKiko,...,health:viewHealth,...}` — references every
+  // view function by name UP FRONT to build that lookup object, even though only one is used.
+  // If the dynamically-injected Supabase script below finishes (and calls render()) before a
+  // view-*.js file later in the list has executed, that line throws "viewX is not defined" —
+  // intermittent because it depends on network/cache timing, not on which tab is active.
+  if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",bootLive,{once:true}); } else bootLive();
+  function bootLive(){
   // live: gentle loader while Supabase connects, then check login
   const v=$("#view");
   if(v) v.innerHTML='<div class="panel" style="max-width:380px;margin:48px auto;text-align:center"><div style="font-size:28px">❄️🦊</div><p class="soft" style="margin:8px 0 0">Konfuyu~ getting your cozy space ready…</p></div>';
@@ -5047,6 +5056,7 @@ function start(){
   };
   sc.onerror=()=>{ render(); };
   document.head.appendChild(sc);
+  }
 }
 
 function gameEventPrompt(gameName){
