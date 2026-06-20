@@ -8808,21 +8808,32 @@ Return ONLY a valid JSON array — no markdown, no explanation, just the raw arr
 
 Rules:
 - Focus on IN-GAME EVENTS and LIMITED TIME CONTENT — things that expire and you'll miss if you don't play
-- Include endgame rotation resets (e.g. ZZZ Hollow Zero/Shiyu Defense resets, HSR Memory of Chaos/Pure Fiction, WuWa Tower of Adversity, Arknights CC/IS resets, Genshin Spiral Abyss, R1999 Limbo)
+- Include endgame rotation resets (e.g. ZZZ Hollow Zero/Shiyu Defense/Deadly Assault resets, HSR Memory of Chaos/Pure Fiction, WuWa Tower of Adversity, Arknights CC/IS resets, Genshin Spiral Abyss, Reverse: 1999 Limbo/Mane's Bulletin)
 - For resets like ZZZ Hollow Zero, Shiyu Defense, Deadly Assault — find the EXACT current cycle end date, not a generic date. Check the official ZZZ wiki or HoYoLAB for the current cycle's specific end timestamp
+- For Reverse: 1999 specifically — check r/Reverse1999, the official Bluepoch social media, and the R1999 wiki (reverse1999.fandom.com or 1999.wiki.gg) for current patch events, Limbo season, Mane's Bulletin reset, and any banners or story chapters going live. R1999 patch versions last ~6 weeks — include the current patch end date if found
 - Include limited time events ending within 14 days — name the SPECIFIC event
 - Include any announced official livestreams in the next 14 days
-- DO NOT include gacha banners — she tracks those separately
+- DO NOT include gacha pull banners (the actual "pull this character" mechanic) — she tracks those separately
+- DO include new patch/version updates, story chapters, and limited-time events that arrive alongside a new character release — e.g. "R1999 2.5 patch" or "R1999 — [character name] story event" is fine, just not "R1999 — [character name] banner"
 - "date" = start date (or today if already started), "endDate" = when it ends (null if unknown)
 - "url" = link to the wiki page, official post, or source you used — leave "" if you can't find one
-- "note" = one short sentence explaining what this is and why she should care
+- "note" = one short sentence explaining what this is and why she should care — NO quotes or apostrophes inside this field, use plain text only
+- "url" = a plain URL with no quotes or special characters inside it
+- IMPORTANT: all string values must be valid JSON — do not use unescaped double quotes, backslashes, or newlines inside any string value
 - NEVER mix up games — verify each item belongs to the correct game before including it
 - Only include things with real confirmed dates from official sources or wikis
 - If a game has nothing happening this week, skip it
 - DO NOT create duplicate entries — one entry per event, even if it spans multiple weeks`;
     const d=await kikoSimpleCall({question:prompt,history:[],tab:"gachas",userModel:"",smart:false});
-    const raw=(d.reply||"").replace(/```json|```/g,"").trim();
-    const events=JSON.parse(raw);
+    let raw=(d.reply||"").replace(/```json|```/g,"").trim();
+    // extract just the array portion in case Kiko added surrounding text
+    const arrMatch=raw.match(/\[[\s\S]*\]/); if(arrMatch) raw=arrMatch[0];
+    // sanitize common JSON-breaking issues: literal newlines/tabs inside strings, then parse
+    let events; try{ events=JSON.parse(raw); }catch(_){
+      // fallback: strip control characters inside strings and retry
+      const cleaned=raw.replace(/"(?:[^"\\]|\\.)*"/g,m=>m.replace(/[\n\r\t]/g," ").replace(/(?<!\\)\\(?!["\\/bfnrtu])/g,"\\\\"));
+      events=JSON.parse(cleaned);
+    }
     if(!Array.isArray(events)) throw new Error("not an array");
     // remove old auto-fetched events, keep user-created ones
     await DB.saveDaily(SENTINEL,n=>{
