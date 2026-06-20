@@ -2744,10 +2744,10 @@ function cardGachaCommunityPulse(){
               <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--peri-deep);margin-bottom:3px">✨ HYPE</div>
               <div style="font-size:12.5px;line-height:1.6">${renderMd(p.hype)}</div>
             </div>`:""}
-            ${p.drama?`<div style="background:rgba(220,100,130,.10);border-left:3px solid var(--sakura-deep);border-radius:0 8px 8px 0;padding:8px 10px">
-              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--sakura-deep);margin-bottom:3px">🔥 DRAMA</div>
-              <div style="font-size:12.5px;line-height:1.6">${renderMd(p.drama)}</div>
-            </div>`:""}
+            ${p.drama?(()=>{ const quiet=/no significant|nothing significant|no major|no notable|no drama|no controversy|no backlash|no frustration/i.test(p.drama); return `<div style="background:${quiet?'rgba(150,150,150,.05)':'rgba(220,100,130,.10)'};border-left:3px solid ${quiet?'rgba(150,150,150,.2)':'var(--sakura-deep)'};border-radius:0 8px 8px 0;padding:8px 10px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:${quiet?'var(--muted)':'var(--sakura-deep)'};margin-bottom:3px">🔥 DRAMA</div>
+              <div style="font-size:12px;line-height:1.6;color:${quiet?'var(--muted)':''}">${quiet?'No significant drama in the past 14 days.':renderMd(p.drama)}</div>
+            </div>`; })():""}
             ${p.idea?`<div style="background:rgba(100,200,160,.10);border-left:3px solid var(--mint);border-radius:0 8px 8px 0;padding:8px 10px">
               <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--mint);margin-bottom:3px">💡 STREAM IDEA</div>
               <div style="font-size:12.5px;line-height:1.6">${renderMd(p.idea)}</div>
