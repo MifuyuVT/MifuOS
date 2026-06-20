@@ -710,8 +710,38 @@
   .jr-pagetext{ width:100%; min-height:300px; border:none; background:transparent; resize:vertical; font-family:var(--sans); font-size:14px; line-height:28px; color:var(--jr-ink,#3a3550); outline:none; display:block; }
   .jr-page-foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; flex-wrap:wrap; }
   .jr-cell.jr-sel{ outline:2.5px solid var(--jr-accent,#8AB1CA); outline-offset:-2px; }
-  @media (max-width:640px){ .jr-pagetext{ min-height:240px; } .jr-page-day{ font-size:26px; } }
+  .jr-toolbar{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; padding:8px 10px; background:var(--panel); border:1px solid var(--line); border-radius:12px; margin-bottom:8px; }
+  .jr-tb-select{ font-size:12px; padding:4px 6px; border:1px solid var(--line); border-radius:7px; background:var(--bg); color:var(--ink); cursor:pointer; max-width:110px; }
+  .jr-tb-size{ max-width:56px; }
+  .jr-tb-btn{ background:none; border:1px solid transparent; border-radius:6px; padding:4px 7px; font-size:13px; cursor:pointer; color:var(--ink); line-height:1; transition:background .12s,border-color .12s; }
+  .jr-tb-btn:hover,.jr-tb-btn.active{ background:var(--peri-soft,#ede9fb); border-color:var(--lav-deep); }
+  .jr-tb-div{ width:1px; height:18px; background:var(--line); margin:0 2px; flex-shrink:0; }
+  .jr-color-swatches{ display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+  .jr-swatch{ width:18px; height:18px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; transition:transform .12s,border-color .12s; }
+  .jr-swatch:hover{ transform:scale(1.2); border-color:var(--ink); }
+  .jr-pagetext[contenteditable]{ outline:none; min-height:300px; }
+  .jr-pagetext[contenteditable]:empty::before{ content:attr(data-placeholder); color:var(--muted); pointer-events:none; }
+  @media (max-width:640px){ .jr-pagetext{ min-height:240px; } .jr-page-day{ font-size:26px; } .jr-toolbar{ gap:4px; } }
 
+  /* ===== 📚 Journal asset panel ===== */
+  .jr-layout{ display:flex; gap:16px; align-items:flex-start; }
+  .jr-layout .page-main{ flex:1; min-width:0; }
+  .jr-asset-panel{ width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; position:sticky; top:70px; max-height:calc(100vh - 90px); overflow-y:auto; padding-bottom:20px; }
+  .jr-asset-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; }
+  .jr-asset-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .jr-asset-card-title{ font-size:14px; font-weight:700; color:var(--ink); }
+  .jr-asset-card-see{ font-size:11px; color:var(--lav-deep); cursor:pointer; text-decoration:none; }
+  .jr-asset-month{ width:100%; margin-bottom:10px; font-size:11px; padding:5px 8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+  .jr-asset-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:10px; }
+  .jr-asset-thumb{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; border:1px solid var(--line); cursor:grab; transition:transform .12s,box-shadow .12s; background:#f5f3fb; }
+  .jr-asset-thumb:hover{ transform:scale(1.07); box-shadow:0 4px 12px rgba(120,110,160,.28); }
+  .jr-asset-placeholder{ width:100%; aspect-ratio:1; border-radius:10px; border:1.5px dashed var(--line); background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:16px; opacity:.45; }
+  .jr-asset-strip{ width:100%; height:38px; object-fit:cover; border-radius:8px; border:1px solid var(--line); cursor:grab; display:block; margin-bottom:5px; transition:transform .12s; }
+  .jr-asset-strip:hover{ transform:scaleY(1.06); box-shadow:0 3px 8px rgba(120,110,160,.2); }
+  .jr-asset-strip-ph{ width:100%; height:38px; border-radius:8px; border:1.5px dashed var(--line); background:var(--bg); margin-bottom:5px; display:flex; align-items:center; justify-content:center; font-size:13px; opacity:.4; }
+  .jr-add-btn{ width:100%; padding:8px; border:1.5px dashed var(--lav-deep); border-radius:10px; background:transparent; color:var(--lav-deep); font-size:12px; cursor:pointer; margin-top:2px; transition:background .15s; }
+  .jr-add-btn:hover{ background:var(--peri-soft,#ede9fb); }
+  @media(max-width:760px){ .jr-layout{ flex-direction:column-reverse; } .jr-asset-panel{ width:100%; position:static; max-height:none; } }
   /* ===== 🎮 Gacha tracker + checklist rows (shared with Daily habits/goals) ===== */
   .gt-sec{ font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-soft); margin:2px 0 7px; }
   .gt-div{ height:1px; margin:14px 0; background:linear-gradient(90deg,transparent,var(--line) 20%,var(--line) 80%,transparent); }
@@ -904,6 +934,12 @@
   }
   #sidebar.sb-collapsed .sb-group-label{ display:none; }
   #sidebar.sb-collapsed .sb-group::before{ margin:4px 14px; }
+  .sb-unlock-banner{ font-size:10px; color:var(--lav-deep); text-align:center; padding:5px 10px 8px; letter-spacing:.04em; opacity:.8; }
+  .tab-drag-wrap{ display:flex; align-items:center; gap:2px; position:relative; }
+  .tab-drag-wrap .tab{ flex:1; }
+  .drag-grip{ font-size:13px; color:var(--muted); cursor:grab; padding:0 4px; opacity:.5; flex-shrink:0; user-select:none; }
+  .tab-drag-wrap.dragging{ opacity:.4; }
+  .tab-drag-wrap.drag-over .tab{ background:var(--peri-soft,#ede9fb); outline:2px dashed var(--lav-deep); outline-offset:-2px; }
   /* sidebar footer */
   #sb-footer{
     padding:10px; display:flex; flex-direction:column; gap:6px;
@@ -1106,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.pulseAuto";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.navDragFix";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1170,7 +1206,7 @@ async function autoResearchGames(){
   if(!needsResearch.length) return;
   for(const g of needsResearch){
     try{
-      const seed=`Search the internet RIGHT NOW for what the ${g.name} community is talking about this week. Reply in EXACTLY this format — no intro, no extra text, just these four lines:\nHYPE: [one sentence naming the specific character/event/update people are excited about right now + source link]\nDRAMA: [one sentence naming the specific controversy/frustration/backlash happening right now + source link]\nIDEA: [one punchy stream or video title idea reacting to the current mood — short and catchy, like a YouTube title]\nDETAIL: [your full detailed breakdown with all sources and context]`;
+      const seed=`Search the internet RIGHT NOW for what the ${g.name} community is talking about this week. IMPORTANT: Before including ANY character name, event, or update — verify it actually belongs to ${g.name} and not a different game. If you are not 100% certain something is from ${g.name} specifically, do not include it. Reply in EXACTLY this format — no intro, no extra text, just these four lines:\nHYPE: [one sentence naming the specific character/event/update people are excited about right now + source link]\nDRAMA: [one sentence naming the specific controversy/frustration/backlash happening right now + source link]\nIDEA: [one punchy stream or video title idea reacting to the current mood — short and catchy, like a YouTube title]\nDETAIL: [your full detailed breakdown with all sources and context]`;
       const d=await kikoSimpleCall({question:seed,history:[],tab:'gachas',userModel:state.sentinel.kikoUserModel||'',smart:false});
       const ans=d.reply||'';
       if(ans) await setSent(n=>{ const v=(n.sparkVault||[]).filter(x=>x.gid!==g.id); return {...n,sparkVault:[...v,{id:'spark'+Date.now(),gid:g.id,text:ans,date:TODAY}]}; });
@@ -1181,7 +1217,7 @@ async function autoResearchGames(){
 }
 function parsePulse(text){
   const t=stripMd(text||"");
-  const clean=(s)=>s.replace(/\(https?:\/\/[^)]+\)/g,'').replace(/https?:\/\/\S+/g,'').replace(/\([^)]{3,50}\.(com|org|net|io|gg|tv)[^)]*\)/gi,'').replace(/\s{2,}/g,' ').trim();
+  const clean=(s)=>s.replace(/\(https?:\/\/[^)]+\)/g,'').replace(/https?:\/\/\S+/g,'').replace(/\([^)]{2,60}\.[a-z]{2,6}[^)]*\)/gi,'').replace(/\s{2,}/g,' ').trim();
   const line=(key)=>{ const m=t.match(new RegExp('^'+key+':\\s*(.+)','im')); return m?clean(m[1]).slice(0,180):null; };
   return { hype:line('HYPE'), drama:line('DRAMA'), idea:line('IDEA'), detail:(t.match(/^DETAIL:\s*([\s\S]+)/im)||[])[1]||null };
 }
@@ -1461,6 +1497,53 @@ function applyTextZoom(size){
   const z=(size/TEXT_DEFAULT).toFixed(4);
   const col=document.getElementById("main-col"); if(col) col.style.zoom=z;
 }
+function wireNavDrag(nav, tabOrder, groups, mode){
+  let _dragTab=null, _overEl=null;
+  nav.addEventListener("dragstart",e=>{
+    const w=e.target.closest("[data-drag-tab]"); if(!w)return;
+    _dragTab=w.dataset.dragTab; e.dataTransfer.effectAllowed="move";
+    setTimeout(()=>w.classList.add("dragging"),0);
+  });
+  nav.addEventListener("dragend",e=>{
+    const w=e.target.closest("[data-drag-tab]"); if(w)w.classList.remove("dragging");
+    if(_overEl){_overEl.classList.remove("drag-over");_overEl=null;}
+    _dragTab=null;
+  });
+  nav.addEventListener("dragover",e=>{
+    e.preventDefault(); e.dataTransfer.dropEffect="move";
+    const w=e.target.closest("[data-drag-tab]")||e.target.closest("[data-drop-group]");
+    if(!w)return;
+    if(_overEl&&_overEl!==w) _overEl.classList.remove("drag-over");
+    _overEl=w; w.classList.add("drag-over");
+  });
+  nav.addEventListener("dragleave",e=>{
+    const w=e.target.closest("[data-drag-tab]")||e.target.closest("[data-drop-group]");
+    if(w&&w===_overEl){_overEl.classList.remove("drag-over");_overEl=null;}
+  });
+  nav.addEventListener("drop",e=>{
+    e.preventDefault();
+    if(_overEl){_overEl.classList.remove("drag-over");_overEl=null;}
+    if(!_dragTab)return;
+    // drop on a group label → move tab to that group
+    const groupEl=e.target.closest("[data-drop-group]");
+    if(groupEl){
+      const targetGroup=groupEl.dataset.dropGroup;
+      const newGroups=groups.map(g=>({...g,tabs:g.tabs.filter(t=>t!==_dragTab)}));
+      const tg=newGroups.find(g=>g.label===targetGroup);
+      if(tg) tg.tabs.push(_dragTab);
+      try{localStorage.setItem("nav-groups-"+mode,JSON.stringify(newGroups));}catch(_){}
+      _dragTab=null; render(); return;
+    }
+    // drop on another tab → reorder
+    const w=e.target.closest("[data-drag-tab]"); if(!w||w.dataset.dragTab===_dragTab)return;
+    const toTab=w.dataset.dragTab;
+    const order=[...tabOrder];
+    const fi=order.indexOf(_dragTab), ti=order.indexOf(toTab);
+    if(fi>=0&&ti>=0){ order.splice(fi,1); order.splice(ti,0,_dragTab); }
+    try{localStorage.setItem("tab-order",JSON.stringify(order));}catch(_){}
+    _dragTab=null; render();
+  });
+}
 function applyPrefs(){
   try{
     PREF.calm=localStorage.getItem("mifu-calm")==="1";
@@ -1475,6 +1558,7 @@ function applyPrefs(){
   const lc=document.getElementById("lockChip"); if(lc){ lc.textContent=locked?"🔒":"🔓"; lc.className="chip"+(locked?" on":""); }
 }
 const MODULAR_TABS=["home","care","food","gachas"];
+const MODULAR_GRID_TABS=["home","homehealth","care","food","gachas"];
 const MODULAR_LABELS={};
 function modLayout(tab){ const L=(state.sentinel.layout||{})[tab]||{}; return {order:L.order||[],size:L.size||{},min:L.min||{},hidden:L.hidden||{}}; }
 async function setLayout(tab, mut){ await setSent(n=>{ const layout={...(n.layout||{})}; const L={order:[],size:{},min:{},hidden:{},...(layout[tab]||{})}; mut(L); layout[tab]=L; return {...n,layout}; }); }
@@ -1505,7 +1589,7 @@ function spanFromC(c, colCount){ c=c||4; let span; if(colCount<=2) span=c>=9?2:1
 function cForSpan(span){ return span>=3 ? 12 : span===2 ? 10 : 4; }
 function layoutHome(){
   const tab=state.tab; if(!MODULAR_TABS.includes(tab))return;
-  const viewFn={home:viewHome,food:viewFood,care:viewCare,gachas:viewGachas}[tab]; if(!viewFn)return;
+  const viewFn={home:viewHome,homehealth:viewHome,food:viewFood,care:viewCare,gachas:viewGachas}[tab]||viewHome; if(!viewFn)return;
   const grid=document.querySelector('.grid-modular'); if(!grid)return;
   const tmp=document.createElement('div'); tmp.innerHTML=viewFn();
   const ng=tmp.querySelector('.grid-modular'); if(ng)grid.replaceWith(ng);
@@ -1533,13 +1617,13 @@ const SB_GROUPS={
     {label:"Business",tabs:["money","studio","memories"]},
   ],
   health:[
-    {label:null,tabs:["home"]},
+    {label:null,tabs:["home","journal"]},
     {label:"Health",tabs:["food","care","bunny","health","trends"]},
-    {label:"Mind & Life",tabs:["life","journal"]},
+    {label:"Mind & Life",tabs:["life"]},
     {label:"Memories",tabs:["memories"]},
   ]
 };
-const HEALTH_TABS=["home","food","care","bunny","life","trends","health","journal","memories","kiko"];   /* Settings removed from the nav bar — reach it via the ⚙️ chip by the avatar */
+const HEALTH_TABS=["home","journal","food","care","bunny","life","trends","health","memories","kiko"];   /* Settings removed from the nav bar — reach it via the ⚙️ chip by the avatar */
 let OS_MODE=(function(){ try{ return localStorage.getItem("mifu-mode")==="health"?"health":"creator"; }catch(e){ return "creator"; } })();   // default: Creator OS
 function modeTabs(){ return OS_MODE==="health"?HEALTH_TABS:CREATOR_TABS; }
 function modeSwapAnim(){ const v=$("#view"); if(!v)return; v.classList.remove("mode-anim"); void v.offsetWidth; v.classList.add("mode-anim");
@@ -1586,21 +1670,31 @@ async function render(){
   // sync sidebar mode buttons
   { const sc=$("#sbCreatorBtn"),sh=$("#sbHealthBtn"); if(sc)sc.className=OS_MODE==="creator"?"on":""; if(sh)sh.className=OS_MODE==="health"?"on":""; }
   // build grouped sidebar nav
-  { const _sbTabBtn=([t,l])=>{ const sp=l.split(' '); const em=sp[0]; const lb=sp.slice(1).join(' ');
-      return `<button class="tab${state.tab===t?' active':''}" data-act="tab" data-tab="${t}"><span class="tab-emoji">${em}</span><span class="tab-label">${lb}</span></button>`; };
+  { const _unlocked=localStorage.getItem("layout-locked")==="0";
+    const _sbTabBtn=([t,l])=>{ const sp=l.split(' '); const em=sp[0]; const lb=sp.slice(1).join(' ');
+      return _unlocked
+        ? `<div class="tab-drag-wrap" draggable="true" data-drag-tab="${t}"><span class="drag-grip">⠿</span><button class="tab${state.tab===t?' active':''}" data-act="tab" data-tab="${t}"><span class="tab-emoji">${em}</span><span class="tab-label">${lb}</span></button></div>`
+        : `<button class="tab${state.tab===t?' active':''}" data-act="tab" data-tab="${t}"><span class="tab-emoji">${em}</span><span class="tab-label">${lb}</span></button>`; };
     const _kikoTab=_tabs.find(([t])=>t==="kiko"); const _nonKiko=_tabs.filter(([t])=>t!=="kiko");
     const _sbGroups=(SB_GROUPS[OS_MODE]||SB_GROUPS.creator);
     const _groupedSet=new Set(_sbGroups.flatMap(g=>g.tabs));
-    let _navHtml="";
-    for(const g of _sbGroups){
+    // load custom group overrides from localStorage
+    let _customGroups; try{ _customGroups=JSON.parse(localStorage.getItem("nav-groups-"+OS_MODE)||"null"); }catch(_){ _customGroups=null; }
+    const _activeGroups=_customGroups||_sbGroups.map(g=>({...g,tabs:[...g.tabs]}));
+    const _groupedSet2=new Set(_activeGroups.flatMap(g=>g.tabs));
+    let _navHtml=_unlocked?`<div class="sb-unlock-banner">🔓 drag to reorder · drop on a section label to move groups <button class="btn" style="font-size:10px;padding:2px 7px;margin-left:6px" data-act="resetNavOrder">↺ reset</button></div>`:"";
+    for(const g of _activeGroups){
       const gt=_nonKiko.filter(([t])=>g.tabs.includes(t)); if(!gt.length)continue;
-      _navHtml+=g.label?`<div class="sb-group"><span class="sb-group-label">${g.label}</span>${gt.map(_sbTabBtn).join("")}</div>`:gt.map(_sbTabBtn).join("");
+      _navHtml+=g.label
+        ?`<div class="sb-group" data-group-label="${esc(g.label)}"><span class="sb-group-label" data-drop-group="${esc(g.label)}">${g.label}</span>${gt.map(_sbTabBtn).join("")}</div>`
+        :`<div data-group-label="">${gt.map(_sbTabBtn).join("")}</div>`;
     }
-    // any tabs not in groups (safety net)
-    _nonKiko.filter(([t])=>!_groupedSet.has(t)).forEach(tb=>{ _navHtml+=_sbTabBtn(tb); });
+    _nonKiko.filter(([t])=>!_groupedSet2.has(t)).forEach(tb=>{ _navHtml+=_sbTabBtn(tb); });
     _navHtml+=`<div style="flex:1;min-height:8px"></div>`;
     if(_kikoTab) _navHtml+=_sbTabBtn(_kikoTab);
-    $("#nav").innerHTML=_navHtml; }
+    const _nav=$("#nav"); _nav.innerHTML=_navHtml;
+    if(_unlocked){ wireNavDrag(_nav, _tabs.map(([t])=>t), _activeGroups, OS_MODE); }
+  }
   const _stxt=DEMO?"◇ demo data":(SB?"● live":"◌ connecting…"); const _scls="chip"+(DEMO?" demo":(SB?" on":""));
   const st=$("#status"); if(st){ st.textContent=_stxt; st.className=_scls; }
   const str=$("#status-rail"); if(str){ str.textContent=_stxt; str.className=_scls; }
@@ -1732,11 +1826,21 @@ function cardGoals(){
   </section>`;
 }
 function cardJournal(){
+  const entry=(state.today.journal||"").trim();
+  const preview=entry?entry.slice(0,160)+(entry.length>160?"…":""):"";
+  const det=(state.kikoDetected||{})[TODAY];
+  const moodEmoji=det&&det.mood!=null?['😶','😢','😔','😐','🙂','😊'][Math.max(0,Math.min(5,det.mood))]:'';
   return `<section class="panel">
-    <div class="label" style="margin-bottom:6px">Journal 🌙</div>
-    <p class="soft" style="font-size:12px;margin:0 0 8px">A line about today — how it went, a thought, nothing fancy.</p>
-    <textarea class="inp" id="journalInput" placeholder="today I…">${esc(state.today.journal||"")}</textarea>
-    <div style="margin-top:8px"><button class="btn btn-grad" data-act="saveJournal">💾 save</button></div>
+    <div class="card-head"><span class="label">📓 Journal</span><button class="btn btn-grad" data-act="tab" data-tab="journal">📝 open today's page</button></div>
+    ${preview
+      ? `<p style="font-size:13px;line-height:1.6;margin:0 0 8px;color:var(--ink-soft);font-style:italic">"${esc(preview)}"</p>
+         ${det?`<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-top:4px">
+           ${det.mood!=null?`<span>${moodEmoji} mood ${det.mood}/5</span>`:''}
+           ${det.energy!=null?`<span>⚡ energy ${det.energy}/5</span>`:''}
+           ${det.sleep!=null?`<span>🌙 ${det.sleep}h sleep</span>`:''}
+           ${det.dayColor?`<span>🌈 ${esc(det.dayColor)}</span>`:''}
+         </div>`:'<p class="soft" style="font-size:11px;margin:4px 0 0">Tap <b>🦊 Kiko, read this</b> to detect mood & energy from your words.</p>'}`
+      : `<p class="soft" style="font-size:12.5px;margin:0">Nothing written yet today — tap to open your journal and add a few words. 🌸</p>`}
   </section>`;
 }
 
@@ -2632,10 +2736,7 @@ function viewHome(){
     {key:"journal",label:"Journal",cols:4,html:cardJournal()},
     {key:"weight",label:"Weight trend",cols:4,html:cardWeightTrend()},
     {key:"glance",label:"Dose & day glance",cols:4,html:cardGlance()},
-    {key:"snowfox",label:"Snowfox",cols:4,html:cardSnowfox()},
-    {key:"braindump",label:"Voice dump",cols:4,html:cardBrainDump()},
     {key:"deeppatterns",label:"Kiko noticed",cols:4,html:deepPatternsCard()},
-    {key:"onthisday",label:"On this day",cols:4,html:cardOnThisDay()},
   ];
   return `<div class="home-fixed">${cardHero()}${glance}</div>${modularGrid(creator?"home":"homehealth",items)}${DISCLAIMER}`;
 }
@@ -3428,11 +3529,16 @@ function viewMemories(){
    layer (setDay / jrFetchMonth / jrCache) is reused untouched. Heavy freeform canvas +
    scrapbook drawers + font controls + templates come in the next journal slice.
    ============================================================================ */
-const JR_THEME={ "01":["#EE7E61","#C85F47"],"02":["#A47351","#80573C"],"03":["#D392B8","#A96790"],
-  "04":["#F28D9D","#D16578"],"05":["#B5A131","#8E7D20"],"06":["#8AB1CA","#638AA4"],
-  "07":["#979EBB","#71789A"],"08":["#849FBC","#607B97"],"09":["#D79277","#B16F57"],
-  "10":["#A885AD","#85638A"],"11":["#849F94","#5F7A6F"],"12":["#F78887","#D15F60"] };
+const JR_THEME={ "01":["#D85C2E","#B03E18"],"02":["#A8785A","#855840"],
+  "03":["#A87898","#846078"],"04":["#D87880","#B05860"],
+  "05":["#A89828","#847810"],"06":["#789870","#587850"],
+  "07":["#4878A8","#305888"],"08":["#8878B8","#685898"],
+  "09":["#B87858","#985840"],"10":["#9878A8","#785888"],
+  "11":["#387870","#185850"],"12":["#C83828","#A01810"] };
+const JR_COLOR_NAMES={"01":"Tangerine Red","02":"Caramel Brown","03":"Dusty Mauve","04":"Rose Pink","05":"Olive Moss","06":"Hydrangea Blue","07":"Cornflower","08":"Wisteria","09":"Terracotta","10":"Lavender","11":"Forest Teal","12":"Crimson"};
 function jrTheme(date){ return JR_THEME[(date||TODAY).slice(5,7)]||JR_THEME["06"]; }
+function jrColorName(ym){ return JR_COLOR_NAMES[(ym||TODAY).slice(5,7)]||""; }
+function jrMonthLabel(ym){ const d=new Date((ym||TODAY.slice(0,7))+"-01T00:00"); return d.toLocaleDateString("en-US",{month:"long"})+" · "+jrColorName(ym); }
 function dayShift(date,n){ const d=new Date(date+"T00:00"); d.setDate(d.getDate()+n); return d.toLocaleDateString("en-CA"); }
 function jrWeekNum(date){ const d=new Date(date+"T00:00"); const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const day=dt.getUTCDay()||7; dt.setUTCDate(dt.getUTCDate()+4-day); const ys=new Date(Date.UTC(dt.getUTCFullYear(),0,1)); return Math.ceil((((dt-ys)/86400000)+1)/7); }
 function jrGlance(date,n){ n=n||{}; const out=[]; const m=n.mind||{};
@@ -3464,18 +3570,185 @@ function jrDailyPage(date){
       </div>
     </div>
     ${glance.length?`<div class="jr-glance"><div class="jr-glance-h">🦊 Kiko's day at a glance</div><ul>${glance.map(g=>`<li>${esc(g)}</li>`).join("")}</ul></div>`:`<div class="jr-glance jr-glance-empty">🦊 Write below — Kiko fills in your day-at-a-glance from what you log.</div>`}
-    <div class="jr-paper"><textarea id="jrPageText" class="jr-pagetext" data-act="noop" data-date="${date}" placeholder="${isToday?'talk or type — today, in your own words…  ♡':'this day, in your words…'}">${esc(n.journal||"")}</textarea></div>
+    <div class="jr-paper">
+      <div id="jrPageText" class="jr-pagetext" contenteditable="true" data-date="${date}" data-placeholder="${isToday?'talk or type — today, in your own words…  ♡':'this day, in your words…'}">${n.journalHtml||nl2br(esc(n.journal||''))}</div>
+    </div>
+    <div class="jr-toolbar" id="jrToolbar">
+      <select class="jr-tb-select" id="jrFont" title="Font family">
+        <option value="">Default</option>
+        <option value="'Georgia',serif">Georgia</option>
+        <option value="'Palatino Linotype',serif">Palatino</option>
+        <option value="'Courier New',monospace">Courier New</option>
+        <option value="'Comic Sans MS',cursive">Comic Sans</option>
+        ${(state.sentinel.jrFonts||[]).map(f=>`<option value="'${esc(f.name)}',sans-serif">${esc(f.name)}</option>`).join('')}
+        <option value="__add__">✚ add a font…</option>
+      </select>
+      <select class="jr-tb-select jr-tb-size" id="jrSize" title="Font size">
+        ${[10,11,12,13,14,16,18,20,24,28,32,40].map(s=>`<option value="${s}" ${s===14?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <span class="jr-tb-div"></span>
+      <div class="jr-color-swatches" id="jrSwatches">
+        ${(state.jrRecentColors&&state.jrRecentColors.length?state.jrRecentColors:['#9b8ec4','#c87080','#5a8a70']).slice(0,3).map(c=>`<button class="jr-swatch" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('')}
+        <label class="jr-swatch jr-swatch-pick" title="Pick any color" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);cursor:pointer">
+          <input type="color" id="jrColorPick" style="opacity:0;position:absolute;width:0;height:0">
+        </label>
+      </div>
+      <span class="jr-tb-div"></span>
+      <button class="jr-tb-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+      <button class="jr-tb-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+      <button class="jr-tb-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+      <span class="jr-tb-div"></span>
+      <button class="jr-tb-btn" data-cmd="insertUnorderedList" title="Bullet list" style="font-size:15px">•≡</button>
+      <button class="jr-tb-btn" data-cmd="insertOrderedList" title="Numbered list" style="font-size:13px">1.≡</button>
+      <button class="jr-tb-btn" data-cmd="removeFormat" title="Remove all formatting from selection" style="font-size:11px">clear fmt</button>
+    </div>
     <div class="jr-page-foot">
       <button class="btn ${state._jrMic?'btn-grad':''}" data-act="jrMic" title="speak your entry (Chrome/Edge)">${state._jrMic?"⏹ listening…":"🎤 Speak"}</button>
       <span class="soft" id="jrSaveState" style="font-size:11px">auto-saves as you write ✨</span>
+      <button class="btn btn-grad" data-act="kikoReadJournal" data-date="${date}" style="margin-left:auto" title="Kiko reads your entry and detects mood, energy, symptoms and more">🦊 Kiko, read this</button>
     </div>
+  </section>
+  ${kikoDetectedPanel(date, n)}`;
+}
+function kikoDetectedPanel(date, n){
+  const det=(state.kikoDetected||{})[date];
+  const theme=jrTheme(date); const col=theme[0];
+  if(!det&&!(n&&n.journal&&n.journal.trim())) return '';
+  if(!det) return `<section class="panel" style="border-left:3px solid ${col}">
+    <div class="card-head"><span class="label">🦊 Kiko Detected</span><span class="soft" style="font-size:11px">auto-detected from your entry</span></div>
+    <p class="soft" style="font-size:12.5px;margin:0">Tap <b>"🦊 Kiko, read this"</b> above and Kiko will extract your mood, energy, sleep, symptoms and more from your words. ✨</p>
+  </section>`;
+  const row=(icon,label,val)=>val!=null?`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--line)">
+    <span style="font-size:15px;width:22px;text-align:center">${icon}</span>
+    <span style="font-size:12px;color:var(--muted);width:72px;flex-shrink:0">${label}</span>
+    <span style="font-size:13px;font-weight:500;flex:1">${esc(String(val))}</span>
+  </div>`:'';
+  const moodEmoji=['😶','😢','😔','😐','🙂','😊'][Math.max(0,Math.min(5,det.mood||0))];
+  return `<section class="panel" style="border-left:3px solid ${col}">
+    <div class="card-head"><span class="label">🦊 Kiko Detected</span><span class="soft" style="font-size:11px">auto-detected from your entry</span></div>
+    <div>
+      ${row('😊','Mood',det.mood!=null?`${moodEmoji} ${['—','Rough','Low','Okay','Good','Lovely'][det.mood]||det.mood}`:null)}
+      ${row('⚡','Energy',det.energy!=null?det.energy+'/5':null)}
+      ${row('🫨','Stress',det.stress!=null?det.stress+'/5':null)}
+      ${row('🌙','Sleep',det.sleep!=null?det.sleep+'h':null)}
+      ${row('🩹','Symptoms',det.symptoms&&det.symptoms.length?det.symptoms.join(', '):(det.symptoms||null))}
+      ${row('💬','Topics',det.topics&&det.topics.length?det.topics.join(', '):(det.topics||null))}
+      ${row('💜','Special day',det.special?'Yes ✨':null)}
+      ${row('🌈','Day colour',det.dayColor||null)}
+    </div>
+    ${det.summary?`<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 0;line-height:1.5;font-style:italic">"${esc(det.summary)}"</p>`:''}
+    <button class="btn" data-act="kikoReadJournal" data-date="${date}" style="margin-top:10px;font-size:11px">↺ re-read entry</button>
   </section>`;
 }
+function nl2br(s){ return (s||'').replace(/\n/g,'<br>'); }
 let _jrSaveT=null;
 function wireJrPage(){
-  const ta=$("#jrPageText"); if(!ta||ta._wired)return; ta._wired=true; const date=ta.dataset.date||TODAY;
-  ta.addEventListener("input",()=>{ const ss=$("#jrSaveState"); if(ss)ss.textContent="saving…"; clearTimeout(_jrSaveT);
-    _jrSaveT=setTimeout(async()=>{ try{ const val=ta.value; await setDay(date,n=>({...n,journal:val})); const s2=$("#jrSaveState"); if(s2)s2.textContent="saved ✓"; }catch(e){ const s2=$("#jrSaveState"); if(s2)s2.textContent="couldn't save 🌧️"; } },1100); });
+  const el=$("#jrPageText"); if(!el||el._wired)return; el._wired=true; const date=el.dataset.date||TODAY;
+  // auto-save on input
+  el.addEventListener("input",()=>{
+    const ss=$("#jrSaveState"); if(ss)ss.textContent="saving…"; clearTimeout(_jrSaveT);
+    _jrSaveT=setTimeout(async()=>{
+      try{
+        const html=el.innerHTML.replace(/​/g,'');
+        const plain=el.innerText.replace(/​/g,'');
+        await setDay(date,n=>({...n,journal:plain,journalHtml:html}));
+        const s2=$("#jrSaveState"); if(s2)s2.textContent="saved ✓";
+      }catch(e){ const s2=$("#jrSaveState"); if(s2)s2.textContent="couldn't save 🌧️"; }
+    },1100);
+  });
+  // toolbar wiring
+  const tb=$("#jrToolbar"); if(!tb) return;
+  // format buttons
+  tb.querySelectorAll("[data-cmd]").forEach(btn=>{
+    btn.addEventListener("mousedown",e=>{
+      e.preventDefault(); // keep focus in editor
+      document.execCommand(btn.dataset.cmd,false,null);
+      btn.classList.toggle("active", document.queryCommandState(btn.dataset.cmd));
+    });
+  });
+  // color swatches
+  tb.querySelectorAll(".jr-swatch[data-color]").forEach(sw=>{
+    sw.addEventListener("mousedown",e=>{ e.preventDefault(); applyJrColor(sw.dataset.color); });
+  });
+  // color picker (rainbow circle)
+  const colorPick=$("#jrColorPick");
+  if(colorPick){
+    colorPick.parentElement.addEventListener("mousedown",e=>{ e.preventDefault(); colorPick.click(); });
+    colorPick.addEventListener("input",()=>applyJrColor(colorPick.value));
+  }
+  function applyJrColor(hex){
+    const sel=window.getSelection();
+    if(sel&&sel.rangeCount){
+      const range=sel.getRangeAt(0);
+      if(range.collapsed){
+        // Insert a color-anchor span so typing continues in that color
+        const span=document.createElement("span");
+        span.style.color=hex;
+        span.innerHTML="&#8203;"; // zero-width space placeholder
+        range.insertNode(span);
+        const r2=document.createRange();
+        r2.setStart(span.firstChild,1); r2.collapse(true);
+        sel.removeAllRanges(); sel.addRange(r2);
+      } else {
+        document.execCommand("styleWithCSS",false,true);
+        document.execCommand("foreColor",false,hex);
+      }
+    }
+    // update recents
+    const DEFAULTS=["#9b8ec4","#c87080","#5a8a70"];
+    const recents=(state.jrRecentColors&&state.jrRecentColors.length===3?state.jrRecentColors:DEFAULTS.slice());
+    state.jrRecentColors=[hex,...recents.filter(c=>c!==hex)].slice(0,3);
+    // repaint swatch row live without full render
+    const swRow=$("#jrSwatches"); if(!swRow) return;
+    swRow.querySelectorAll(".jr-swatch[data-color]").forEach((el,i)=>{
+      const c=state.jrRecentColors[i]||'#ccc';
+      el.dataset.color=c; el.style.background=c; el.title=c;
+    });
+  }
+  // font family
+  const fontSel=$("#jrFont");
+  if(fontSel) fontSel.addEventListener("change",()=>{
+    if(fontSel.value==="__add__"){
+      const name=prompt("Font name (e.g. 'Pacifico'):");
+      if(!name){fontSel.value="";return;}
+      const url=prompt("Google Fonts URL (paste the @import link, or leave blank to use system font):");
+      if(url&&url.trim()){
+        const link=document.createElement("link"); link.rel="stylesheet"; link.href=url.trim(); document.head.appendChild(link);
+      }
+      const fonts=state.sentinel.jrFonts||[];
+      fonts.push({name:name.trim(),url:url||""});
+      state.sentinel.jrFonts=fonts;
+      saveSentinel().catch(()=>{});
+      // add to select and apply
+      const opt=document.createElement("option"); opt.value=`'${name}',sans-serif`; opt.textContent=name;
+      fontSel.insertBefore(opt, fontSel.querySelector("option[value='__add__']"));
+      fontSel.value=opt.value;
+      document.execCommand("fontName",false,opt.value);
+      return;
+    }
+    if(fontSel.value) document.execCommand("fontName",false,fontSel.value);
+  });
+  // font size (execCommand uses 1-7, we map px sizes)
+  const sizeSel=$("#jrSize");
+  if(sizeSel) sizeSel.addEventListener("change",()=>{
+    const px=parseInt(sizeSel.value);
+    // insert a span with the size instead, execCommand fontSize is too coarse
+    const sel=window.getSelection(); if(!sel.rangeCount) return;
+    const range=sel.getRangeAt(0);
+    if(range.collapsed) return;
+    const span=document.createElement("span");
+    span.style.fontSize=px+"px";
+    range.surroundContents(span);
+    sel.removeAllRanges();
+  });
+  // update active states on selection change
+  el.addEventListener("keyup", updateToolbarState);
+  el.addEventListener("mouseup", updateToolbarState);
+  function updateToolbarState(){
+    tb.querySelectorAll("[data-cmd]").forEach(btn=>{
+      try{ btn.classList.toggle("active", document.queryCommandState(btn.dataset.cmd)); }catch(_){}
+    });
+  }
 }
 function viewJournal(){
   if(!state.jrRef){ const t=new Date(); state.jrRef=new Date(t.getFullYear(),t.getMonth(),1); }
@@ -3501,7 +3774,13 @@ function viewJournal(){
   const caps=state.sentinel.memoryCapsules||{};
   const capYMs=(function(){ const out=[]; const t=new Date(); for(let i=1;i<=6;i++){ const d=new Date(t.getFullYear(),t.getMonth()-i,1); out.push(jrYM(d)); } return out; })();
   const srch=state.jrSearch||{};
-  return `<div class="page">
+  const theme=jrTheme(state.jrDay||TODAY); const col=theme[0];
+  const monthLabel=ref.toLocaleDateString("en-US",{month:"long"});
+  const stickers=(state.sentinel.jrStickers||[]).filter(s=>!s.month||s.month===ym);
+  const washi=(state.sentinel.jrWashi||[]).filter(w=>!w.month||w.month===ym);
+  const photos=(state.sentinel.jrPhotos||[]).filter(p=>!p.month||p.month===ym);
+  return `<div class="page"><div class="jr-layout">
+  <div class="page-main">
   ${jrDailyPage(state.jrDay||TODAY)}
   <section class="panel">
     <div class="card-head"><h2 style="font-size:18px">📓 ${monthName} <span class="soft" style="font-size:12px;font-weight:500">· month overview</span></h2>
@@ -3534,7 +3813,38 @@ function viewJournal(){
       return c?`<details class="acc" style="margin-bottom:6px"><summary>💊 ${label}</summary><div class="acc-body"><div style="white-space:pre-wrap;font-size:12.5px;line-height:1.65">${esc(c.text)}</div><button class="btn" data-act="jrCapsule" data-ym="${cym}" style="margin-top:8px">↻ rebuild</button></div></details>`
         :`<div class="listrow"><span class="grow" style="font-size:12.5px">${label}</span><button class="btn" data-act="jrCapsule" data-ym="${cym}">✨ build capsule</button></div>`; }).join("")}
   </section>
-  ${DISCLAIMER}</div>`;
+  ${DISCLAIMER}
+  </div><!-- /page-main --><aside class="jr-asset-panel">
+    ${(()=>{
+    const ph=(n,icon)=>Array.from({length:n},(_,i)=>`<div class="jr-asset-placeholder">${i===0?icon:''}</div>`).join('');
+    const allMonths=[...new Set([...(state.sentinel.jrStickers||[]),...(state.sentinel.jrWashi||[]),...(state.sentinel.jrPhotos||[])].map(x=>x.month).filter(Boolean))].sort().reverse();
+    const monthOpts=allMonths.map(m=>`<option value="${m}" ${m===ym?'selected':''}>${new Date(m+'-01T00:00').toLocaleDateString('en-US',{month:'long'})} · ${jrColorName(m)}</option>`).join('');
+    const selMonth=state.jrAssetMonth||ym;
+    const stk=(state.sentinel.jrStickers||[]).filter(s=>!s.month||s.month===selMonth).slice(0,6);
+    const wsh=(state.sentinel.jrWashi||[]).filter(w=>!w.month||w.month===selMonth).slice(0,4);
+    const pht=(state.sentinel.jrPhotos||[]).filter(p=>!p.month||p.month===selMonth).slice(0,6);
+    const thumb=(s,type)=>`<img class="jr-asset-thumb" src="${esc(s.url)}" title="${esc(s.name||'')}" draggable="true" data-act="jrInsertAsset" data-url="${esc(s.url)}" data-type="${type}">`;
+    const strip=(w)=>`<img class="jr-asset-strip" src="${esc(w.url)}" title="${esc(w.name||'')}" draggable="true" data-act="jrInsertAsset" data-url="${esc(w.url)}" data-type="washi">`;
+    return `
+    <div class="jr-asset-card">
+      <div class="jr-asset-card-head"><span class="jr-asset-card-title">Stickers</span><span class="jr-asset-card-see">see all</span></div>
+      <select class="jr-asset-month" data-act="jrAssetMonthPick"><option value="">all months</option>${monthOpts}</select>
+      <div class="jr-asset-grid">${stk.map(s=>thumb(s,'sticker')).join('')}${ph(Math.max(0,6-stk.length),'🌸')}</div>
+      <label class="jr-add-btn" style="display:block;text-align:center;cursor:pointer">+ add stickers to database<input type="file" accept="image/*" multiple style="display:none" data-act="jrUploadAsset" data-type="stickers"></label>
+    </div>
+    <div class="jr-asset-card">
+      <div class="jr-asset-card-head"><span class="jr-asset-card-title">Washi</span><span class="jr-asset-card-see">see all</span></div>
+      <select class="jr-asset-month" data-act="jrAssetMonthPick"><option value="">all months</option>${monthOpts}</select>
+      ${wsh.map(w=>strip(w)).join('')}${Array.from({length:Math.max(0,4-wsh.length)},(_,i)=>`<div class="jr-asset-strip-ph">${i===0?'🎀':''}</div>`).join('')}
+      <label class="jr-add-btn" style="display:block;text-align:center;cursor:pointer;margin-top:4px">+ add washi to database<input type="file" accept="image/*" multiple style="display:none" data-act="jrUploadAsset" data-type="washi"></label>
+    </div>
+    <div class="jr-asset-card">
+      <div class="jr-asset-card-head"><span class="jr-asset-card-title">Photos</span><span class="jr-asset-card-see">see all</span></div>
+      <div class="jr-asset-grid">${pht.map(p=>thumb(p,'photo')).join('')}${ph(Math.max(0,6-pht.length),'📷')}</div>
+      <label class="jr-add-btn" style="display:block;text-align:center;cursor:pointer">+ add photos to database<input type="file" accept="image/*" multiple style="display:none" data-act="jrUploadAsset" data-type="photos"></label>
+    </div>`;
+  })()}
+  </aside></div></div>`;
 }
 /* the day view/editor — her words live HERE, behind a click, never on the grid */
 async function jrEntryModal(date){
@@ -5500,6 +5810,7 @@ IMPORTANT — when doing any research or community pulse request:
 - Always include the APPROXIMATE DATE of when this happened
 - Always include at least one clickable source link (Reddit thread, YouTube video, tweet, news article) so she can verify and show chat
 - If something is speculated or uncertain, say so clearly
+- NEVER mix up games — always verify a character, event or update belongs to the game being asked about before including it. Lucilla is from Wuthering Waves, not Reverse: 1999. Double-check before every claim.
 - Write as if you're briefing a content creator who needs to go live in an hour and needs real, verifiable, specific receipts`;
   const history=(agentInput.history||[]).map(m=>({role:m.role==="me"?"user":"assistant",content:m.text}));
   const messages=[{role:"system",content:sys},...history,{role:"user",content:agentInput.question||(agentInput.images&&agentInput.images.length?"(sent an image)":"...")}];
@@ -6349,6 +6660,26 @@ const H={
   jrPick(el){ const date=el.dataset.date||(el.closest("[data-date]")&&el.closest("[data-date]").dataset.date); if(!date||date>TODAY)return;
     state.jrDay=date; const ym=date.slice(0,7); if(!state.jrRef||jrYM(state.jrRef)!==ym) state.jrRef=new Date(ym+"-01T00:00");
     try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} render(); },
+  jrAssetMonthPick(el){ state.jrAssetMonth=el.value||null; render(); },
+  async jrUploadAsset(el){
+    const files=el.files; if(!files||!files.length) return;
+    const type=el.dataset.type||'stickers';
+    const listKey=type==='stickers'?'jrStickers':type==='washi'?'jrWashi':'jrPhotos';
+    const ym=(state.jrRef?jrYM(state.jrRef):(TODAY.slice(0,7)));
+    toast("Uploading… ✨"); let added=0;
+    for(const file of files){
+      try{
+        const path=`jr-assets/${type}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+        const {data,error}=await SB.storage.from('mifu-assets').upload(path,file,{upsert:false});
+        if(error) throw error;
+        const {data:pub}=SB.storage.from('mifu-assets').getPublicUrl(path);
+        const arr=state.sentinel[listKey]||[];
+        arr.push({url:pub.publicUrl,name:file.name,month:ym,added:TODAY});
+        state.sentinel[listKey]=arr; added++;
+      }catch(e){ toast("Upload failed: "+e.message+" 🌧️"); }
+    }
+    if(added){ await saveSentinel(); toast(`${added} file${added>1?'s':''} added! 🌸`); render(); }
+  },
   jrMic(){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){ toast("voice needs Chrome or Edge 🌸"); return; }
@@ -6848,7 +7179,8 @@ const H={
   closeModal(){ try{voiceStopMic();}catch(_){} $("#modal").innerHTML=""; },
   noop(){},
   // --- modular layout ---
-  toggleLock(){ const v=localStorage.getItem("layout-locked")==="1"?"0":"1"; localStorage.setItem("layout-locked",v); applyPrefs(); toast(v==="1"?"Layout locked 🔒":"Layout unlocked 🔓"); },
+  toggleLock(){ const v=localStorage.getItem("layout-locked")==="0"?"1":"0"; localStorage.setItem("layout-locked",v); applyPrefs(); render(); toast(v==="0"?"Layout unlocked 🔓 — drag tabs to reorder":"Layout locked 🔒"); },
+  resetNavOrder(){ try{ localStorage.removeItem("tab-order"); localStorage.removeItem("nav-groups-health"); localStorage.removeItem("nav-groups-creator"); }catch(_){} toast("Nav order reset ↺"); render(); },
   async homeMin(el){ const k=el.dataset.w, tab=el.dataset.tab||state.tab; await setLayout(tab,L=>{ L.min={...L.min,[k]:!L.min[k]}; }); render(); },
   async homeHide(el){ const k=el.dataset.w, tab=el.dataset.tab||state.tab; await setLayout(tab,L=>{ L.hidden={...L.hidden,[k]:true}; }); toast("card hidden — restore it from ＋ cards 🌸"); render(); },
   manageCards(el){ manageCardsModal(el.dataset.tab||state.tab); },
@@ -7004,6 +7336,30 @@ const H={
     }
     KIKO.log.push({role:"pet",text:"and that's our journal for today 🌸 you showed up for yourself, and that counts. ❄️🦊"});
     paintKiko(); await finishJournal(J); },
+  async kikoReadJournal(el){
+    const date=el.dataset.date||TODAY;
+    const ym=date.slice(0,7);
+    if(!(state.jrCache||{})[ym]) await jrFetchMonth(new Date(date+"T00:00"));
+    const dayData=(date===TODAY?state.today:null)||(state.jrCache||{})[ym]?.[date]||{};
+    const text=(dayData.journal||'').trim();
+    if(!text){ toast("Write something in your journal first! 📓"); return; }
+    const btn=el; btn.disabled=true; btn.textContent="🦊 reading…";
+    try{
+      const prompt=`Read this personal journal entry and extract the following. Reply ONLY with a valid JSON object, no extra text:\n{\n  "mood": 1-5 (1=rough, 5=lovely),\n  "energy": 1-5,\n  "stress": 1-5 (1=low stress, 5=very stressed),\n  "sleep": hours as a number or null,\n  "symptoms": ["list","of","symptoms"] or [],\n  "topics": ["list","of","main","topics"] (e.g. stream, food, health, friends, gaming, family),\n  "special": true or false (was this a notably special or memorable day?),\n  "dayColor": "lovely" | "okay" | "rough",\n  "summary": "one warm sentence summarising the day in Kiko's voice"\n}\n\nJournal entry:\n${text}`;
+      const d=await kikoSimpleCall({question:prompt,history:[],tab:'journal',userModel:'',smart:false});
+      const raw=(d.reply||'').replace(/```json|```/g,'').trim();
+      const det=JSON.parse(raw);
+      if(!state.kikoDetected) state.kikoDetected={};
+      state.kikoDetected[date]=det;
+      // sync detected values back into health data for today
+      if(date===TODAY){
+        const upd={}; if(det.mood!=null) upd.mood=det.mood; if(det.energy!=null) upd.energy=det.energy;
+        if(det.stress!=null) upd.stress=det.stress; if(det.sleep!=null) upd.sleep=det.sleep;
+        if(Object.keys(upd).length) await setDay(date,n=>({...n,...upd,mind:{...(n.mind||{}),...upd}}));
+      }
+      toast("Kiko read your entry ✨"); render();
+    }catch(e){ toast("Couldn't parse — try again 🌧️"); btn.disabled=false; btn.textContent="🦊 Kiko, read this"; }
+  },
   async kikoSend(){ const inp=kikoInputEl(); const q=(inp?inp.value:"").trim(); const imgs=(KIKO.pendingImages||[]).slice(0,6);
     if((!q && !imgs.length)||KIKO.busy)return;
     KIKO.log.push({role:"me",text:q,...(imgs.length?{imgs}:{})});   // images show right in the chat
@@ -7222,6 +7578,9 @@ document.addEventListener("change",e=>{
     setSent(n=>({...n,medsList:(n.medsList||[]).map(m=>m.id===id?{...m,refill:v||undefined}:m)})).then(()=>render());
   } else if(t.dataset && t.dataset.spdue){ const id=t.dataset.spdue, v=t.value;
     setSent(n=>({...n,sponsors:(n.sponsors||[]).map(sp=>sp.id===id?{...sp,due:v||undefined}:sp)})).then(()=>render());
+  } else if(t.dataset && t.dataset.act==="jrUploadAsset"){
+    H.jrUploadAsset(t).catch(e=>toast("Upload error: "+e.message));
+    t.value="";
   }
 });
 window._lastPtr="mouse"; document.addEventListener("pointerdown",e=>{ window._lastPtr=e.pointerType||"mouse"; },true);   // pen/touch must not trigger native HTML5 drags
