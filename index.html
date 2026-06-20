@@ -1142,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.eventTypes";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.betterDrama";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1206,7 +1206,7 @@ async function autoResearchGames(){
   if(!needsResearch.length) return;
   for(const g of needsResearch){
     try{
-      const seed=`Search the internet RIGHT NOW for what the ${g.name} community is talking about this week. IMPORTANT: Before including ANY character name, event, or update — verify it actually belongs to ${g.name} and not a different game. If you are not 100% certain something is from ${g.name} specifically, do not include it. Reply in EXACTLY this format — no intro, no extra text, just these four lines:\nHYPE: [one sentence naming the specific character/event/update people are excited about right now + source link]\nDRAMA: [one sentence naming the specific controversy/frustration/backlash happening right now + source link]\nIDEA: [one punchy stream or video title idea reacting to the current mood — short and catchy, like a YouTube title]\nDETAIL: [your full detailed breakdown with all sources and context]`;
+      const seed=pulsePrompt(g.name);
       const d=await kikoSimpleCall({question:seed,history:[],tab:'gachas',userModel:state.sentinel.kikoUserModel||'',smart:false});
       const ans=d.reply||'';
       if(ans) await setSent(n=>{ const v=(n.sparkVault||[]).filter(x=>x.gid!==g.id); return {...n,sparkVault:[...v,{id:'spark'+Date.now(),gid:g.id,text:ans,date:TODAY}]}; });
@@ -1218,7 +1218,7 @@ async function autoResearchGames(){
 function parsePulse(text){
   const t=stripMd(text||"");
   const clean=(s)=>s.replace(/\(https?:\/\/[^)]+\)/g,'').replace(/https?:\/\/\S+/g,'').replace(/\([^)]{2,60}\.[a-z]{2,6}[^)]*\)/gi,'').replace(/\s{2,}/g,' ').trim();
-  const line=(key)=>{ const m=t.match(new RegExp('^'+key+':\\s*(.+)','im')); return m?clean(m[1]).slice(0,180):null; };
+  const line=(key)=>{ const m=t.match(new RegExp('^'+key+':\\s*(.+)','im')); return m?clean(m[1]).slice(0,400):null; };
   return { hype:line('HYPE'), drama:line('DRAMA'), idea:line('IDEA'), detail:(t.match(/^DETAIL:\s*([\s\S]+)/im)||[])[1]||null };
 }
 function renderMd(t){
@@ -2653,19 +2653,40 @@ function compactGachaAlert(){
   </div>`;
 }
 function pulsePrompt(gameName){
-  return `Today is ${TODAY}. You are a community researcher for a VTuber who covers gacha games. Search Reddit (r/${gameName.replace(/\s/g,'')}, r/gachagaming, r/gachagaming_meta), Twitter/X, YouTube comments, and any fan wikis or news sites RIGHT NOW for what the ${gameName} community is ACTUALLY talking about this week.
+  return `Today is ${TODAY}. You are a community sentiment researcher for a VTuber content creator who covers gacha games. Search Reddit (r/${gameName.replace(/\s/g,'')}, r/gachagaming), Twitter/X trending posts, and YouTube video comments RIGHT NOW.
 
-CRITICAL RULES:
-- Only include things specific to ${gameName} — do NOT mix up content from other games
-- Verify every character name, event name, and date belongs to ${gameName} before including it
-- For DRAMA: there is ALWAYS something people are frustrated or unhappy about. Look for: content droughts, marketing failures, communication issues (wrong YouTube channel, no official announcement), gacha rate complaints, broken promises, dev silence, comparison to competitors, censorship, rerun controversies, lack of content, roadmap disappointments, community infighting, anything. If the obvious controversies seem "old", dig deeper — find what people are still upset about or newly upset about. NEVER write "no significant controversy" or "no drama". That answer is always wrong.
-- Include real source URLs people can click to verify
+FRESHNESS RULE — CRITICAL: Every single piece of information you include — hype, drama, events, reactions — must be from the last 14 days (between ${new Date(new Date(TODAY).getTime()-14*86400000).toISOString().slice(0,10)} and ${TODAY}). If you cannot find something recent enough, say so honestly rather than pulling in old news. A year-old lawsuit, a months-old controversy, or a stale Reddit post is USELESS and embarrassing to share with a live audience. Only include things that happened or are actively being discussed RIGHT NOW.
 
-Reply in EXACTLY this format — no intro, no preamble, just these four lines:
-HYPE: [one sentence — the SPECIFIC character/event/update/collab people are hyped about RIGHT NOW, with their exact name and a source link]
-DRAMA: [one sentence — the REAL frustration, controversy, or backlash happening in the community RIGHT NOW — be specific: name what happened, when, who's involved, and include a source link. NEVER say "no significant controversy".]
-IDEA: [one punchy stream or video title reacting to the real current mood — short, catchy, YouTube-title style]
-DETAIL: [full breakdown: what exactly happened, when, how the community reacted, direct quotes or receipts if you can find them, why it matters for a streamer covering this game, all your sources]`;
+WHAT I NEED FOR DRAMA — READ THIS CAREFULLY:
+I do NOT want:
+- Complaints about web events, login bonuses, or event duration
+- Minor gacha rate complaints
+- Random blog/news site opinions
+- Anything a random content farm website wrote
+
+I DO want REAL community-wide frustration that a content creator could actually make a video or stream about:
+- Mass review bombing campaigns (App Store, Google Play, Steam)
+- Character design changes/controversies that upset the fanbase
+- Developer decisions that went against what the community wanted
+- Lackluster or poorly received livestreams/showcases
+- Long-running frustrations that have been building up (content drought, ignored feedback, powercreep, censorship)
+- Harbinger/character design controversies, "waifu-bait" concerns, changing art direction
+- Community splits, prominent creator callouts, dev PR failures
+- Anything trending negatively on r/${gameName.replace(/\s/g,'')} or r/gachagaming with significant upvotes
+
+The drama should be something real fans are ACTUALLY angry about — not something a content site wrote to fill space. If recent posts on Reddit or Twitter are calling something out loudly, that's what I want.
+
+RULES:
+- Only include things specific to ${gameName}
+- Every claim needs a real source link (Reddit thread, Twitter post, YouTube video)
+- Do NOT mention web events or login rewards as drama under any circumstances
+- Be brutally honest — do not soften the community's actual reaction
+
+Reply in EXACTLY this format — no intro, no preamble:
+HYPE: [one sentence — what SPECIFIC thing people are genuinely excited about right now, name it exactly + source link]
+DRAMA: [one sentence — the most significant real community frustration/backlash right now. Name exactly what happened, when, and why people are upset. Must be something content-creator-worthy. Include a Reddit or Twitter source link.]
+IDEA: [one punchy stream or video title reacting to the REAL community mood — something you could actually click on YouTube]
+DETAIL: [full breakdown: what happened, timeline, how the community reacted, notable Reddit posts or tweets, direct quotes if you can find them, why this matters for a streamer covering ${gameName}]`;
 }
 async function refreshCommunityPulse(gid){
   const btn=document.getElementById("pulse-btn-"+gid);
