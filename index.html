@@ -1142,7 +1142,7 @@
 <script>
 "use strict";
 /* ===================== CONFIG (everything here is yours to change) ===== */
-const APP_BUILD="2026-06-20.backupRestore";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
+const APP_BUILD="2026-06-20.dragAndEvents";   // bump on EVERY change — the Settings chip ends "is it the fix or the cache?" forever
 const CONFIG = {
   url: "https://hdkhoijkawwyfnjvsmdi.supabase.co",          // Supabase project URL — blank = demo mode
   anonKey: "sb_publishable_DovTvekKojWHLpSNHfZLjQ_C9Gn_LFs", // sb_publishable_... — blank = demo mode
@@ -1565,7 +1565,7 @@ function applyPrefs(){
   document.body.classList.toggle("locked",locked);
   const lc=document.getElementById("lockChip"); if(lc){ lc.textContent=locked?"🔒":"🔓"; lc.className="chip"+(locked?" on":""); }
 }
-const MODULAR_TABS=["home","care","food","gachas"];
+const MODULAR_TABS=["home","homehealth","care","food","gachas"];
 const MODULAR_GRID_TABS=["home","homehealth","care","food","gachas"];
 const MODULAR_LABELS={};
 function modLayout(tab){ const L=(state.sentinel.layout||{})[tab]||{}; return {order:L.order||[],size:L.size||{},min:L.min||{},hidden:L.hidden||{}}; }
@@ -2677,12 +2677,20 @@ function viewGachas(){
   const allEvs=(state.sentinel.calendarEvents||[]).filter(gameSrc).map(e=>({...e,days:daysBetween(TODAY,e.date)}));
   const endingSoon=allEvs.filter(e=>e.days>=0&&e.days<=3&&/\bend\b|\bends\b|\bclos/i.test(e.title||''));
   const todayUpd=allEvs.filter(e=>e.days>=0&&e.days<=30&&!/\bend\b|\bends\b|\bclos/i.test(e.title||''));
-  // weekly gacha focus — only this-week events (≤7 days), no dailies/weeklies clutter
-  const isEndingEv=e=>/\bend\b|\bends\b|\bclos/i.test(e.title||'');
-  const thisWeekEnding=allEvs.filter(e=>e.days>=0&&e.days<=7&&isEndingEv(e)&&!/banner|rerun/i.test(e.title||'')).sort((a,b)=>a.days-b.days);
-  const thisWeekStart=allEvs.filter(e=>e.days>=0&&e.days<=7&&!isEndingEv(e)).sort((a,b)=>a.days-b.days);
+  // weekly gacha focus — ending = endDate within 7 days OR title says "ends/closes"
+  const daysUntilEnd=e=>{ if(!e.endDate) return null; const d=daysBetween(TODAY,e.endDate); return d>=0?d:null; };
+  const isEndingTitle=e=>/\bend\b|\bends\b|\bclos|\bexpir|\blast day/i.test(e.title||'');
+  // an event is "ending" if its endDate is within 7 days, OR if it has no endDate but title says "ends"
+  const thisWeekEnding=allEvs.filter(e=>{
+    const due=daysUntilEnd(e);
+    if(due!=null) return due<=7;
+    return e.days>=0&&e.days<=7&&isEndingTitle(e);
+  }).sort((a,b)=>{ const da=daysUntilEnd(a)??a.days, db=daysUntilEnd(b)??b.days; return da-db; });
+  // "starting" = start date within next 7 days and NOT already ending
+  const endingIds=new Set(thisWeekEnding.map(e=>e.id));
+  const thisWeekStart=allEvs.filter(e=>e.days>=0&&e.days<=7&&!endingIds.has(e.id)).sort((a,b)=>a.days-b.days);
   const byGame=g=>gachaKeywords(g).some(kw=>(g.name||'').toLowerCase().replace(/\W/g,'').includes(kw.replace(/\W/g,'')));
-  const kikoSeed=`Research which gacha game events are ending this week (within 7 days) across: ${list.map(g=>g.name).join(', ')}. List each game, the event name, and the end date. Focus on things I might miss if I don't play before the deadline.`;
+  const lastRefresh=localStorage.getItem("gachaEvLastRefresh")||"never";
   const weeklies=gachaWeeklies();
   // game cards as modular widgets — drag/resize/minimize come for free
   const gameItems=list.map(g=>({key:g.id,label:g.name,cols:4,html:gachaGameCard(g,checks,weeklies,allEvs)}));
@@ -2692,10 +2700,13 @@ function viewGachas(){
       <div class="gg-stat" style="flex:1"><span class="gg-stat-n ${wkDone===total&&total?'ok':''}">${wkDone}/${total}</span><span class="gg-stat-l">Weeklies</span></div>
     </div>
     <section class="panel" style="margin:0;flex:1;display:flex;flex-direction:column">
-      <div class="card-head"><span class="label">✨ Weekly Gacha Focus</span><button class="btn" data-act="kikoSeedAsk" data-seed="${esc(kikoSeed)}" title="Ask Kiko to research">🦊 Research</button></div>
-      ${wkPending.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:4px 0 2px;letter-spacing:-.01em">🎮 Still need weeklies</p><p class="soft" style="font-size:11px;margin:0 0 6px">Do these before the week resets!</p>${wkPending.map(g=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(g.name)}</span><button class="chiptog" data-act="gachaWkToggle" data-v="${g.id}" style="font-size:10px;padding:3px 8px"><span>◦</span>done</button></div>`).join('')}`:`<p class="soft" style="font-size:12px;margin:0 0 6px">All weeklies done this week! ✨</p>`}
+      <div class="card-head"><span class="label">✨ Weekly Gacha Focus</span><button id="gachaRefreshBtn" class="btn" onclick="refreshGachaEvents()" title="Kiko researches current events for all your games">🔄 Refresh</button></div>
+      <p class="soft" style="font-size:11px;margin:0 0 8px">Last updated: ${lastRefresh==="never"?"never — press Refresh!":lastRefresh}</p>
+      <div id="gachaFocusBody">
+      ${!thisWeekEnding.length&&!thisWeekStart.length?`<p class="soft" style="font-size:12px;margin:4px 0">No events found — press 🔄 Refresh and Kiko will look them up for you!</p>`:""}
       ${thisWeekEnding.length?`<p style="font-size:14px;font-weight:800;color:#e07030;margin:12px 0 2px;letter-spacing:-.01em">⏳ Ending this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Do these before they're gone!</p>${thisWeekEnding.map(e=>`<div class="kn-row"><span class="kn-dot" style="background:#e07030;flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
-      ${thisWeekStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:12px 0 2px;letter-spacing:-.01em">🌟 Starting this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${thisWeekStart.slice(0,4).map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
+      ${thisWeekStart.length?`<p style="font-size:14px;font-weight:800;color:var(--lav-deep);margin:12px 0 2px;letter-spacing:-.01em">🌟 Starting this week</p><p class="soft" style="font-size:11px;margin:0 0 6px">Content opportunities!</p>${thisWeekStart.slice(0,6).map(e=>`<div class="kn-row"><span class="kn-dot" style="flex:none"></span><span class="grow" style="font-size:13px">${esc(e.title)}</span>${evTierChip(e.days,e.days===0,fmtDate(e.date))}</div>`).join('')}`:''}
+      </div>
     </section>
   </div>`;
   return `<div class="page" style="padding-top:12px">
@@ -8626,7 +8637,11 @@ function start(){
   // restore sidebar collapsed state from last visit
   try{ const sb=document.getElementById("sidebar"); if(sb&&localStorage.getItem("mifu-sb-col")==="1") sb.classList.add("sb-collapsed"); }catch(e){}
   try{ kikoStart(); setTimeout(kikoGreet,3500); setInterval(kikoGreet,10*60*1000); }catch(e){ console.error(e); }
-  setTimeout(autoResearchGames, 8000);   // one hello, then at most every 10 min (was 45s — way too chatty)
+  setTimeout(autoResearchGames, 8000);
+  // auto-refresh gacha events every Sunday (or if never run before)
+  const isSunday=new Date().getDay()===0;
+  const lastGachaRefresh=localStorage.getItem("gachaEvLastRefresh")||"";
+  if(isSunday&&lastGachaRefresh!==TODAY) setTimeout(refreshGachaEvents, 12000);   // one hello, then at most every 10 min (was 45s — way too chatty)
   if(DEMO){ render(); return; }                 // demo: data is instant — one render
   // live: gentle loader while Supabase connects, then check login
   const v=$("#view");
@@ -8688,6 +8703,56 @@ async function sendMagicLink(){
   const {error}=await SB.auth.signInWithOtp({email,options:{emailRedirectTo:location.href}});
   if(msg)msg.textContent=error?"Couldn't send — "+error.message+" 🌧️":"Check your email for the magic link! ✨ (check spam too)";
   if(btn)btn.disabled=false;
+}
+
+async function refreshGachaEvents(){
+  const btn=document.getElementById("gachaRefreshBtn");
+  const body=document.getElementById("gachaFocusBody");
+  if(btn){ btn.disabled=true; btn.textContent="🦊 researching…"; }
+  if(body) body.innerHTML=`<p class="soft" style="font-size:12px;margin:8px 0">Kiko is checking what's happening this week across all your games… ❄️</p>`;
+  try{
+    const games=gachaList().map(g=>g.name).join(", ");
+    const prompt=`Today is ${TODAY}. Search the web RIGHT NOW for in-game events, endgame resets, and limited-time content for these games: ${games}.
+
+Return ONLY a valid JSON array — no markdown, no explanation, just the raw array. Each item:
+{"title":"[Game] — [specific event name]","game":"[game name]","date":"YYYY-MM-DD","endDate":"YYYY-MM-DD or null","type":"event|reset|livestream|update"}
+
+Rules:
+- Focus on IN-GAME EVENTS and LIMITED TIME CONTENT — things that expire and you'll miss if you don't play
+- Include endgame rotation resets (e.g. ZZZ Hollow Zero/Shiyu Defense resets, HSR Memory of Chaos/Pure Fiction, WuWa Tower of Adversity, Arknights CC/IS resets, Genshin Spiral Abyss, R1999 Limbo)
+- Include limited time events ending within 14 days — name the SPECIFIC event
+- Include any announced official livestreams in the next 14 days
+- DO NOT include gacha banners — she tracks those separately
+- "date" = start date (or today if already started), "endDate" = when it ends (null if unknown)
+- NEVER mix up games — verify each item belongs to the correct game before including it
+- Only include things with real confirmed dates from official sources or wikis
+- If a game has nothing happening this week, skip it`;
+    const d=await kikoSimpleCall({question:prompt,history:[],tab:"gachas",userModel:"",smart:false});
+    const raw=(d.reply||"").replace(/```json|```/g,"").trim();
+    const events=JSON.parse(raw);
+    if(!Array.isArray(events)) throw new Error("not an array");
+    // remove old auto-fetched events, keep user-created ones
+    await DB.saveDaily(SENTINEL,n=>{
+      const kept=(n.calendarEvents||[]).filter(e=>!e.autoFetched);
+      const fresh=events.map(e=>({
+        id:"auto"+Date.now()+Math.random().toString(36).slice(2),
+        title:e.title||"",
+        date:e.date||TODAY,
+        endDate:e.endDate||null,
+        color:"#9fc7f0",
+        src:"game",
+        autoFetched:true,
+        tz:"Europe/Amsterdam",
+        time:"",note:"",url:""
+      }));
+      return {...n,calendarEvents:[...kept,...fresh]};
+    });
+    localStorage.setItem("gachaEvLastRefresh",TODAY);
+    render();
+  }catch(e){
+    if(body) body.innerHTML=`<p class="soft" style="font-size:12px;color:#c87080;margin:4px 0">Couldn't fetch events: ${esc(e.message)} 🌧️ Try again in a moment.</p>`;
+    if(btn){ btn.disabled=false; btn.textContent="🔄 Refresh"; }
+  }
 }
 
 async function exportBackup(){
@@ -8815,7 +8880,7 @@ start();
       if(!state.sentinel.layout)state.sentinel.layout={};
       if(!state.sentinel.layout[tab])state.sentinel.layout[tab]={order:[],size:{},min:{},hidden:{}};
       state.sentinel.layout[tab].order=order;
-      setLayout(tab,L=>{ L.order=order; }); try{layoutHome();}catch(_){}
+      setLayout(tab,L=>{ L.order=order; });
     }
   },true);
   document.addEventListener("pointercancel",()=>{ if(!d)return; if(d.thumb)d.thumb.remove(); if(d.ph){ d.ph.parentElement&&d.ph.parentElement.insertBefore(d.item,d.ph); d.ph.remove(); } if(d.item)d.item.classList.remove("dragsrc","resizing","reordering"); d=null; },true);
