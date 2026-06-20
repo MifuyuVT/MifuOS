@@ -652,14 +652,11 @@ async function render(){
     if(MODULAR_TABS.includes(state.tab)){
       // Position the masonry cards SYNCHRONOUSLY now — before the browser paints — so it never
       // shows cards stacked-then-snapping (that one-frame reflow was the "whole page jiggles" bug).
+      // Just the one pass: layoutHome() rebuilds .grid-modular from current state (not measured DOM
+      // heights), so re-running it later produces identical HTML — repeated passes used to also
+      // run on a delay, but each one replaces the grid with a fresh node while #view still carries
+      // .anim, which restarts the panelIn entrance animation on every card and looked like a flicker/reload.
       try{layoutHome();}catch(e){}
-      // The extra staggered passes ONLY matter on first load / tab change (late images, fonts settling).
-      // On a plain check-off (same tab) they re-pack with no real change and just cause jitter on iOS —
-      // so skip them then. The single synchronous pass above already measured the post-tap heights.
-      if(animate || !state._homeLaidOnce){
-        state._homeLaidOnce=true;
-        requestAnimationFrame(()=>{try{layoutHome();}catch(e){}}); setTimeout(()=>{try{layoutHome();}catch(e){}},150); setTimeout(()=>{try{layoutHome();}catch(e){}},520); setTimeout(()=>{try{layoutHome();}catch(e){}},1000);
-      }
     }
     if(state.tab==='kiko'){ KIKO.open=false; const cc=$("#kikoChat"); if(cc)cc.classList.add("hidden"); try{ paintKiko(); }catch(e){} }   // fill the Ask-Kiko chat panel
     if(state.tab==='memories'){ if(state.media===undefined&&!state._mediaLoading){ loadMedia().then(()=>{ if(state.tab==='memories') render(); }); } try{ wireMedia(); }catch(e){} }   // lazy-load the media row + wire upload/caption inputs

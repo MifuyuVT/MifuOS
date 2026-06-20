@@ -35,7 +35,7 @@ function viewToolbox(){
       ${tb.tOut.respond?`<div class="label" style="margin-top:8px">easiest healthy reply</div><div class="soft" style="font-size:12.5px">${esc(tb.tOut.respond)}</div>`:""}
     </div>`:""}
   </section>
-  <section class="panel tb-span2">
+  <section class="panel">
     <div class="label" style="margin-bottom:6px">🧠 Brain-dump compiler</div>
     <p class="soft" style="font-size:11.5px;margin:0 0 8px">Pour everything out unsorted — comes back as tidy groups.</p>
     <textarea class="inp" id="tbCText" rows="2" placeholder="everything in your head, in any order…">${esc(tb.cText||'')}</textarea>
