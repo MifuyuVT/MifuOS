@@ -10,7 +10,7 @@
      there's no clickjacking protection here short of moving off GitHub Pages or fronting it with something
      that can inject real response headers. -->
 <meta name="referrer" content="strict-origin-when-cross-origin" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co https://cdn.jsdelivr.net; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;" />
 <title>Mifuyu OS ❄️🦊</title>
 <link rel="icon" type="image/png" href="sakura.png" />
 <link rel="apple-touch-icon" href="AYAYA.png" />
@@ -30,7 +30,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Fredoka:wght@500;600&display=swap" rel="stylesheet" />
 <!-- Supabase is loaded lazily at boot, and only when CONFIG keys are set (see start() at the bottom). -->
 <link rel="stylesheet" href="style.css" />
-<script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<!-- Vendored instead of CDN-loaded — see vendor/README.md for why and how to update. -->
+<script src="vendor/twemoji.min.js"></script>
 </head>
 <body>
 <div id="app-shell">

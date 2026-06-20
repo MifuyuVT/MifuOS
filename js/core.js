@@ -5009,7 +5009,7 @@ function start(){
   const v=$("#view");
   if(v) v.innerHTML='<div class="panel" style="max-width:380px;margin:48px auto;text-align:center"><div style="font-size:28px">❄️🦊</div><p class="soft" style="margin:8px 0 0">Konfuyu~ getting your cozy space ready…</p></div>';
   const sc=document.createElement('script');
-  sc.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  sc.src="vendor/supabase.min.js";   // vendored, not CDN-loaded — see vendor/README.md
   sc.onload=async()=>{
     try{ SB=window.supabase.createClient(CONFIG.url,CONFIG.anonKey); }catch(e){ console.error(e); render(); return; }
     // handle magic link callback (URL has #access_token after clicking the email link)
