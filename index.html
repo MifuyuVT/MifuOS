@@ -8785,7 +8785,8 @@ function start(){
       if(session&&session.user){ UID=session.user.id; history.replaceState(null,"",location.pathname); render(); return; }
     }
     const {data:{session}}=await SB.auth.getSession();
-    if(session&&session.user){ UID=session.user.id; }
+    if(!session||!session.user){ location.href="login.html"; return; }   // not signed in — bounce to the login page, never render the app
+    UID=session.user.id;
     // one-time migration: merge any sentinel data saved under "mifuyu" into the real UUID row
     try{
       const legacyId="mifuyu";
