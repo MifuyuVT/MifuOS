@@ -6,7 +6,7 @@
 <!-- Same meta-tag CSP caveat as index.html: no frame-ancestors / X-Frame-Options / X-Content-Type-Options
      possible on GitHub Pages, so clickjacking protection is out of reach here. -->
 <meta name="referrer" content="strict-origin-when-cross-origin" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://hdkhoijkawwyfnjvsmdi.supabase.co; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;" />
 <title>Mifuyu OS — Log in</title>
 <link rel="icon" type="image/png" href="sakura.png" />
 <link rel="stylesheet" href="login.css" />
@@ -23,7 +23,8 @@
     <a id="lgForgot" href="#">forgot password?</a>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Vendored instead of CDN-loaded — see vendor/README.md for why and how to update. -->
+<script src="vendor/supabase.min.js"></script>
 <script src="login.js"></script>
 </body>
 </html>
