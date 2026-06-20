@@ -8834,67 +8834,59 @@ async function sendMagicLink(){
   if(btn)btn.disabled=false;
 }
 
+function gameEventPrompt(gameName){
+  const sources={
+    "Infinity Nikki":"https://infinitynikki.infoldgames.com/en/news AND https://game8.co/games/Infinity-Nikki AND r/InfinityNikki. Nikki runs MANY small simultaneous events — find ALL of them ending within 14 days. Look for: gathering/exploration events, limited claimable rewards, styling contests, resonance events, story events, Starlit Crystal activities, Wishing Well events. Include EVERY one with an exact end date, not just the most obvious banner.",
+    "Honkai: Star Rail":"https://game8.co/games/Honkai-Star-Rail/archives/408749 AND https://honkai-star-rail.fandom.com/wiki/Events for the full event list. Include: Aptitude Showcase, story events, challenge events, SU/Simulated Universe events, login rewards with deadlines. Do NOT include character or light cone warps (e.g. Gift of Tempered Blade, Bygone Reminiscence).",
+    "Genshin Impact":"https://game8.co/games/Genshin-Impact/archives/301599 AND https://genshin-impact.fandom.com/wiki/Events. Genshin runs many simultaneous events per patch — find ALL of them ending within 14 days. Do NOT include Phase 1/2 banner entries or character wishes.",
+    "Zenless Zone Zero":"https://game8.co/games/Zenless-Zone-Zero/archives/457176 AND https://zzz.rng.moe/en/timeline. Include ALL active events AND the EXACT end date/time for the current Hollow Zero cycle, Shiyu Defense cycle, and Deadly Assault cycle.",
+    "Wuthering Waves":"https://game8.co/games/Wuthering-Waves/archives/453473 AND https://wuwa.uk/event-calendar. Find ALL active events with end dates — currently includes Instant Flashlight, Night City Roaming, Gifts of Dreamchasers, Matrix Reform. Also include Tower of Adversity reset date.",
+    "Arknights":"https://arknights.wiki.gg/wiki/Event/Upcoming AND https://arknights.wiki.gg/wiki/Event. Include CC (Contingency Contract), IS (Integrated Strategies) season end dates, and any active limited story events.",
+    "Reverse: 1999":"https://dotgg.gg/reverse-1999/events/ AND https://reverse1999.fandom.com/wiki/Events. Find ALL active events — currently includes Turquoise Serpent Club (ends ~Jun 29) and Where Spirits Rest (ends ~Jul 1). Verify exact dates and find any additional events.",
+    "NTE":"https://gamewith.net/nte/74811 AND https://www.pockettactics.com/neverness-to-everness/events. NTE is a newer game — find all active in-game events including the Porsche collab, story events, Underground Circuit racing, What's Baking event, and anything else with an end date."
+  };
+  const src=Object.entries(sources).find(([k])=>gameName.toLowerCase().includes(k.toLowerCase())||k.toLowerCase().includes(gameName.toLowerCase()));
+  const sourceHint=src?`\nWhere to look: ${src[1]}`:"";
+  return `Today is ${TODAY}. Search the web RIGHT NOW for ALL currently active in-game events, endgame resets, and limited-time content for ${gameName} only.${sourceHint}
+
+Return ONLY a valid JSON array — no markdown, no explanation, just the array. Each item:
+{"title":"${gameName} — [exact event name]","game":"${gameName}","date":"YYYY-MM-DD","endDate":"YYYY-MM-DD or null","type":"event|reset|livestream|update","url":"source URL or empty string","note":"one plain sentence about what this is and why it matters"}
+
+Rules:
+- Find EVERY active limited-time event — not just the biggest one. There may be 5-10 running at once.
+- Include endgame rotation resets with EXACT current cycle end dates (not generic dates)
+- DO NOT include gacha pull banners, character warps, weapon banners, or any pulling mechanic
+- DO include patch updates, story chapters, challenge events, reward collection deadlines
+- date = when it started (or today if already running), endDate = exact end date
+- No unescaped quotes or special characters inside string values
+- Only include things with confirmed real dates from official sources or wikis
+- One entry per event — no duplicates`;
+}
 async function refreshGachaEvents(){
   const btn=document.getElementById("gachaRefreshBtn");
   const body=document.getElementById("gachaFocusBody");
   if(btn){ btn.disabled=true; btn.textContent="🦊 researching…"; }
-  if(body) body.innerHTML=`<p class="soft" style="font-size:12px;margin:8px 0">Kiko is checking what's happening this week across all your games… ❄️</p>`;
+  const list=gachaList();
+  let allFresh=[];
+  for(let i=0;i<list.length;i++){
+    const g=list[i];
+    if(body) body.innerHTML=`<p class="soft" style="font-size:12px;margin:8px 0">Kiko is checking ${esc(g.name)}… (${i+1}/${list.length}) ❄️</p>`;
+    try{
+      const d=await kikoSimpleCall({question:gameEventPrompt(g.name),history:[],tab:"gachas",userModel:"",smart:false});
+      let raw=(d.reply||"").replace(/```json|```/g,"").trim();
+      const arrMatch=raw.match(/\[[\s\S]*\]/); if(arrMatch) raw=arrMatch[0];
+      let events; try{ events=JSON.parse(raw); }catch(_){
+        const cleaned=raw.replace(/"(?:[^"\\]|\\.)*"/g,m=>m.replace(/[\n\r\t]/g," ").replace(/(?<!\\)\\(?!["\\/bfnrtu])/g,"\\\\"));
+        try{ events=JSON.parse(cleaned); }catch(_2){ events=[]; }
+      }
+      if(Array.isArray(events)) allFresh.push(...events);
+    }catch(_){}
+    if(i<list.length-1) await new Promise(r=>setTimeout(r,1500));
+  }
   try{
-    const games=gachaList().map(g=>g.name).join(", ");
-    const prompt=`Today is ${TODAY}. Search the web RIGHT NOW for in-game events, endgame resets, and limited-time content for these games: ${games}.
-
-Return ONLY a valid JSON array — no markdown, no explanation, just the raw array. Each item:
-{"title":"[Game] — [specific event name]","game":"[game name]","date":"YYYY-MM-DD","endDate":"YYYY-MM-DD or null","type":"event|reset|livestream|update","url":"https://... source link or empty string","note":"brief one-line description of what this is"}
-
-Rules:
-- Focus on IN-GAME EVENTS and LIMITED TIME CONTENT — things that expire and you'll miss if you don't play
-- Include endgame rotation resets (e.g. ZZZ Hollow Zero/Shiyu Defense/Deadly Assault resets, HSR Memory of Chaos/Pure Fiction, WuWa Tower of Adversity, Arknights CC/IS resets, Genshin Spiral Abyss, Reverse: 1999 Limbo/Mane's Bulletin)
-- For resets like ZZZ Hollow Zero, Shiyu Defense, Deadly Assault — find the EXACT current cycle end date, not a generic date. Check the official ZZZ wiki or HoYoLAB for the current cycle's specific end timestamp
-Per-game sources — check THESE SPECIFIC PAGES for each game, not just a generic search:
-
-INFINITY NIKKI: Check https://infinitynikki.infoldgames.com/en/news AND https://game8.co/games/Infinity-Nikki AND r/InfinityNikki. Nikki runs MANY small simultaneous events — find ALL of them ending within 14 days. Types to look for: gathering/exploration events, limited claimable rewards, styling contests, resonance events, story events, weekly Starlit Crystal activities. Include EVERY one with an exact end date.
-
-HONKAI: STAR RAIL: Check https://game8.co/games/Honkai-Star-Rail/archives/408749 for the full event schedule. Include in-game reward events (Aptitude Showcase, story events, challenge events, SU events). Do NOT include "Gift of Tempered Blade", "Bygone Reminiscence" or any character/light cone warp.
-
-GENSHIN IMPACT: Check https://game8.co/games/Genshin-Impact for the full event list. Genshin runs many simultaneous events per patch — find all of them ending within 14 days. Do NOT include any "Phase 1/2" banner entries.
-
-ZENLESS ZONE ZERO: Check https://game8.co/games/Zenless-Zone-Zero/archives/457176 AND https://zzz.rng.moe/en/timeline for the full schedule including Hollow Zero and Shiyu Defense EXACT reset dates for the current cycle.
-
-WUTHERING WAVES: Check https://game8.co/games/Wuthering-Waves/archives/453473 AND https://wuwa.uk/event-calendar for all active events with end dates. Current 3.4 events include: Instant Flashlight, Night City Roaming, Gifts of Dreamchasers (all ending July 9), Matrix Reform (Jun 25 - Jul 9).
-
-ARKNIGHTS: Check https://arknights.wiki.gg/wiki/Event/Upcoming for all upcoming and active events. Include CC (Contingency Contract), IS (Integrated Strategies) seasons, and limited story events.
-
-REVERSE: 1999: Check https://dotgg.gg/reverse-1999/events/ AND https://reverse1999.fandom.com/wiki/Events for active events. Current events include Turquoise Serpent Club (ends Jun 29) and Where Spirits Rest (ends Jul 1) — verify these are still active and find any others.
-
-NEVERNESS TO EVERNESS (NTE): Check https://gamewith.net/nte/74811 AND https://www.pockettactics.com/neverness-to-everness/events for the current event schedule. NTE is a newer game — look for story events, collaboration events (e.g. Porsche collab), and in-game activities with end dates.
-- Include limited time events ending within 14 days — name the SPECIFIC event, include the EXACT end date
-- Include any announced official livestreams in the next 14 days
-- DO NOT include gacha pull banners, character warps, light cone warps, or weapon banners — she tracks those separately. This includes anything with "warp", "banner", "light cone event warp", "phase 1", "phase 2" in the title
-- DO include new patch/version updates, story chapters, and limited-time in-game events that arrive alongside a new character release — e.g. "HSR 3.2 patch" or "HSR — Ripples Rejoined event" is fine, but NOT "HSR — Bygone Reminiscence Light Cone Warp"
-- "date" = start date (or today if already started), "endDate" = when it ends (null if unknown)
-- "url" = link to the wiki page, official post, or source you used — leave "" if you can't find one
-- "note" = one short sentence explaining what this is and why she should care — NO quotes or apostrophes inside this field, use plain text only
-- "url" = a plain URL with no quotes or special characters inside it
-- IMPORTANT: all string values must be valid JSON — do not use unescaped double quotes, backslashes, or newlines inside any string value
-- NEVER mix up games — verify each item belongs to the correct game before including it
-- Only include things with real confirmed dates from official sources or wikis
-- If a game has nothing happening this week, skip it
-- DO NOT create duplicate entries — one entry per event, even if it spans multiple weeks`;
-    const d=await kikoSimpleCall({question:prompt,history:[],tab:"gachas",userModel:"",smart:false});
-    let raw=(d.reply||"").replace(/```json|```/g,"").trim();
-    // extract just the array portion in case Kiko added surrounding text
-    const arrMatch=raw.match(/\[[\s\S]*\]/); if(arrMatch) raw=arrMatch[0];
-    // sanitize common JSON-breaking issues: literal newlines/tabs inside strings, then parse
-    let events; try{ events=JSON.parse(raw); }catch(_){
-      // fallback: strip control characters inside strings and retry
-      const cleaned=raw.replace(/"(?:[^"\\]|\\.)*"/g,m=>m.replace(/[\n\r\t]/g," ").replace(/(?<!\\)\\(?!["\\/bfnrtu])/g,"\\\\"));
-      events=JSON.parse(cleaned);
-    }
-    if(!Array.isArray(events)) throw new Error("not an array");
-    // remove old auto-fetched events, keep user-created ones
     await DB.saveDaily(SENTINEL,n=>{
       const kept=(n.calendarEvents||[]).filter(e=>!e.autoFetched);
-      const fresh=events.map(e=>({
+      const fresh=allFresh.map(e=>({
         id:"auto"+Date.now()+Math.random().toString(36).slice(2),
         title:e.title||"",
         date:e.date||TODAY,
@@ -8912,8 +8904,8 @@ NEVERNESS TO EVERNESS (NTE): Check https://gamewith.net/nte/74811 AND https://ww
     localStorage.setItem("gachaEvLastRefresh",TODAY);
     render();
   }catch(e){
-    if(body) body.innerHTML=`<p class="soft" style="font-size:12px;color:#c87080;margin:4px 0">Couldn't fetch events: ${esc(e.message)} 🌧️ Try again in a moment.</p>`;
-    if(btn){ btn.disabled=false; btn.textContent="🔄 Refresh"; }
+    if(body) body.innerHTML=`<p class="soft" style="font-size:12px;color:#c87080;margin:4px 0">Couldn't save events: ${esc(e.message)} 🌧️</p>`;
+    if(btn){ btn.disabled=false; btn.textContent="🔄 Refresh events"; }
   }
 }
 
