@@ -1,0 +1,10 @@
+{
+  "name": "mifuyu-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mifuyu OS — manifest for vendored dependency versions (see vendor/README.md). Not used for any build/install step.",
+  "dependencies": {
+    "@twemoji/api": "17.0.3",
+    "@supabase/supabase-js": "2.108.2"
+  }
+}
