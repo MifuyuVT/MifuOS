@@ -705,9 +705,13 @@ const HABITS_DEFAULT=[
 
 const GACHA_DEFAULT=["Nikki","R1999","Arknights","ZZZ","NTE","WUWA","GENSHIN","HSR"].map(n=>({id:"g_"+n.toLowerCase().replace(/\W+/g,""),name:n}));
 
+const SOCIALS_DEFAULT=(CONFIG.socials||[]).map(([n,u])=>({id:"s_"+n.toLowerCase().replace(/\W+/g,""),name:n,url:u}));
+
 function habitsList(){ const l=state.sentinel.habitsList; return (Array.isArray(l)&&l.length)?l:HABITS_DEFAULT; }
 
 function gachaList(){ const l=state.sentinel.gachaList; return (Array.isArray(l)&&l.length)?l:GACHA_DEFAULT; }
+
+function socialsList(){ const l=state.sentinel.socials; return (Array.isArray(l)&&l.length)?l:SOCIALS_DEFAULT; }
 
 function weekStrip(field,total){
   const byDate={}; (state.range||[]).forEach(r=>byDate[r.date]=r.notes); byDate[TODAY]=state.today;
@@ -1201,6 +1205,7 @@ function viewHome(){
     {key:"goals",label:"Goals",cols:4,html:cardGoals()},
     {key:"deeppatterns",label:"Kiko noticed",cols:4,html:deepPatternsCard()},
     {key:"thisweek",label:"Coming up",cols:4,html:cardThisWeek()},
+    {key:"socials",label:"Mifu's links",cols:4,html:cardSocials()},
   ]:[
     {key:"habits",label:"Daily habits",cols:4,html:cardHabits()},
     {key:"journal",label:"Journal",cols:4,html:cardJournal()},
@@ -3192,6 +3197,21 @@ const H={
     const wi=$("#gachaWkInput"); if(wi) state.gachaWkDraft=wi.value;
     await setSent(n=>{ const l=(Array.isArray(n.gachaWeeklies)?n.gachaWeeklies:[]).filter(g=>g.id!==id); return {...n,gachaWeeklies:l}; }); render(); },
   gachaWeek(el){ const d=Number(el.dataset.d)||0; let off=(state.gachaWeek||0)+d; if(off>0)off=0; if(off<-8)off=-8; state.gachaWeek=off; render(); },
+
+  // --- 🦊 socials list (add/remove + copy-all) ---
+  socialsEdit(){ state.socialsEdit=!state.socialsEdit; render(); },
+  async addSocialUI(){ const ni=$("#socialName"), ui=$("#socialUrl");
+    const name=((ni&&ni.value)||"").trim(), url=((ui&&ui.value)||"").trim(); if(!name||!url)return;
+    state.socialDraft=null;
+    await setSent(n=>{ const l=(Array.isArray(n.socials)&&n.socials.length)?n.socials.slice():SOCIALS_DEFAULT.slice();
+      l.push({id:"s"+Date.now(),name,url}); return {...n,socials:l}; }); toast("link added 🦊"); render(); },
+  async delSocial(el){ const id=el.dataset.v;
+    const ni=$("#socialName"), ui=$("#socialUrl"); if(ni||ui) state.socialDraft={name:(ni&&ni.value)||"",url:(ui&&ui.value)||""};
+    await setSent(n=>{ let l=(Array.isArray(n.socials)&&n.socials.length)?n.socials.slice():SOCIALS_DEFAULT.slice();
+      l=l.filter(s=>s.id!==id); return {...n,socials:l}; }); render(); },
+  copySocials(){ const l=socialsList(); if(!l.length)return;
+    const t=l.map(s=>`${s.name}: ${s.url}`).join("\n");
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t); toast("copied all links 📋"); },
 
   async mjSet(el){ const f=el.dataset.f,v=Number(el.dataset.v);
     await setToday(n=>{ const mounjaro={...(n.mounjaro||{})}; mounjaro[f]=v; return {...n,mounjaro}; }); toast("saved 💗"); render(); },

@@ -519,6 +519,17 @@ function cardThisWeek(){
   </section>`;
 }
 
+function cardSocials(){
+  const list=socialsList(), ed=!!state.socialsEdit;
+  const rows=list.length?`<div class="chiprow">${list.map(s=>`<a class="chiptog" ${ed?'':`href="${s.url}" target="_blank" rel="noopener"`} style="text-decoration:none">${esc(s.name)}${ed?`<span class="x" data-act="delSocial" data-v="${s.id}" style="margin-left:2px">✕</span>`:''}</a>`).join("")}</div>`
+    :`<p class="soft" style="font-size:11.5px;margin:2px 0">No links yet — tap edit to add one.</p>`;
+  return `<section class="panel">
+    <div class="card-head"><span class="label">🦊 Mifu's links</span><span style="display:flex;gap:6px;align-items:center"><button class="btn" data-act="copySocials">📋 copy all</button><button class="btn" data-act="socialsEdit">${ed?'done':'edit'}</button></span></div>
+    ${rows}
+    ${ed?`<div class="gt-add"><input class="inp" id="socialName" placeholder="name (e.g. Twitch)" style="flex:1;min-width:90px" value="${esc((state.socialDraft||{}).name||'')}"><input class="inp" id="socialUrl" placeholder="https://…" style="flex:1.4;min-width:120px" value="${esc((state.socialDraft||{}).url||'')}"><button class="btn btn-grad" data-act="addSocialUI">add</button></div>`:''}
+  </section>`;
+}
+
 /* today's stream from the calendar/schedule (matches the weekday slot) */
 function todayStreamSlot(){ const wd=DOW_ORDER[(new Date().getDay()+6)%7];
   const slots=slotsForDate(new Date(TODAY+"T00:00"))||[]; return slots.find(s=>s.day===wd&&(s.show||s.text))||null; }
